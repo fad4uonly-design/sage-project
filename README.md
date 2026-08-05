@@ -90,6 +90,11 @@ sage goal create --title "Build AI Operating System" --horizon long
 sage context --refresh
 sage ask "what needs attention?"
 sage reflect
+sage discover
+
+# Web dashboard + API (v0.6.0)
+sage serve --host 0.0.0.0 --port 8742
+# open http://localhost:8742/
 
 # Run tests
 pytest
@@ -108,11 +113,11 @@ pytest
 | **0.3.1** | Business Intelligence Suite — 12 advisors, BI KG, 40+ workflows | ✅ |
 | **0.3.2** | Shared Skill Library — cross-domain reusable skills for automation | ✅ |
 | **0.4.0** | Automation — Workflow Engine, Tools, Approval, Audit, Automation Manager | ✅ |
-| **0.5.0** | Cognitive Context Engine — projects, goals, fusion, suggestions, reflection | ✅ Current |
-| **0.6.0** | User Experience — web, desktop, mobile, voice, REST/WS | Planned |
-| **1.0.0** | Production — hardening, backup/recovery, stable APIs | Planned |
+| **0.5.0** | Cognitive Context Engine — projects, goals, fusion, suggestions, reflection | ✅ |
+| **0.6.0** | UX foundations — REST/WS API, Web Dashboard, Knowledge Discovery; **core freeze** | ✅ Current |
+| **1.0.0** | Production — hardening, backup/recovery, stable API freeze | Planned |
 
-See [docs/architecture/](docs/architecture/) — especially [CONTEXT_v0.5.0.md](docs/architecture/CONTEXT_v0.5.0.md) and [AUTOMATION_v0.4.0.md](docs/architecture/AUTOMATION_v0.4.0.md).
+See [docs/architecture/](docs/architecture/) — [ARCHITECTURE_FREEZE_v1.md](docs/architecture/ARCHITECTURE_FREEZE_v1.md), [UX_v0.6.0.md](docs/architecture/UX_v0.6.0.md).
 
 ---
 

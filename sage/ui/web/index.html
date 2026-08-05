@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SAGE Dashboard</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel2: #182236;
+      --text: #e8eefc;
+      --muted: #93a0b8;
+      --accent: #5b9dff;
+      --good: #3dd68c;
+      --warn: #f5c542;
+      --bad: #ff6b7a;
+      --border: #243049;
+      --chip: #1e2a44;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #1a2744 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      background: rgba(11,18,32,0.85);
+      z-index: 10;
+    }
+    .brand { display: flex; gap: 12px; align-items: center; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #5b9dff, #7c5cff);
+      display: grid; place-items: center; font-weight: 800;
+    }
+    h1 { font-size: 18px; margin: 0; }
+    .sub { color: var(--muted); font-size: 12px; }
+    .pill {
+      border: 1px solid var(--border);
+      background: var(--chip);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pill.ok { color: var(--good); border-color: rgba(61,214,140,.35); }
+    .pill.warn { color: var(--warn); }
+    main {
+      display: grid;
+      grid-template-columns: 280px 1fr 360px;
+      gap: 16px;
+      padding: 16px;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+    }
+    nav, section, aside {
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      min-height: 200px;
+    }
+    nav { padding: 12px; }
+    nav button {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      padding: 12px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    nav button:hover, nav button.active {
+      background: rgba(91,157,255,.12);
+      color: var(--accent);
+    }
+    section { padding: 16px 18px 20px; overflow: auto; }
+    h2 { margin: 0 0 12px; font-size: 16px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .card .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .card .value { font-size: 22px; font-weight: 700; margin-top: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+    .muted { color: var(--muted); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    input, textarea, select {
+      background: #0d1526;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    input, select { height: 40px; }
+    textarea { width: 100%; min-height: 80px; resize: vertical; }
+    button.action {
+      background: linear-gradient(135deg, #5b9dff, #4f7cff);
+      color: white;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+    #chat-log {
+      height: 420px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+    }
+    .bubble {
+      max-width: 92%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .bubble.user { align-self: flex-end; background: rgba(91,157,255,.18); }
+    .bubble.bot { align-self: flex-start; background: rgba(255,255,255,.05); border: 1px solid var(--border); }
+    .hidden { display: none !important; }
+    .list-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: rgba(0,0,0,.15);
+    }
+    .list-item h3 { margin: 0 0 4px; font-size: 13px; }
+    .list-item p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    aside { padding: 14px; }
+    .error { color: var(--bad); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <h1>SAGE Dashboard</h1>
+        <div class="sub" id="tagline">Learn Better. Think Better. Live Better.</div>
+      </div>
+    </div>
+    <div class="row" style="margin:0">
+      <span class="pill" id="health-pill">connecting…</span>
+      <span class="pill" id="version-pill">—</span>
+    </div>
+  </header>
+
+  <main>
+    <nav id="nav">
+      <button data-view="overview" class="active">Overview</button>
+      <button data-view="chat">Chat</button>
+      <button data-view="context">Context</button>
+      <button data-view="projects">Projects & Goals</button>
+      <button data-view="workflows">Workflows</button>
+      <button data-view="automation">Automation</button>
+      <button data-view="knowledge">Knowledge</button>
+      <button data-view="audit">Audit</button>
+      <button data-view="discovery">Discovery</button>
+      <button data-view="approvals">Approvals</button>
+    </nav>
+
+    <section>
+      <div id="view-overview">
+        <h2>Overview</h2>
+        <div class="grid" id="stats"></div>
+        <div class="row">
+          <button class="action" onclick="refreshAll()">Refresh</button>
+          <button class="ghost" onclick="runReflect()">Run reflection</button>
+          <button class="ghost" onclick="runDiscovery()">Run discovery</button>
+        </div>
+        <h2 style="margin-top:18px">Modules</h2>
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>Module</th><th>Level</th><th>Message</th></tr></thead>
+            <tbody id="modules-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-chat" class="hidden">
+        <h2>Chat</h2>
+        <div id="chat-log"></div>
+        <div class="row">
+          <input id="chat-input" style="flex:1" placeholder="Message SAGE…" onkeydown="if(event.key==='Enter')sendChat()" />
+          <button class="action" onclick="sendChat()">Send</button>
+        </div>
+        <div class="muted" id="ws-status">WebSocket: connecting…</div>
+      </div>
+
+      <div id="view-context" class="hidden">
+        <h2>Cognitive Context</h2>
+        <p class="muted" id="context-summary">—</p>
+        <div class="row">
+          <button class="action" onclick="loadContext(true)">Refresh suggestions</button>
+        </div>
+        <h2 style="margin-top:16px">Suggestions</h2>
+        <div id="suggestions"></div>
+      </div>
+
+      <div id="view-projects" class="hidden">
+        <h2>Projects</h2>
+        <div class="row">
+          <input id="proj-name" placeholder="Project name" />
+          <input id="proj-desc" placeholder="Description" style="flex:1" />
+          <button class="action" onclick="createProject()">Create</button>
+        </div>
+        <div id="projects-list"></div>
+        <h2 style="margin-top:18px">Goals</h2>
+        <div class="row">
+          <input id="goal-title" placeholder="Goal title" style="flex:1" />
+          <select id="goal-horizon">
+            <option value="daily">daily</option>
+            <option value="medium" selected>medium</option>
+            <option value="long">long</option>
+          </select>
+          <button class="action" onclick="createGoal()">Add goal</button>
+        </div>
+        <div id="goals-list"></div>
+      </div>
+
+      <div id="view-workflows" class="hidden">
+        <h2>Workflows</h2>
+        <div class="row">
+          <select id="wf-select" style="flex:1"></select>
+          <input id="wf-task" placeholder="Task / goal text" style="flex:1" />
+          <button class="action" onclick="runWorkflow()">Run</button>
+        </div>
+        <pre id="wf-result" class="card muted" style="white-space:pre-wrap;font-size:12px"></pre>
+        <table>
+          <thead><tr><th>Name</th><th>Description</th></tr></thead>
+          <tbody id="wf-body"></tbody>
+        </table>
+      </div>
+
+      <div id="view-automation" class="hidden">
+        <h2>Automation jobs</h2>
+        <div id="auto-list"></div>
+      </div>
+
+      <div id="view-knowledge" class="hidden">
+        <h2>Knowledge Graph</h2>
+        <div class="grid" id="kg-stats"></div>
+        <div class="row">
+          <input id="kg-q" placeholder="Search entities…" style="flex:1" />
+          <button class="action" onclick="searchKg()">Search</button>
+        </div>
+        <div id="kg-results"></div>
+      </div>
+
+      <div id="view-audit" class="hidden">
+        <h2>Execution audit</h2>
+        <table>
+          <thead><tr><th>Time</th><th>Kind</th><th>Status</th><th>Summary</th></tr></thead>
+          <tbody id="audit-body"></tbody>
+        </table>
+      </div>
+
+      <div id="view-discovery" class="hidden">
+        <h2>Knowledge Discovery</h2>
+        <div class="row">
+          <button class="action" onclick="runDiscovery()">Discover now</button>
+        </div>
+        <div id="discovery-list"></div>
+      </div>
+
+      <div id="view-approvals" class="hidden">
+        <h2>Pending approvals</h2>
+        <div id="approvals-list"></div>
+      </div>
+    </section>
+
+    <aside>
+      <h2 style="font-size:14px;margin:0 0 10px">Quick ask</h2>
+      <textarea id="quick-ask" placeholder="Ask SAGE…"></textarea>
+      <div class="row">
+        <button class="action" onclick="quickAsk()">Ask</button>
+      </div>
+      <pre id="quick-reply" class="muted" style="white-space:pre-wrap;font-size:12px;max-height:360px;overflow:auto"></pre>
+      <div class="error" id="err"></div>
+    </aside>
+  </main>
+
+  <script>
+    const API = '/api/v1';
+    let ws = null;
+
+    function showError(e) {
+      const el = document.getElementById('err');
+      el.textContent = e ? String(e) : '';
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, {
+        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+        ...opts,
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || res.statusText);
+      }
+      if (res.status === 204) return null;
+      return res.json();
+    }
+
+    function switchView(name) {
+      document.querySelectorAll('nav button').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === name);
+      });
+      document.querySelectorAll('section > div').forEach(d => d.classList.add('hidden'));
+      const el = document.getElementById('view-' + name);
+      if (el) el.classList.remove('hidden');
+      if (name === 'chat') connectWs();
+    }
+
+    document.getElementById('nav').addEventListener('click', (e) => {
+      if (e.target.dataset.view) switchView(e.target.dataset.view);
+    });
+
+    async function loadStatus() {
+      const s = await api('/status');
+      document.getElementById('version-pill').textContent = 'v' + s.version;
+      const pill = document.getElementById('health-pill');
+      pill.textContent = (s.health_level || s.state) + ' · ' + s.state;
+      pill.className = 'pill ' + (s.health_level === 'healthy' ? 'ok' : 'warn');
+
+      const h = await api('/health');
+      const stats = document.getElementById('stats');
+      stats.innerHTML = '';
+      const cards = [
+        ['State', s.state],
+        ['Health', s.health_level || '—'],
+        ['Modules', s.modules.length],
+        ['Env', s.env],
+      ];
+      for (const [label, value] of cards) {
+        stats.innerHTML += `<div class="card"><div class="label">${label}</div><div class="value">${value}</div></div>`;
+      }
+      const body = document.getElementById('modules-body');
+      body.innerHTML = h.modules.map(m =>
+        `<tr><td>${m.name}</td><td>${m.level}</td><td class="muted">${m.message || ''}</td></tr>`
+      ).join('');
+    }
+
+    async function loadContext(refresh = false) {
+      const ctx = await api('/context' + (refresh ? '?refresh=true' : ''));
+      document.getElementById('context-summary').textContent = ctx.summary || '—';
+      const box = document.getElementById('suggestions');
+      const items = ctx.suggestions || [];
+      if (!items.length) {
+        box.innerHTML = '<p class="muted">No open suggestions.</p>';
+        return;
+      }
+      box.innerHTML = items.map(s => `
+        <div class="list-item">
+          <h3>${escapeHtml(s.title)} <span class="muted">(${escapeHtml(s.category)})</span></h3>
+          <p>${escapeHtml(s.body)}</p>
+          <div class="row"><button class="ghost" onclick="dismissSuggestion('${s.id}')">Dismiss</button></div>
+        </div>
+      `).join('');
+    }
+
+    async function dismissSuggestion(id) {
+      await api('/suggestions/' + id + '/dismiss', { method: 'POST', body: '{}' });
+      await loadContext();
+    }
+
+    async function loadProjects() {
+      const [projects, goals] = await Promise.all([api('/projects'), api('/goals')]);
+      document.getElementById('projects-list').innerHTML = projects.map(p =>
+        `<div class="list-item"><h3>${escapeHtml(p.name)}</h3>
+         <p>${escapeHtml(p.description || '')} · ${escapeHtml(p.status)} · p=${p.priority}</p></div>`
+      ).join('') || '<p class="muted">No projects yet.</p>';
+      document.getElementById('goals-list').innerHTML = goals.map(g =>
+        `<div class="list-item"><h3>(${escapeHtml(g.horizon)}) ${escapeHtml(g.title)}</h3>
+         <p>progress ${(100 * (g.progress || 0)).toFixed(0)}%</p></div>`
+      ).join('') || '<p class="muted">No goals yet.</p>';
+    }
+
+    async function createProject() {
+      const name = document.getElementById('proj-name').value.trim();
+      const description = document.getElementById('proj-desc').value.trim();
+      if (!name) return;
+      await api('/projects', {
+        method: 'POST',
+        body: JSON.stringify({ name, description, activate: true, priority: 0.7 }),
+      });
+      document.getElementById('proj-name').value = '';
+      await loadProjects();
+      await loadContext();
+    }
+
+    async function createGoal() {
+      const title = document.getElementById('goal-title').value.trim();
+      const horizon = document.getElementById('goal-horizon').value;
+      if (!title) return;
+      await api('/goals', {
+        method: 'POST',
+        body: JSON.stringify({ title, horizon, priority: 0.6 }),
+      });
+      document.getElementById('goal-title').value = '';
+      await loadProjects();
+      await loadContext(true);
+    }
+
+    async function loadWorkflows() {
+      const wfs = await api('/workflows');
+      const sel = document.getElementById('wf-select');
+      sel.innerHTML = wfs.map(w => `<option value="${escapeHtml(w.name)}">${escapeHtml(w.name)}</option>`).join('');
+      document.getElementById('wf-body').innerHTML = wfs.map(w =>
+        `<tr><td>${escapeHtml(w.name)}</td><td class="muted">${escapeHtml(w.description || '')}</td></tr>`
+      ).join('');
+    }
+
+    async function runWorkflow() {
+      const name = document.getElementById('wf-select').value;
+      const task = document.getElementById('wf-task').value || name;
+      const run = await api('/workflows/run', {
+        method: 'POST',
+        body: JSON.stringify({ name, task }),
+      });
+      document.getElementById('wf-result').textContent = JSON.stringify({
+        id: run.id, status: run.status, error: run.error, result: run.result,
+      }, null, 2);
+      await loadAudit();
+    }
+
+    async function loadAutomation() {
+      const jobs = await api('/automations');
+      document.getElementById('auto-list').innerHTML = jobs.map(j => `
+        <div class="list-item">
+          <h3>${escapeHtml(j.name)}</h3>
+          <p>${escapeHtml(j.trigger_type)} · enabled=${j.enabled} · runs=${j.run_count} · ${escapeHtml(j.last_status || '')}</p>
+          <div class="row">
+            <button class="ghost" onclick="runAuto('${escapeHtml(j.name)}')">Run now</button>
+          </div>
+        </div>
+      `).join('') || '<p class="muted">No jobs.</p>';
+    }
+
+    async function runAuto(name) {
+      const r = await api('/automations/run', {
+        method: 'POST',
+        body: JSON.stringify({ name, context: { task: name } }),
+      });
+      alert(JSON.stringify(r, null, 2));
+      await loadAutomation();
+      await loadAudit();
+    }
+
+    async function loadKg() {
+      const s = await api('/knowledge/stats');
+      const el = document.getElementById('kg-stats');
+      el.innerHTML = `
+        <div class="card"><div class="label">Entities</div><div class="value">${s.entities || 0}</div></div>
+        <div class="card"><div class="label">Edges</div><div class="value">${s.edges || 0}</div></div>
+      `;
+    }
+
+    async function searchKg() {
+      const q = document.getElementById('kg-q').value.trim();
+      if (!q) return;
+      const rows = await api('/knowledge/search?q=' + encodeURIComponent(q));
+      document.getElementById('kg-results').innerHTML = rows.map(e =>
+        `<div class="list-item"><h3>${escapeHtml(e.name)}</h3>
+         <p>${escapeHtml(e.entity_type)} · conf=${e.confidence}</p></div>`
+      ).join('') || '<p class="muted">No matches.</p>';
+    }
+
+    async function loadAudit() {
+      const rows = await api('/audit?limit=40');
+      document.getElementById('audit-body').innerHTML = rows.map(r =>
+        `<tr><td>${escapeHtml((r.created_at || '').slice(11,19))}</td>
+         <td>${escapeHtml(r.kind)}</td><td>${escapeHtml(r.status)}</td>
+         <td class="muted">${escapeHtml(r.summary || '')}</td></tr>`
+      ).join('');
+    }
+
+    async function loadApprovals() {
+      const rows = await api('/approvals/pending');
+      document.getElementById('approvals-list').innerHTML = rows.map(r => `
+        <div class="list-item">
+          <h3>${escapeHtml(r.resource_type)} / ${escapeHtml(r.resource_id)}</h3>
+          <p>${escapeHtml(r.action)} · ${escapeHtml(r.id)}</p>
+          <div class="row">
+            <button class="action" onclick="decideApproval('${r.id}', true)">Approve</button>
+            <button class="ghost" onclick="decideApproval('${r.id}', false)">Deny</button>
+          </div>
+        </div>
+      `).join('') || '<p class="muted">No pending approvals.</p>';
+    }
+
+    async function decideApproval(id, approve) {
+      await api('/approvals/' + id, {
+        method: 'POST',
+        body: JSON.stringify({ approve, decided_by: 'dashboard' }),
+      });
+      await loadApprovals();
+    }
+
+    async function runDiscovery() {
+      const rows = await api('/discovery/run', { method: 'POST' });
+      document.getElementById('discovery-list').innerHTML = rows.map(i => `
+        <div class="list-item">
+          <h3>${escapeHtml(i.kind)} · ${escapeHtml(i.title)}</h3>
+          <p>${escapeHtml(i.body)}</p>
+        </div>
+      `).join('') || '<p class="muted">No insights.</p>';
+      await loadContext(true);
+    }
+
+    async function loadDiscovery() {
+      const rows = await api('/discovery?limit=20');
+      document.getElementById('discovery-list').innerHTML = rows.map(i => `
+        <div class="list-item">
+          <h3>${escapeHtml(i.kind)} · ${escapeHtml(i.title)}</h3>
+          <p>${escapeHtml(i.body)}</p>
+        </div>
+      `).join('') || '<p class="muted">No insights yet. Click Discover now.</p>';
+    }
+
+    async function runReflect() {
+      const r = await api('/reflect', { method: 'POST' });
+      alert((r.findings || []).join('\n') + '\n\n' + (r.recommendations || []).join('\n'));
+    }
+
+    async function quickAsk() {
+      const message = document.getElementById('quick-ask').value.trim();
+      if (!message) return;
+      const r = await api('/ask', { method: 'POST', body: JSON.stringify({ message }) });
+      document.getElementById('quick-reply').textContent = r.reply;
+    }
+
+    function connectWs() {
+      if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${proto}://${location.host}${API}/ws/chat`);
+      const st = document.getElementById('ws-status');
+      ws.onopen = () => { st.textContent = 'WebSocket: connected'; };
+      ws.onclose = () => { st.textContent = 'WebSocket: closed'; };
+      ws.onerror = () => { st.textContent = 'WebSocket: error'; };
+      ws.onmessage = (ev) => {
+        const data = JSON.parse(ev.data);
+        if (data.type === 'reply') {
+          addBubble('user', data.user);
+          addBubble('bot', data.assistant);
+        } else if (data.type === 'error') {
+          addBubble('bot', 'Error: ' + data.error);
+        }
+      };
+    }
+
+    function addBubble(who, text) {
+      const log = document.getElementById('chat-log');
+      const div = document.createElement('div');
+      div.className = 'bubble ' + (who === 'user' ? 'user' : 'bot');
+      div.textContent = text;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function sendChat() {
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg || !ws || ws.readyState !== 1) return;
+      ws.send(JSON.stringify({ message: msg }));
+      input.value = '';
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      })[c]);
+    }
+
+    async function refreshAll() {
+      showError('');
+      try {
+        await Promise.all([
+          loadStatus(),
+          loadContext(),
+          loadProjects(),
+          loadWorkflows(),
+          loadAutomation(),
+          loadKg(),
+          loadAudit(),
+          loadApprovals(),
+          loadDiscovery(),
+        ]);
+      } catch (e) {
+        showError(e);
+      }
+    }
+
+    refreshAll();
+    setInterval(loadStatus, 15000);
+  </script>
+</body>
+</html>

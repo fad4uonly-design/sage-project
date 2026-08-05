@@ -1,10 +1,11 @@
 """
-API Layer (Phase 4).
+SAGE API Layer (v0.6.0) — versioned REST + WebSocket surface.
 
-HTTP/WebSocket surface will live here. Placeholder keeps the package importable
-and documents the future boundary.
+Public stability target for the v1.0 API freeze. Additive endpoints only
+after freeze without major version bump.
 """
 
-from __future__ import annotations
+from sage.api.app import create_app
+from sage.api.service import APIModule
 
-__all__: list[str] = []
+__all__ = ["APIModule", "create_app"]

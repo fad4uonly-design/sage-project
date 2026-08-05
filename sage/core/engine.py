@@ -109,6 +109,7 @@ class SageEngine:
           → orchestrator → conversation
         """
         from sage.agents.service import AgentModule
+        from sage.api.service import APIModule
         from sage.approval.service import ApprovalModule
         from sage.audit.service import AuditModule
         from sage.automation.service import AutomationModule
@@ -118,6 +119,7 @@ class SageEngine:
         from sage.conversation.service import ConversationModule
         from sage.db.service import DatabaseModule
         from sage.decision.service import DecisionModule
+        from sage.discovery.service import DiscoveryModule
         from sage.files.service import FileModule
         from sage.goals.service import GoalsModule
         from sage.knowledge.service import KnowledgeModule
@@ -139,13 +141,13 @@ class SageEngine:
         from sage.workflow.service import WorkflowModule
 
         b = self.bootstrapper
-        # Foundation
+        # Foundation (FROZEN v1)
         b.register_module("database", lambda c: DatabaseModule(c), critical=True)
         b.register_module("secrets", lambda c: SecretsModule(c), critical=False)
         b.register_module("permissions", lambda c: PermissionsModule(c), critical=True)
         b.register_module("config", lambda c: ConfigModule(c), critical=True)
         b.register_module("memory", lambda c: MemoryModule(c), critical=True)
-        # Intelligence layer
+        # Intelligence layer (FROZEN v1)
         b.register_module("knowledge", lambda c: KnowledgeModule(c), critical=False)
         b.register_module("models", lambda c: ModelsModule(c), critical=False)
         b.register_module("retrieval", lambda c: RetrievalModule(c), critical=False)
@@ -153,26 +155,29 @@ class SageEngine:
         b.register_module("learning", lambda c: LearningModule(c), critical=False)
         b.register_module("planning", lambda c: PlanningModule(c), critical=False)
         b.register_module("decision", lambda c: DecisionModule(c), critical=False)
-        # Automation control plane
+        # Automation control plane (FROZEN v1)
         b.register_module("audit", lambda c: AuditModule(c), critical=False)
         b.register_module("approval", lambda c: ApprovalModule(c), critical=False)
         b.register_module("tools", lambda c: ToolsModule(c), critical=False)
         b.register_module("skills", lambda c: SkillsModule(c), critical=False)
         b.register_module("workflow", lambda c: WorkflowModule(c), critical=False)
         b.register_module("capabilities", lambda c: CapabilitiesModule(c), critical=False)
-        # Domain intelligence
+        # Domain intelligence (FROZEN v1)
         b.register_module("agents", lambda c: AgentModule(c), critical=False)
         b.register_module("automation", lambda c: AutomationModule(c), critical=False)
-        # Cognitive context (after projects/goals dependencies exist via DB)
+        # Cognitive context (FROZEN v1)
         b.register_module("projects", lambda c: ProjectsModule(c), critical=False)
         b.register_module("goals", lambda c: GoalsModule(c), critical=False)
         b.register_module("context", lambda c: ContextModule(c), critical=False)
         b.register_module("reflection", lambda c: ReflectionModule(c), critical=False)
+        # Additive: discovery + UX API
+        b.register_module("discovery", lambda c: DiscoveryModule(c), critical=False)
         b.register_module("plugins", lambda c: PluginModule(c), critical=False)
         b.register_module("files", lambda c: FileModule(c), critical=False)
         b.register_module("orchestrator", lambda c: OrchestratorModule(c), critical=True)
         b.register_module("monitor", lambda c: MonitorModule(c), critical=False)
         b.register_module("conversation", lambda c: ConversationModule(c), critical=True)
+        b.register_module("api", lambda c: APIModule(c), critical=False)
 
     async def _register_system_jobs(self) -> None:
         """Built-in maintenance jobs on the real scheduler."""

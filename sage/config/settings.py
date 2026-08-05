@@ -59,7 +59,7 @@ class SchedulerSettings(BaseModel):
 
 class ApiSettings(BaseModel):
     enabled: bool = False
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"
     port: int = 8742
 
 

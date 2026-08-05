@@ -69,6 +69,44 @@ def start(
     _run(_go())
 
 
+@app.command("serve")
+def serve_cmd(
+    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    host: str = typer.Option("0.0.0.0", "--host"),
+    port: int = typer.Option(8742, "--port"),
+    log_level: Optional[str] = typer.Option(None, "--log-level"),
+) -> None:
+    """Boot SAGE with the Web Dashboard + REST/WebSocket API."""
+
+    async def _go() -> None:
+        import asyncio
+
+        from sage.core.engine import SageEngine
+
+        overrides: dict[str, Any] = {
+            "api": {"enabled": True, "host": host, "port": port},
+        }
+        if data_dir is not None:
+            overrides["data_dir"] = str(data_dir)
+            overrides["db_path"] = str(Path(data_dir) / "sage.db")
+        if log_level is not None:
+            overrides["logging"] = {"level": log_level}
+
+        engine = await SageEngine.create(overrides=overrides)
+        console.print(
+            f"[green]SAGE API + Dashboard[/green]  http://{host}:{port}/  ·  /api/v1/status"
+        )
+        try:
+            while engine.state.value in {"running", "degraded"}:
+                await asyncio.sleep(1)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            pass
+        finally:
+            await engine.shutdown()
+
+    _run(_go())
+
+
 @app.command()
 def status(
     data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
@@ -467,6 +505,32 @@ def reflect_cmd(
             re_ = engine.container.resolve(ReflectionEngine)  # type: ignore[type-abstract]
             reflection = await re_.reflect()
             console.print(reflection.format())
+        finally:
+            await engine.shutdown()
+
+    _run(_go())
+
+
+@app.command("discover")
+def discover_cmd(
+    limit: int = typer.Option(15, "--limit"),
+    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+) -> None:
+    """Run Knowledge Discovery and print insights (advisory only)."""
+
+    async def _go() -> None:
+        from sage.core.engine import SageEngine
+        from sage.discovery.engine import DiscoveryEngine
+
+        engine = await SageEngine.create(overrides=_overrides(data_dir))
+        try:
+            disc = engine.container.resolve(DiscoveryEngine)  # type: ignore[type-abstract]
+            insights = await disc.discover(limit=limit)
+            if not insights:
+                console.print("[dim]No insights.[/dim]")
+            for ins in insights:
+                console.print(ins.format())
+                console.print("")
         finally:
             await engine.shutdown()
 
