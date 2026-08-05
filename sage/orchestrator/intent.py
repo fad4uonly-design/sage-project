@@ -32,7 +32,7 @@ _PATTERNS: list[tuple[IntentKind, re.Pattern[str], float]] = [
     (
         IntentKind.PLAN,
         re.compile(
-            r"^\s*(plan|create a plan|make a plan|help me plan|schedule)\b(.*)$",
+            r"^\s*(plan|create a plan|make a plan|help me plan)\b(.*)$",
             re.I | re.S,
         ),
         0.9,
@@ -75,30 +75,36 @@ class IntentAnalyzer:
         if not text:
             return Intent(kind=IntentKind.UNKNOWN, confidence=0.0, raw_message=message)
 
+        # 1) Absolute-priority intents (never/recall/status) always win
         for kind, pattern, conf in _PATTERNS:
+            if kind not in {
+                IntentKind.STATUS,
+                IntentKind.REMEMBER,
+                IntentKind.RECALL,
+            }:
+                continue
             m = pattern.match(text)
             if not m:
                 continue
-            groups = m.groups()
-            subject = ""
-            if kind == IntentKind.REMEMBER and len(groups) >= 2:
-                subject = (groups[-1] or "").strip()
-            elif kind in {
+            return self._intent_from_match(kind, conf, m, text)
+
+        # 2) Domain specialists beat generic plan/reason when keywords are clear
+        domain_intent = self._domain_agent_intent(text)
+        if domain_intent is not None and domain_intent.confidence >= 0.7:
+            return domain_intent
+
+        # 3) Remaining structured patterns
+        for kind, pattern, conf in _PATTERNS:
+            if kind in {
+                IntentKind.STATUS,
+                IntentKind.REMEMBER,
                 IntentKind.RECALL,
-                IntentKind.PLAN,
-                IntentKind.REASON,
-                IntentKind.RESEARCH,
-                IntentKind.DOCUMENT,
-                IntentKind.LEARN,
             }:
-                subject = (groups[-1] or "").strip()
-            return Intent(
-                kind=kind,
-                confidence=conf,
-                subject=subject or text,
-                raw_message=text,
-                hints=self._hints(kind, text),
-            )
+                continue
+            m = pattern.match(text)
+            if not m:
+                continue
+            return self._intent_from_match(kind, conf, m, text)
 
         # Soft keyword signals for agent routing
         lower = text.lower()
@@ -110,6 +116,48 @@ class IntentAnalyzer:
                 raw_message=text,
                 hints=["keyword:research"],
             )
+        soft = self._domain_agent_intent(text)
+        if soft is not None:
+            return soft
+
+        return Intent(
+            kind=IntentKind.CHAT,
+            confidence=0.5,
+            subject=text,
+            raw_message=text,
+            hints=self._hints(IntentKind.CHAT, text),
+        )
+
+    def _intent_from_match(
+        self,
+        kind: IntentKind,
+        conf: float,
+        m: re.Match[str],
+        text: str,
+    ) -> Intent:
+        groups = m.groups()
+        subject = ""
+        if kind == IntentKind.REMEMBER and len(groups) >= 2:
+            subject = (groups[-1] or "").strip()
+        elif kind in {
+            IntentKind.RECALL,
+            IntentKind.PLAN,
+            IntentKind.REASON,
+            IntentKind.RESEARCH,
+            IntentKind.DOCUMENT,
+            IntentKind.LEARN,
+        }:
+            subject = (groups[-1] or "").strip()
+        return Intent(
+            kind=kind,
+            confidence=conf,
+            subject=subject or text,
+            raw_message=text,
+            hints=self._hints(kind, text),
+        )
+
+    def _domain_agent_intent(self, text: str) -> Intent | None:
+        lower = text.lower()
         if any(
             k in lower
             for k in (
@@ -123,11 +171,13 @@ class IntentAnalyzer:
                 "greenhouse",
                 "soil",
                 "pest",
+                "tomato",
+                "planting",
             )
         ):
             return Intent(
                 kind=IntentKind.AGENT,
-                confidence=0.72,
+                confidence=0.78,
                 subject=text,
                 raw_message=text,
                 entities={"domain": "agriculture"},
@@ -150,7 +200,7 @@ class IntentAnalyzer:
         ):
             return Intent(
                 kind=IntentKind.AGENT,
-                confidence=0.72,
+                confidence=0.75,
                 subject=text,
                 raw_message=text,
                 entities={"domain": "finance"},
@@ -158,11 +208,19 @@ class IntentAnalyzer:
             )
         if any(
             k in lower
-            for k in ("swot", "business plan", "go-to-market", "gtm", "kpi", "pricing strategy", "competitor")
+            for k in (
+                "swot",
+                "business plan",
+                "go-to-market",
+                "gtm",
+                "kpi",
+                "pricing strategy",
+                "competitor",
+            )
         ):
             return Intent(
                 kind=IntentKind.AGENT,
-                confidence=0.7,
+                confidence=0.72,
                 subject=text,
                 raw_message=text,
                 entities={"domain": "business"},
@@ -183,20 +241,13 @@ class IntentAnalyzer:
         ):
             return Intent(
                 kind=IntentKind.AGENT,
-                confidence=0.7,
+                confidence=0.72,
                 subject=text,
                 raw_message=text,
                 entities={"domain": "programming"},
                 hints=["domain:programming"],
             )
-
-        return Intent(
-            kind=IntentKind.CHAT,
-            confidence=0.5,
-            subject=text,
-            raw_message=text,
-            hints=self._hints(IntentKind.CHAT, text),
-        )
+        return None
 
     def _hints(self, kind: IntentKind, text: str) -> list[str]:
         hints = [f"intent:{kind.value}"]

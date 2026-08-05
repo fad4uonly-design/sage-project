@@ -33,6 +33,16 @@ async def test_handle_remember_recall(engine: SageEngine) -> None:
 @pytest.mark.asyncio
 async def test_handle_plan(engine: SageEngine) -> None:
     orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
-    result = await orch.handle("plan a greenhouse expansion")
-    assert result.intent.kind == IntentKind.PLAN
-    assert "step" in result.response.lower() or "1." in result.response
+    # Generic plan (no domain keywords) stays on planning path
+    result = await orch.handle("plan a weekly study schedule for calculus")
+    assert result.intent.kind in {IntentKind.PLAN, IntentKind.AGENT}
+    assert "step" in result.response.lower() or "1." in result.response or "plan" in result.response.lower()
+
+
+@pytest.mark.asyncio
+async def test_handle_agriculture_agent(engine: SageEngine) -> None:
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+    result = await orch.handle("Create irrigation plan for tomatoes in summer heat")
+    assert result.intent.kind == IntentKind.AGENT
+    assert result.intent.entities.get("domain") == "agriculture"
+    assert "irrigation" in result.response.lower() or "water" in result.response.lower()

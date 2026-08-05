@@ -131,12 +131,13 @@ class AgricultureAgent(DomainAgent):
         if not kg:
             return
         crops = re.findall(
-            r"\b(tomato|tomatoes|basil|wheat|corn|rice|lettuce|pepper|cucumber|onion)\b",
+            r"\b(tomatoes|tomato|basil|wheat|corn|rice|lettuce|peppers|pepper|"
+            r"cucumbers|cucumber|onions|onion)\b",
             task.description,
             flags=re.I,
         )
         for crop in crops[:3]:
-            name = crop.rstrip("s").title() if crop.lower().endswith("s") else crop.title()
+            name = (_extract_crop(crop) or crop).title()
             try:
                 await kg.extract_and_merge(
                     f"{name} is a crop. {name} requires water. {name} requires soil.",
