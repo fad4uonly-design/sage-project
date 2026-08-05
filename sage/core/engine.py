@@ -127,6 +127,7 @@ class SageEngine:
         from sage.reasoning.service import ReasoningModule
         from sage.retrieval.service import RetrievalModule
         from sage.secrets.service import SecretsModule
+        from sage.skills.service import SkillsModule
         from sage.tools.service import ToolsModule
 
         b = self.bootstrapper
@@ -145,6 +146,8 @@ class SageEngine:
         b.register_module("planning", lambda c: PlanningModule(c), critical=False)
         b.register_module("decision", lambda c: DecisionModule(c), critical=False)
         b.register_module("tools", lambda c: ToolsModule(c), critical=False)
+        # Shared Skill Library (before agents so they can orchestrate skills)
+        b.register_module("skills", lambda c: SkillsModule(c), critical=False)
         b.register_module("capabilities", lambda c: CapabilitiesModule(c), critical=False)
         # Domain intelligence
         b.register_module("agents", lambda c: AgentModule(c), critical=False)

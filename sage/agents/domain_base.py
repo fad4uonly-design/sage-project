@@ -104,7 +104,33 @@ class DomainAgent:
                     error=result.error,
                 )
 
-            # No strong workflow — reason + plan + respond
+            # Prefer shared Skill Library when no domain workflow matches strongly
+            skill_result = await self.use_best_skill(
+                task.description, context=ctx, min_score=0.4
+            )
+            if skill_result is not None and skill_result.success:
+                text = (
+                    f"### {self.profile.display_name}\n\n"
+                    f"**via Skill Library**\n\n"
+                    f"{skill_result.format()}"
+                )
+                collab = await self.maybe_collaborate(task, ctx, None)
+                if collab:
+                    text = text + "\n\n" + collab
+                return AgentResult(
+                    task_id=task.id,
+                    agent_id=self.id,
+                    success=True,
+                    output=text,
+                    data={
+                        "domain": self.domain,
+                        "mode": "skill",
+                        "skill_id": skill_result.skill_id,
+                        **skill_result.data,
+                    },
+                )
+
+            # Fallback — reason + plan + respond
             text = await self.default_execute(task, ctx)
             collab = await self.maybe_collaborate(task, ctx, None)
             if collab:
@@ -173,8 +199,83 @@ class DomainAgent:
             ctx["documents"] = result.documents
             ctx["retrieval_confidence"] = result.overall_confidence
 
+        # Skill library hooks (agents orchestrate shared skills)
+        from sage.skills.interfaces import SkillLibrary
+
+        skills = self._container.try_resolve(SkillLibrary)  # type: ignore[type-abstract]
+        if skills:
+            ctx["skills"] = skills
+            # Bound helpers so skills can call planner / decision without importing agents
+            async def _plan_fn(goal: str) -> str:
+                return await self.plan(goal, ctx)
+
+            async def _decide_fn(req: Any) -> Any:
+                return await self.decide(req)
+
+            ctx["_plan_fn"] = _plan_fn
+            ctx["_decide_fn"] = _decide_fn
+
         await self.enrich_domain_context(task, ctx)
         return ctx
+
+    async def use_skill(
+        self,
+        skill_id: str,
+        *,
+        task: str = "",
+        params: dict[str, Any] | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> Any:
+        """Invoke a shared skill by id."""
+        from sage.skills.interfaces import SkillLibrary
+
+        lib = self._container.try_resolve(SkillLibrary)  # type: ignore[type-abstract]
+        if not lib:
+            return None
+        ctx = dict(context or {})
+        ctx.setdefault("domain", self.domain)
+        return await lib.invoke(
+            skill_id,
+            task=task,
+            params=params,
+            context=ctx,
+            principal=self.profile.principal,
+        )
+
+    async def use_best_skill(
+        self,
+        task: str,
+        *,
+        context: dict[str, Any] | None = None,
+        min_score: float = 0.35,
+    ) -> Any:
+        """Match and run the best shared skill for a task string."""
+        from sage.skills.interfaces import SkillLibrary
+
+        lib = self._container.try_resolve(SkillLibrary)  # type: ignore[type-abstract]
+        if not lib:
+            return None
+        ctx = dict(context or {})
+        ctx.setdefault("domain", self.domain)
+        if "_plan_fn" not in ctx:
+
+            async def _plan_fn(goal: str) -> str:
+                return await self.plan(goal, ctx)
+
+            ctx["_plan_fn"] = _plan_fn
+        if "_decide_fn" not in ctx:
+
+            async def _decide_fn(req: Any) -> Any:
+                return await self.decide(req)
+
+            ctx["_decide_fn"] = _decide_fn
+        return await lib.invoke_best(
+            task,
+            domain=self.domain,
+            context=ctx,
+            principal=self.profile.principal,
+            min_score=min_score,
+        )
 
     async def enrich_domain_context(self, task: AgentTask, ctx: dict[str, Any]) -> None:
         """Subclass hook for domain-specific context."""
