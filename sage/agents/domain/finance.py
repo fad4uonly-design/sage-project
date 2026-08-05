@@ -47,6 +47,19 @@ class FinanceAgent(DomainAgent):
         confidence_threshold=0.3,
     )
 
+    async def default_execute(self, task: Any, ctx: dict[str, Any]) -> str:
+        # When pulled in for cost collaboration, prefer expense forecast
+        desc = task.description.lower()
+        if any(w in desc for w in ("cost", "expense", "estimate the cost", "how much")):
+            result = await self.workflows.run(
+                "wf_finance_expense_forecast",
+                ctx,
+                params={"task": task.description},
+            )
+            if result.success and result.output:
+                return await self.generate_response(task, ctx, workflow_result=result)
+        return await super().default_execute(task, ctx)
+
     def register_workflows(self) -> None:
         self.workflows.register(
             Workflow(
