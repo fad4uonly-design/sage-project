@@ -13,8 +13,9 @@ from sage.core.engine import SageEngine
 async def test_agents_include_domains(engine: SageEngine) -> None:
     orch = engine.container.resolve(AgentOrchestrator)  # type: ignore[type-abstract]
     domains = {a["domain"] for a in orch.list_agents()}
-    for d in ("agriculture", "finance", "business", "programming", "general", "planning"):
+    for d in ("agriculture", "finance", "business", "programming", "general", "planning", "marketing"):
         assert d in domains
+
 
 
 @pytest.mark.asyncio

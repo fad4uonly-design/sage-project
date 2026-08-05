@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from sage.knowledge.graph.business_seed import BUSINESS_SEED_TYPES
 from sage.knowledge.graph.models import Entity, EntityType, RelationType, canonicalize
 from sage.utils.ids import new_id
 
@@ -36,7 +37,7 @@ _SEED_TYPES: dict[str, EntityType] = {
     "farm": EntityType.PLACE,
     "field": EntityType.PLACE,
     "budget": EntityType.METRIC,
-    "revenue": EntityType.METRIC,
+    "revenue": EntityType.REVENUE,
     "profit": EntityType.METRIC,
     "invoice": EntityType.CONCEPT,
     "python": EntityType.TOOL,
@@ -45,6 +46,7 @@ _SEED_TYPES: dict[str, EntityType] = {
     "sage": EntityType.CONCEPT,
     "memory": EntityType.CONCEPT,
     "orchestrator": EntityType.CONCEPT,
+    **BUSINESS_SEED_TYPES,
 }
 
 # Pattern → (relation, subject_group, object_group)  — groups are 1-indexed
@@ -157,6 +159,97 @@ _RELATION_PATTERNS: list[tuple[re.Pattern[str], str, int, int]] = [
         1,
         2,
     ),
+    # Business patterns (v0.3.1)
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+sells?\s+to\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.SELLS_TO.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+buys?\s+from\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.BUYS_FROM.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+employs?\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.EMPLOYS.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+competes?\s+with\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.COMPETES_WITH.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+targets?\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.TARGETS.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+generates?\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.GENERATES.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+incurs?\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.INCURS.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+measures?\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.MEASURES.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+(?:is\s+)?owned by\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.OWNED_BY.value,
+        1,
+        2,
+    ),
+    (
+        re.compile(
+            r"\b([A-Za-z][\w\s\-]{1,40}?)\s+manages?\s+([A-Za-z][\w\s\-]{1,40})\b",
+            re.I,
+        ),
+        RelationType.MANAGES.value,
+        1,
+        2,
+    ),
 ]
 
 _CAPITALIZED = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})\b")
@@ -266,9 +359,11 @@ class TextExtractor:
                     continue
                 self._ensure_entity(result, subj, source=source)
                 self._ensure_entity(result, obj, source=source)
-                result.triples.append(
-                    (canonicalize(subj), relation, canonicalize(obj), 0.75)
-                )
+                src_c, tgt_c = canonicalize(subj), canonicalize(obj)
+                if src_c == tgt_c:
+                    continue  # skip tautological self-edges
+                result.triples.append((src_c, relation, tgt_c, 0.75))
+
 
         # 2) Seed lexicon hits
         lower = text.lower()

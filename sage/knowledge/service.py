@@ -319,7 +319,7 @@ class SQLiteKnowledgeManager(BaseRepository):
 
 class KnowledgeModule(BaseModule):
     name = "knowledge"
-    version = "0.2.0"
+    version = "0.3.1"
     is_critical = False
 
     def __init__(self, container: Container) -> None:
@@ -343,6 +343,8 @@ class KnowledgeModule(BaseModule):
 
     async def _seed_core_ontology(self) -> None:
         assert self._graph is not None
+        from sage.knowledge.graph.business_seed import BUSINESS_SEED_ONTOLOGY
+
         seed_text = """
         Tomato is a crop. Tomato requires water. Tomato requires soil.
         Tomato grows in warm climate. Tomato is affected by blight.
@@ -353,6 +355,11 @@ class KnowledgeModule(BaseModule):
         """
         try:
             await self._graph.extract_and_merge(seed_text, source="seed_ontology", source_ref="boot")
+            await self._graph.extract_and_merge(
+                BUSINESS_SEED_ONTOLOGY,
+                source="business_seed_ontology",
+                source_ref="boot_v031",
+            )
         except Exception:
             log.exception("knowledge.seed_failed")
 

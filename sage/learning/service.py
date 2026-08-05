@@ -231,6 +231,12 @@ class DefaultLearningEngine(BaseRepository):
             ("agriculture", ("crop", "farm", "soil", "irrigation", "harvest")),
             ("finance", ("budget", "invoice", "revenue", "profit")),
             ("programming", ("code", "function", "bug", "api", "python")),
+            ("marketing", ("campaign", "branding", "segmentation", "positioning")),
+            ("sales", ("pipeline", "quota", "forecast", "leads")),
+            ("operations", ("inventory", "procurement", "logistics", "process")),
+            ("accounting", ("ledger", "journal", "ratio", "balance sheet")),
+            ("strategy", ("swot", "competitive", "strategic", "positioning")),
+            ("analytics", ("kpi", "dashboard", "metrics", "trend")),
         ):
             if sum(1 for k in kws if k in lower) >= 2:
                 await self._upsert_pattern(
@@ -239,6 +245,23 @@ class DefaultLearningEngine(BaseRepository):
                     f"Recurring interest in {domain}",
                     example=content[:200],
                     confidence_delta=0.03,
+                )
+        # Business workflow usage signals
+        for wf_kw in (
+            "business plan",
+            "marketing plan",
+            "sales forecast",
+            "break-even",
+            "kpi dashboard",
+            "feasibility",
+        ):
+            if wf_kw in lower:
+                await self._upsert_pattern(
+                    "workflow_usage",
+                    wf_kw.replace(" ", "_"),
+                    f"User engaged workflow theme: {wf_kw}",
+                    example=content[:200],
+                    confidence_delta=0.04,
                 )
 
     async def _suggest_graph_links(self, content: str) -> None:

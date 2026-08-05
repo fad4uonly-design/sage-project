@@ -90,12 +90,13 @@ pytest
 | **0.1.0** | Architecture, interfaces, modular boot | ✅ |
 | **0.1.1** | Core foundation complete — Orchestrator, Permissions, Secrets, Monitor, cognitive Memory | ✅ |
 | **0.2.0** | Intelligence layer — Knowledge Graph, strategies, retrieval, learning, explainability, capabilities | ✅ |
-| **0.3.0** | Domain intelligence — Agriculture, Finance, Business, Programming + Decision Engine + workflows | ✅ Current |
+| **0.3.0** | Domain intelligence — Agriculture, Finance, Business, Programming + Decision Engine + workflows | ✅ |
+| **0.3.1** | Business Intelligence Suite — 12 advisors, BI KG, 40+ workflows | ✅ Current |
 | **0.4.0** | Automation — advanced tools, autonomous multi-step workflows, plugin marketplace | Next |
 | **0.5.0** | UX — Web dashboard, desktop, REST API, voice | Planned |
 | **1.0.0** | Production — hardening, backup/recovery, stable APIs | Planned |
 
-See [docs/architecture/OVERVIEW.md](docs/architecture/OVERVIEW.md), [FOUNDATION_v0.1.1.md](docs/architecture/FOUNDATION_v0.1.1.md), [INTELLIGENCE_v0.2.0.md](docs/architecture/INTELLIGENCE_v0.2.0.md), and [DOMAIN_v0.3.0.md](docs/architecture/DOMAIN_v0.3.0.md).
+See [docs/architecture/](docs/architecture/) — especially [BUSINESS_INTELLIGENCE_v0.3.1.md](docs/architecture/BUSINESS_INTELLIGENCE_v0.3.1.md) and [MIGRATION_v0.3.1.md](docs/architecture/MIGRATION_v0.3.1.md).
 
 ---
 

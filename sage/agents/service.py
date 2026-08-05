@@ -1,4 +1,4 @@
-"""Agent module — core + domain specialists."""
+"""Agent module — core + domain specialists + Business Intelligence Suite."""
 
 from __future__ import annotations
 
@@ -10,9 +10,9 @@ from sage.agents.builtin import (
 )
 from sage.agents.domain import (
     AgricultureAgent,
-    BusinessAgent,
     FinanceAgent,
     ProgrammingAgent,
+    create_business_advisors,
 )
 from sage.agents.interfaces import AgentOrchestrator
 from sage.agents.orchestrator import DefaultAgentOrchestrator
@@ -22,11 +22,14 @@ from sage.core.container import Container
 from sage.core.health import HealthStatus
 from sage.core.module import BaseModule
 from sage.events.bus import EventBus
+from sage.logging import get_logger
+
+log = get_logger(__name__)
 
 
 class AgentModule(BaseModule):
     name = "agents"
-    version = "0.3.0"
+    version = "0.3.1"
     is_critical = False
 
     def __init__(self, container: Container) -> None:
@@ -38,7 +41,6 @@ class AgentModule(BaseModule):
         events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
         self._orch = DefaultAgentOrchestrator(events, container=self.container)
 
-        # Shared workflow library view (union of domain libraries after agent init)
         shared_lib = WorkflowLibrary()
         self.container.register_instance(WorkflowLibrary, shared_lib)
 
@@ -52,12 +54,14 @@ class AgentModule(BaseModule):
             domain_agents = [
                 AgricultureAgent(self.container),
                 FinanceAgent(self.container),
-                BusinessAgent(self.container),
                 ProgrammingAgent(self.container),
             ]
-            for agent in (*core_agents, *domain_agents):
+            # Business Intelligence Suite (12 advisors) — replaces single BusinessAgent
+            bi_advisors = create_business_advisors(self.container)
+            log.info("agents.bi_suite_loaded", count=len(bi_advisors))
+
+            for agent in (*core_agents, *domain_agents, *bi_advisors):
                 self._orch.register(agent)
-                # Merge domain workflows into shared library
                 if hasattr(agent, "workflows"):
                     for wf in agent.workflows.list_workflows():
                         shared_lib.register(wf)
@@ -70,9 +74,25 @@ class AgentModule(BaseModule):
             return HealthStatus.unhealthy(self.name, "not initialized")
         agents = self._orch.list_agents()
         domains = sorted({a["domain"] for a in agents})
+        bi_domains = {
+            "business",
+            "marketing",
+            "sales",
+            "operations",
+            "financial_planning",
+            "accounting",
+            "hr",
+            "project_management",
+            "market_research",
+            "analytics",
+            "risk_compliance",
+            "strategy",
+        }
+        bi_count = sum(1 for d in domains if d in bi_domains)
         return HealthStatus.healthy(
             self.name,
             "ok",
             agents=len(agents),
             domains=domains,
+            bi_advisors=bi_count,
         )

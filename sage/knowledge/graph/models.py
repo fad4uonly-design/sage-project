@@ -12,6 +12,7 @@ from sage.utils.time import utcnow_iso
 
 
 class EntityType(str, Enum):
+    # Core / general
     CONCEPT = "concept"
     PERSON = "person"
     PLACE = "place"
@@ -26,6 +27,25 @@ class EntityType(str, Enum):
     CONDITION = "condition"
     RESOURCE = "resource"
     UNKNOWN = "unknown"
+    # Business Intelligence (v0.3.1)
+    COMPANY = "company"
+    CUSTOMER = "customer"
+    SUPPLIER = "supplier"
+    SERVICE = "service"
+    EMPLOYEE = "employee"
+    DEPARTMENT = "department"
+    MARKET = "market"
+    COMPETITOR = "competitor"
+    CAMPAIGN = "campaign"
+    REVENUE = "revenue"
+    EXPENSE = "expense"
+    ASSET = "asset"
+    LIABILITY = "liability"
+    KPI = "kpi"
+    PROJECT = "project"
+    GOAL = "goal"
+    RISK = "risk"
+    OPPORTUNITY = "opportunity"
 
 
 class RelationType(str, Enum):
@@ -50,14 +70,29 @@ class RelationType(str, Enum):
     MENTIONS = "mentions"
     DERIVED_FROM = "derived_from"
     CUSTOM = "custom"
+    # Business relations (v0.3.1)
+    SELLS_TO = "sells_to"
+    BUYS_FROM = "buys_from"
+    EMPLOYS = "employs"
+    REPORTS_TO = "reports_to"
+    COMPETES_WITH = "competes_with"
+    TARGETS = "targets"
+    MEASURES = "measures"
+    FUNDS = "funds"
+    MANAGES = "manages"
+    BELONGS_TO = "belongs_to"
+    GENERATES = "generates"
+    INCURS = "incurs"
+    MITIGATES = "mitigates"
+    SERVES = "serves"
 
 
-# Relations that are inherently bidirectional when asserted
 _BIDIRECTIONAL_DEFAULTS: frozenset[str] = frozenset(
     {
         RelationType.RELATED_TO.value,
         RelationType.SIMILAR_TO.value,
         RelationType.OPPOSITE_OF.value,
+        RelationType.COMPETES_WITH.value,
     }
 )
 

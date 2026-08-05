@@ -206,26 +206,92 @@ class IntentAnalyzer:
                 entities={"domain": "finance"},
                 hints=["domain:finance"],
             )
-        if any(
-            k in lower
-            for k in (
-                "swot",
-                "business plan",
-                "go-to-market",
-                "gtm",
-                "kpi",
-                "pricing strategy",
-                "competitor",
-            )
-        ):
-            return Intent(
-                kind=IntentKind.AGENT,
-                confidence=0.72,
-                subject=text,
-                raw_message=text,
-                entities={"domain": "business"},
-                hints=["domain:business"],
-            )
+        # Business Intelligence Suite — route to specialized domains when clear
+        bi_routes: list[tuple[str, tuple[str, ...], float]] = [
+            (
+                "marketing",
+                ("marketing plan", "campaign", "branding", "positioning", "segmentation", "advertising"),
+                0.8,
+            ),
+            (
+                "sales",
+                ("sales forecast", "sales pipeline", "lead pipeline", "quota", "pricing analysis"),
+                0.78,
+            ),
+            (
+                "operations",
+                ("inventory", "procurement", "process optimization", "resource allocation", "logistics"),
+                0.78,
+            ),
+            (
+                "accounting",
+                (
+                    "journal entry",
+                    "financial statements",
+                    "ratio analysis",
+                    "break-even",
+                    "breakeven",
+                    "bookkeeping",
+                    "balance sheet",
+                ),
+                0.8,
+            ),
+            (
+                "financial_planning",
+                ("financial planning", "profitability analysis", "cash flow forecast"),
+                0.78,
+            ),
+            ("hr", ("hiring plan", "headcount", "org design", "onboarding plan"), 0.78),
+            (
+                "project_management",
+                ("project plan", "project schedule", "milestone monitoring", "raid log", "gantt"),
+                0.78,
+            ),
+            (
+                "market_research",
+                ("market research", "customer research", "competitor research"),
+                0.8,
+            ),
+            (
+                "analytics",
+                ("kpi dashboard", "trend analysis", "performance report", "business forecast"),
+                0.78,
+            ),
+            (
+                "risk_compliance",
+                ("risk assessment", "compliance review", "regulatory"),
+                0.8,
+            ),
+            (
+                "strategy",
+                ("strategic direction", "corporate strategy", "competitive strategy"),
+                0.78,
+            ),
+            (
+                "business",
+                (
+                    "swot",
+                    "business plan",
+                    "startup plan",
+                    "feasibility",
+                    "business model",
+                    "go-to-market",
+                    "gtm",
+                    "expansion plan",
+                ),
+                0.75,
+            ),
+        ]
+        for domain, keys, conf in bi_routes:
+            if any(k in lower for k in keys):
+                return Intent(
+                    kind=IntentKind.AGENT,
+                    confidence=conf,
+                    subject=text,
+                    raw_message=text,
+                    entities={"domain": domain},
+                    hints=[f"domain:{domain}", "suite:business_intelligence"],
+                )
         if any(
             k in lower
             for k in (

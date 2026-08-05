@@ -428,9 +428,10 @@ class SQLiteKnowledgeGraph(BaseRepository):
         for src_c, rel, tgt_c, conf in raw.triples:
             src_e = can_to_entity.get(src_c)
             tgt_e = can_to_entity.get(tgt_c)
-            if not src_e or not tgt_e:
+            if not src_e or not tgt_e or src_e.id == tgt_e.id:
                 continue
             edge = await self.link(
+
                 src_e,
                 rel,
                 tgt_e,
