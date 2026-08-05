@@ -1,4 +1,4 @@
-"""Memory system service and module."""
+"""Memory system service and module — cognitive pipeline."""
 
 from __future__ import annotations
 
@@ -15,6 +15,12 @@ from sage.db.connection import Database
 from sage.events.bus import EventBus
 from sage.events.events import Event, MemoryEvents
 from sage.logging import get_logger
+from sage.memory.cognitive import (
+    CognitiveMemorySupport,
+    content_fingerprint,
+    extract_terms,
+    score_importance,
+)
 from sage.memory.interfaces import MemorySystem
 from sage.memory.models import ConsolidationReport, MemoryItem, MemoryType
 from sage.memory.store import MemoryStore
@@ -24,27 +30,124 @@ log = get_logger(__name__)
 
 
 class SQLiteMemorySystem:
-    """Production memory implementation backed by SQLite."""
+    """
+    Cognitive memory backed by SQLite.
 
-    def __init__(self, store: MemoryStore, events: EventBus, settings: Settings) -> None:
+    Pipeline on store:
+      fingerprint → duplicate detect → importance score →
+      tags/terms → persist → version snapshot → relationship links
+    """
+
+    def __init__(
+        self,
+        store: MemoryStore,
+        cognitive: CognitiveMemorySupport,
+        events: EventBus,
+        settings: Settings,
+    ) -> None:
         self._store = store
+        self._cog = cognitive
         self._events = events
         self._settings = settings
 
     async def store(self, item: MemoryItem) -> str:
+        return await self.store_cognitive(item)
+
+    async def store_cognitive(self, item: MemoryItem) -> str:
         if item.type == MemoryType.SHORT_TERM and item.expires_at is None:
             ttl = timedelta(minutes=self._settings.memory.short_term_ttl_minutes)
             item.expires_at = (utcnow() + ttl).isoformat().replace("+00:00", "Z")
 
+        # Fingerprint + duplicate detection
+        fp = content_fingerprint(item.content)
+        item.content_hash = fp
+        existing_id = await self._cog.find_by_hash(fp)
+        if existing_id:
+            existing = await self._store.get(existing_id)
+            if existing:
+                # Reinforce existing memory instead of duplicating
+                new_imp = min(1.0, max(existing.importance, item.importance) + 0.05)
+                new_conf = min(1.0, max(existing.confidence, item.confidence) + 0.02)
+                await self._store.update_fields(
+                    existing_id,
+                    {
+                        "importance": new_imp,
+                        "confidence": new_conf,
+                        "access_count": existing.access_count + 1,
+                        "last_accessed_at": utcnow_iso(),
+                    },
+                )
+                log.info("memory.duplicate_reinforced", id=existing_id, hash=fp[:12])
+                await self._events.publish(
+                    Event(
+                        type=MemoryEvents.UPDATED,
+                        payload={"id": existing_id, "reason": "duplicate_reinforce"},
+                        source="memory",
+                    )
+                )
+                return existing_id
+
+        # Importance scoring
+        item.importance = score_importance(item)
+
+        # Auto-tags from terms
+        terms = extract_terms(item.content)
+        for t in terms[:5]:
+            if t not in item.tags:
+                item.tags.append(t)
+        item.metadata = {
+            **item.metadata,
+            "terms": terms,
+            "pipeline": "cognitive_v1",
+        }
+        if not item.summary:
+            item.summary = item.content[:200] + ("..." if len(item.content) > 200 else "")
+
+        item.version = 1
         await self._store.insert(item)
+        await self._cog.set_hash_and_version(item.id, fp, version=1)
+        await self._cog.add_version(
+            item.id,
+            1,
+            item.content,
+            summary=item.summary,
+            importance=item.importance,
+            confidence=item.confidence,
+            metadata=item.metadata,
+            reason="create",
+        )
+
+        # Relationship detection
+        related = await self._cog.find_related_by_terms(terms, exclude_id=item.id, limit=5)
+        for rel_id, weight in related:
+            await self._cog.link(
+                item.id,
+                rel_id,
+                "related_to",
+                weight=min(1.0, weight),
+                confidence=min(0.9, weight),
+                metadata={"via": "term_overlap"},
+            )
+
         await self._events.publish(
             Event(
                 type=MemoryEvents.CREATED,
-                payload={"id": item.id, "type": item.type.value},
+                payload={
+                    "id": item.id,
+                    "type": item.type.value,
+                    "importance": item.importance,
+                    "relations": len(related),
+                },
                 source="memory",
             )
         )
-        log.debug("memory.stored", id=item.id, type=item.type.value)
+        log.debug(
+            "memory.stored_cognitive",
+            id=item.id,
+            type=item.type.value,
+            importance=item.importance,
+            relations=len(related),
+        )
         return item.id
 
     async def recall(
@@ -62,7 +165,6 @@ class SQLiteMemorySystem:
         else:
             items = await self._store.list_recent(limit=lim)
 
-        # Touch access stats
         now = utcnow_iso()
         for item in items:
             await self._store.update_fields(
@@ -75,9 +177,35 @@ class SQLiteMemorySystem:
         return await self._store.get(memory_id)
 
     async def update(self, memory_id: str, **fields: Any) -> MemoryItem:
+        current = await self._store.get(memory_id)
+        if current is None:
+            raise KeyError(f"Memory not found: {memory_id}")
+
+        # Version history when content changes
+        if "content" in fields and fields["content"] != current.content:
+            new_version = current.version + 1
+            fields["version"] = new_version
+            fields["content_hash"] = content_fingerprint(str(fields["content"]))
+            if "importance" not in fields:
+                probe = current.model_copy(update={"content": str(fields["content"])})
+                fields["importance"] = score_importance(probe)
+
         item = await self._store.update_fields(memory_id, fields)
         if item is None:
             raise KeyError(f"Memory not found: {memory_id}")
+
+        if "content" in fields:
+            await self._cog.add_version(
+                memory_id,
+                item.version,
+                item.content,
+                summary=item.summary,
+                importance=item.importance,
+                confidence=item.confidence,
+                metadata=item.metadata,
+                reason="update",
+            )
+
         await self._events.publish(
             Event(
                 type=MemoryEvents.UPDATED,
@@ -101,10 +229,12 @@ class SQLiteMemorySystem:
 
     async def consolidate(self) -> ConsolidationReport:
         expired = await self._store.expire_due()
-        # Basic promotion: high-importance short_term → long_term
         promoted = 0
-        shorts = await self._store.search("", limit=100, types=[MemoryType.SHORT_TERM.value])
-        # search with empty uses recent — handle directly
+        merged = 0
+        related = 0
+        rescored = 0
+
+        # Promote high-importance short_term → long_term
         rows = await self._store.db.fetchall(
             "SELECT id, importance FROM memories WHERE type = ? AND deleted_at IS NULL AND importance >= 0.7",
             (MemoryType.SHORT_TERM.value,),
@@ -116,11 +246,48 @@ class SQLiteMemorySystem:
             )
             promoted += 1
 
+        # Rescore + relate batch
+        active = await self._store.list_all_active(limit=200)
+        seen_hashes: dict[str, str] = {}
+        for item in active:
+            # Rescore drift
+            new_score = score_importance(item)
+            if abs(new_score - item.importance) >= 0.05:
+                await self._store.update_fields(item.id, {"importance": new_score})
+                rescored += 1
+
+            fp = item.content_hash or content_fingerprint(item.content)
+            if fp in seen_hashes and seen_hashes[fp] != item.id:
+                await self._cog.merge_duplicate(seen_hashes[fp], item.id)
+                merged += 1
+            else:
+                seen_hashes[fp] = item.id
+                if not item.content_hash:
+                    await self._cog.set_hash_and_version(item.id, fp, version=item.version)
+
+            # Sparse relationship fill
+            terms = extract_terms(item.content)
+            links = await self._cog.find_related_by_terms(terms, exclude_id=item.id, limit=2)
+            existing = await self._cog.list_relations(item.id)
+            existing_pairs = {(r["source_id"], r["target_id"], r["relation"]) for r in existing}
+            for rel_id, weight in links:
+                key = (item.id, rel_id, "related_to")
+                if key not in existing_pairs:
+                    await self._cog.link(
+                        item.id, rel_id, "related_to", weight=min(1.0, weight), confidence=0.5
+                    )
+                    related += 1
+
         report = ConsolidationReport(
             expired=expired,
             promoted=promoted,
-            merged=0,
-            message=f"expired={expired} promoted={promoted}",
+            merged=merged,
+            related=related,
+            rescored=rescored,
+            message=(
+                f"expired={expired} promoted={promoted} merged={merged} "
+                f"related={related} rescored={rescored}"
+            ),
         )
         await self._events.publish(
             Event(
@@ -135,10 +302,13 @@ class SQLiteMemorySystem:
     async def count(self, *, include_deleted: bool = False) -> int:
         return await self._store.count(include_deleted=include_deleted)
 
+    async def relations(self, memory_id: str) -> list[dict[str, Any]]:
+        return await self._cog.list_relations(memory_id)
+
 
 class MemoryModule(BaseModule):
     name = "memory"
-    version = "0.1.0"
+    version = "0.1.1"
     is_critical = True
 
     def __init__(self, container: Container) -> None:
@@ -150,7 +320,9 @@ class MemoryModule(BaseModule):
         events = self.container.resolve(EventBus)  # type: ignore[type-abstract]
         settings = self.container.resolve(Settings)
         store = MemoryStore(db)
-        self._system = SQLiteMemorySystem(store, events, settings)
+        cognitive = CognitiveMemorySupport(db)
+        await cognitive.ensure_content_hash_column()
+        self._system = SQLiteMemorySystem(store, cognitive, events, settings)
         self.container.register_instance(MemorySystem, self._system)  # type: ignore[type-abstract]
         self.container.register_instance(SQLiteMemorySystem, self._system)
 

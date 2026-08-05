@@ -53,10 +53,6 @@ class SageEngine:
         self.boot_report: BootReport | None = None
         self._register_default_modules()
 
-    # ------------------------------------------------------------------
-    # Factory
-    # ------------------------------------------------------------------
-
     @classmethod
     async def create(
         cls,
@@ -100,22 +96,20 @@ class SageEngine:
         else:
             engine.state = EngineState.RUNNING
 
-        # Expose engine in container for modules that need it
         engine.container.register_instance(SageEngine, engine)
+        await engine._register_system_jobs()
         return engine
-
-    # ------------------------------------------------------------------
-    # Module registration (default graph)
-    # ------------------------------------------------------------------
 
     def _register_default_modules(self) -> None:
         """
-        Register the full module graph.
+        Register the full module graph in dependency order.
 
-        Concrete implementations are used when available; otherwise stubs
-        so the architecture boots end-to-end in M0/M1.
+        v0.1.1 foundation:
+          database → secrets → permissions → config → memory → …
+          → orchestrator → conversation
         """
         from sage.agents.service import AgentModule
+        from sage.config.service import ConfigModule
         from sage.conversation.service import ConversationModule
         from sage.db.service import DatabaseModule
         from sage.files.service import FileModule
@@ -123,14 +117,20 @@ class SageEngine:
         from sage.learning.service import LearningModule
         from sage.memory.service import MemoryModule
         from sage.models.service import ModelsModule
+        from sage.monitor.service import MonitorModule
+        from sage.orchestrator.service import OrchestratorModule
+        from sage.permissions.service import PermissionsModule
         from sage.planning.service import PlanningModule
         from sage.plugins.service import PluginModule
         from sage.reasoning.service import ReasoningModule
+        from sage.secrets.service import SecretsModule
         from sage.tools.service import ToolsModule
 
         b = self.bootstrapper
-        # Order matters — see docs/architecture/STARTUP.md
         b.register_module("database", lambda c: DatabaseModule(c), critical=True)
+        b.register_module("secrets", lambda c: SecretsModule(c), critical=False)
+        b.register_module("permissions", lambda c: PermissionsModule(c), critical=True)
+        b.register_module("config", lambda c: ConfigModule(c), critical=True)
         b.register_module("memory", lambda c: MemoryModule(c), critical=True)
         b.register_module("knowledge", lambda c: KnowledgeModule(c), critical=False)
         b.register_module("models", lambda c: ModelsModule(c), critical=False)
@@ -141,11 +141,53 @@ class SageEngine:
         b.register_module("agents", lambda c: AgentModule(c), critical=False)
         b.register_module("plugins", lambda c: PluginModule(c), critical=False)
         b.register_module("files", lambda c: FileModule(c), critical=False)
+        b.register_module("orchestrator", lambda c: OrchestratorModule(c), critical=True)
+        b.register_module("monitor", lambda c: MonitorModule(c), critical=False)
         b.register_module("conversation", lambda c: ConversationModule(c), critical=True)
 
-    # ------------------------------------------------------------------
-    # Accessors
-    # ------------------------------------------------------------------
+    async def _register_system_jobs(self) -> None:
+        """Built-in maintenance jobs on the real scheduler."""
+        if not self.settings.scheduler.enabled:
+            return
+        scheduler = self.scheduler
+
+        async def _audit_heartbeat() -> None:
+            from sage.logging import audit
+
+            health = await self.health()
+            audit(
+                "heartbeat",
+                state=self.state.value,
+                health=health.level.value,
+                modules=len(health.modules),
+            )
+
+        scheduler.register(
+            "system.heartbeat",
+            _audit_heartbeat,
+            interval_seconds=600.0,
+            description="Audit heartbeat every 10 minutes",
+        )
+
+        # Daily placeholder for backup hook (actual backup in later milestone)
+        async def _daily_maintenance() -> None:
+            from sage.logging import audit
+            from sage.memory.interfaces import MemorySystem
+
+            mem = self.container.try_resolve(MemorySystem)  # type: ignore[type-abstract]
+            if mem:
+                report = await mem.consolidate()
+                audit("daily_maintenance", consolidation=report.model_dump())
+            else:
+                audit("daily_maintenance", consolidation=None)
+
+        scheduler.register(
+            "system.daily_maintenance",
+            _daily_maintenance,
+            daily_at="03:30",
+            timezone="UTC",
+            description="Nightly consolidation / maintenance",
+        )
 
     @property
     def events(self) -> EventBus:
@@ -160,6 +202,11 @@ class SageEngine:
         return self.container.resolve(Scheduler)
 
     async def health(self) -> SystemHealth:
+        from sage.monitor.interfaces import HealthMonitor
+
+        mon = self.container.try_resolve(HealthMonitor)  # type: ignore[type-abstract]
+        if mon is not None:
+            return await mon.probe()
         return await self.bootstrapper.collect_health()
 
     def status_dict(self) -> dict[str, Any]:
@@ -170,17 +217,11 @@ class SageEngine:
             "env": self.settings.env,
             "modules": self.registry.names(),
             "boot": self.boot_report.to_payload() if self.boot_report else None,
+            "jobs": self.scheduler.list_jobs() if self.container.has(Scheduler) else [],
         }
 
-    # ------------------------------------------------------------------
-    # High-level operations
-    # ------------------------------------------------------------------
-
     async def ask(self, message: str, *, user_id: str | None = None) -> str:
-        """
-        One-shot convenience: send a message through the Conversation Engine
-        and return the assistant text.
-        """
+        """One-shot convenience via Conversation Engine → Orchestrator."""
         from sage.conversation.interfaces import ConversationEngine
 
         conv = self.container.resolve(ConversationEngine)  # type: ignore[type-abstract]

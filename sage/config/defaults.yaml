@@ -51,7 +51,7 @@ tools:
 
 scheduler:
   enabled: true
-  tick_seconds: 60
+  tick_seconds: 15
 
 api:
   enabled: false

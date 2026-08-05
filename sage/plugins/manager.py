@@ -1,4 +1,4 @@
-"""Plugin discovery and lifecycle manager."""
+"""Plugin discovery and lifecycle manager with permission requests."""
 
 from __future__ import annotations
 
@@ -22,10 +22,14 @@ class PluginManager:
     def __init__(self, container: Container) -> None:
         self._container = container
         self._plugins: dict[str, Plugin] = {}
+        self._enabled: dict[str, bool] = {}
 
     @property
     def loaded(self) -> list[str]:
         return list(self._plugins.keys())
+
+    def is_enabled(self, plugin_id: str) -> bool:
+        return self._enabled.get(plugin_id, False)
 
     async def load_from_directories(self, directories: list[str]) -> list[str]:
         loaded: list[str] = []
@@ -62,12 +66,13 @@ class PluginManager:
             log.info("plugins.skipped_disabled", id=manifest.id)
             return None
 
-        # entrypoint format: module_file:ClassName  (module_file relative, without .py)
+        # Permission requests before load
+        await self._request_permissions(manifest)
+
         module_part, _, class_name = manifest.entrypoint.partition(":")
         class_name = class_name or "Plugin"
         module_file = directory / f"{module_part.replace('.', '/')}.py"
         if not module_file.is_file():
-            # try plugin.py default
             module_file = directory / "plugin.py"
         if not module_file.is_file():
             raise FileNotFoundError(f"Plugin entry not found in {directory}")
@@ -81,14 +86,52 @@ class PluginManager:
         spec.loader.exec_module(module)
         cls = getattr(module, class_name)
         plugin: Plugin = cls() if not isinstance(cls, type) else cls()  # type: ignore[assignment]
-        # Ensure manifest is available
         if not hasattr(plugin, "manifest"):
             raise TypeError(f"Plugin {manifest.id} missing manifest property")
 
         await plugin.on_load(self._container)
         self._plugins[manifest.id] = plugin
+        self._enabled[manifest.id] = True
         log.info("plugins.loaded", id=manifest.id, version=manifest.version)
         return plugin
+
+    async def _request_permissions(self, manifest: PluginManifest) -> None:
+        if not manifest.permissions:
+            return
+        from sage.permissions.interfaces import PermissionManager
+        from sage.permissions.models import PrincipalType
+
+        pm = self._container.try_resolve(PermissionManager)  # type: ignore[type-abstract]
+        if pm is None:
+            log.warning("plugins.permissions_unavailable", plugin=manifest.id)
+            return
+        grants = await pm.request(
+            manifest.id,
+            manifest.permissions,
+            principal_type=PrincipalType.PLUGIN,
+            auto_approve_safe=True,
+        )
+        pending = [g.permission.value for g in grants if not g.granted]
+        if pending:
+            log.warning(
+                "plugins.permissions_pending",
+                plugin=manifest.id,
+                pending=pending,
+                msg="Dangerous permissions require explicit user grant via PermissionManager.grant",
+            )
+
+    async def enable(self, plugin_id: str) -> bool:
+        if plugin_id not in self._plugins:
+            return False
+        self._enabled[plugin_id] = True
+        return True
+
+    async def disable(self, plugin_id: str) -> bool:
+        if plugin_id not in self._plugins:
+            return False
+        self._enabled[plugin_id] = False
+        log.info("plugins.disabled", id=plugin_id)
+        return True
 
     async def unload_all(self) -> None:
         for pid, plugin in list(self._plugins.items()):
@@ -97,3 +140,4 @@ class PluginManager:
             except Exception:
                 log.exception("plugins.unload_failed", id=pid)
         self._plugins.clear()
+        self._enabled.clear()

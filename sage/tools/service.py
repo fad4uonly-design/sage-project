@@ -20,7 +20,10 @@ class ToolsModule(BaseModule):
         self._manager: DefaultToolManager | None = None
 
     async def _on_initialize(self) -> None:
-        self._manager = DefaultToolManager()
+        from sage.permissions.interfaces import PermissionManager
+
+        pm = self.container.try_resolve(PermissionManager)  # type: ignore[type-abstract]
+        self._manager = DefaultToolManager(pm, principal="core")
         for tool in (EchoTool(), TimeTool(), CalculatorTool()):
             self._manager.register(tool)
         self.container.register_instance(ToolManager, self._manager)  # type: ignore[type-abstract]

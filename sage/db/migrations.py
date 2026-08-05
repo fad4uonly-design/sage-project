@@ -10,11 +10,11 @@ from sage.utils.time import utcnow_iso
 
 log = get_logger(__name__)
 
-_SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
+_DIR = Path(__file__).resolve().parent
 
-# Future migrations append here: (version, name, sql_or_callable)
 MIGRATIONS: list[tuple[int, str, str]] = [
-    (1, "initial_schema", _SCHEMA_PATH.read_text(encoding="utf-8")),
+    (1, "initial_schema", (_DIR / "schema.sql").read_text(encoding="utf-8")),
+    (2, "foundation_v011", (_DIR / "migrations_v2.sql").read_text(encoding="utf-8")),
 ]
 
 
@@ -38,7 +38,6 @@ async def apply_migrations(db: Database) -> int:
             continue
         log.info("db.migrate", version=mig_version, name=name)
         await db.executescript(sql)
-        # Ensure migrations table exists even if script created it
         await db.execute(
             "INSERT OR REPLACE INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
             (mig_version, name, utcnow_iso()),

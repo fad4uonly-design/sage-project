@@ -24,23 +24,27 @@ SAGE is a **personal AI operating system** — not a chatbot. It is designed to 
 
 ```
 SAGE
-├── Core Engine          # Boot, DI, lifecycle, health, coordination
+├── Core Engine          # Boot, DI, lifecycle, scheduler, coordination
+├── Orchestrator         # Intent → plan → module pipeline (cognitive brain)
 ├── Event Bus            # Loose coupling between modules
-├── Memory System        # Short/long-term, episodic, semantic
+├── Permissions          # Capability grants (plugins/tools never unrestricted)
+├── Secrets              # Encrypted local credential store
+├── Health Monitor       # Continuous resource + module probes
+├── Memory System        # Cognitive memory (score, relate, version, consolidate)
 ├── Knowledge Manager    # Document ingestion & knowledge graph
 ├── Reasoning Engine     # Deduction, induction, multi-step logic
 ├── Learning Engine      # Pattern recognition, preference learning
 ├── Planning Engine      # Goals, schedules, workflows
 ├── Agent Framework      # Specialized collaborative agents
-├── Plugin System        # Extensibility without core changes
-├── Tool Manager         # Python, Git, SQLite, APIs, CLI
-├── Conversation Engine  # Context-aware multi-turn dialogue
+├── Plugin System        # Extensibility with permission requests
+├── Tool Manager         # Gated tool invocation
+├── Conversation Engine  # Sessions → Orchestrator → response
 ├── File Manager         # Indexing, watching, categorization
 ├── API Layer            # Programmatic access
 └── User Interface       # CLI → Desktop → Web → Voice → Mobile
 ```
 
-Modules communicate through the **Event Bus** and are coordinated by the **Core Engine**. Each module is independently testable and follows clean architecture / SOLID principles.
+Modules communicate through the **Event Bus**, are gated by **Permissions**, and are driven by the **Orchestrator**. Each module is independently testable and follows clean architecture / SOLID principles.
 
 ---
 
@@ -81,16 +85,17 @@ pytest
 
 ## Development Roadmap
 
-| Phase | Focus | Status |
+| Version | Focus | Status |
 |---|---|---|
-| **0** | Architecture, interfaces, folder structure, startup | ✅ Current |
-| **1** | Foundation — Core, Memory, Database, Config | 🔜 Next |
-| **2** | Intelligence — Knowledge, Reasoning, Learning, Planning | Planned |
-| **3** | Automation — Agents, Plugins, Event Bus, Tools | Planned |
-| **4** | UX — Desktop, Web, Voice, Mobile | Planned |
-| **5** | Advanced — Multi-agent, autonomous workflows, predictive | Planned |
+| **0.1.0** | Architecture, interfaces, modular boot | ✅ |
+| **0.1.1** | Core foundation complete — Orchestrator, Permissions, Secrets, Monitor, cognitive Memory | ✅ Current |
+| **0.2.0** | Intelligence layer — knowledge graph, reasoning strategies, learning | Next |
+| **0.3.0** | Domain intelligence — Agriculture, Finance, Accounting, Business, Programming agents | Planned |
+| **0.4.0** | Automation — workflows, advanced tools, plugin marketplace | Planned |
+| **0.5.0** | UX — Web dashboard, desktop, REST API, voice | Planned |
+| **1.0.0** | Production — hardening, backup/recovery, stable APIs | Planned |
 
-See [docs/architecture/OVERVIEW.md](docs/architecture/OVERVIEW.md) for the full design.
+See [docs/architecture/OVERVIEW.md](docs/architecture/OVERVIEW.md) and [docs/architecture/FOUNDATION_v0.1.1.md](docs/architecture/FOUNDATION_v0.1.1.md).
 
 ---
 
@@ -113,10 +118,14 @@ See [docs/architecture/OVERVIEW.md](docs/architecture/OVERVIEW.md) for the full 
 ```
 sage/
 ├── sage/                 # Main package
-│   ├── core/             # Core Engine, bootstrap, DI container
-│   ├── config/           # Configuration manager
+│   ├── core/             # Core Engine, bootstrap, DI, scheduler
+│   ├── config/           # Configuration manager (YAML/JSON/env/runtime)
 │   ├── events/           # Event bus
-│   ├── memory/           # Memory system
+│   ├── orchestrator/     # Cognitive orchestrator
+│   ├── permissions/      # Capability grants
+│   ├── secrets/          # Encrypted secrets
+│   ├── monitor/          # Health monitor
+│   ├── memory/           # Cognitive memory
 │   ├── knowledge/        # Knowledge manager
 │   ├── reasoning/        # Reasoning engine
 │   ├── learning/         # Learning engine
@@ -130,7 +139,7 @@ sage/
 │   ├── models/           # AI model adapters
 │   ├── api/              # API layer
 │   ├── ui/               # User interfaces
-│   ├── logging/          # Structured logging
+│   ├── logging/          # Structured + audit logging
 │   ├── utils/            # Shared utilities
 │   └── cli.py            # CLI entry point
 ├── tests/                # Unit & integration tests
