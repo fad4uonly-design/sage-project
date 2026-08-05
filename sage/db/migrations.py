@@ -15,6 +15,7 @@ _DIR = Path(__file__).resolve().parent
 MIGRATIONS: list[tuple[int, str, str]] = [
     (1, "initial_schema", (_DIR / "schema.sql").read_text(encoding="utf-8")),
     (2, "foundation_v011", (_DIR / "migrations_v2.sql").read_text(encoding="utf-8")),
+    (3, "intelligence_v020", (_DIR / "migrations_v3.sql").read_text(encoding="utf-8")),
 ]
 
 

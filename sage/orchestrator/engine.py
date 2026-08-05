@@ -50,6 +50,7 @@ class DefaultOrchestrator:
             return ExecutionPlan(intent=intent, steps=steps)
 
         if intent.kind == IntentKind.RECALL:
+            steps.append(PipelineStep.RETRIEVE)
             steps.append(PipelineStep.RECALL_MEMORY)
             steps.append(PipelineStep.COMPOSE_RESPONSE)
             return ExecutionPlan(intent=intent, steps=steps)
@@ -57,8 +58,7 @@ class DefaultOrchestrator:
         if intent.kind == IntentKind.PLAN:
             steps.extend(
                 [
-                    PipelineStep.RECALL_MEMORY,
-                    PipelineStep.SEARCH_KNOWLEDGE,
+                    PipelineStep.RETRIEVE,
                     PipelineStep.PLAN,
                     PipelineStep.COMPOSE_RESPONSE,
                 ]
@@ -68,8 +68,7 @@ class DefaultOrchestrator:
         if intent.kind == IntentKind.REASON:
             steps.extend(
                 [
-                    PipelineStep.RECALL_MEMORY,
-                    PipelineStep.SEARCH_KNOWLEDGE,
+                    PipelineStep.RETRIEVE,
                     PipelineStep.REASON,
                     PipelineStep.COMPOSE_RESPONSE,
                 ]
@@ -79,8 +78,7 @@ class DefaultOrchestrator:
         if intent.kind in {IntentKind.RESEARCH, IntentKind.DOCUMENT, IntentKind.AGENT}:
             steps.extend(
                 [
-                    PipelineStep.RECALL_MEMORY,
-                    PipelineStep.SEARCH_KNOWLEDGE,
+                    PipelineStep.RETRIEVE,
                     PipelineStep.DISPATCH_AGENT,
                     PipelineStep.COMPOSE_RESPONSE,
                 ]
@@ -97,11 +95,10 @@ class DefaultOrchestrator:
             )
             return ExecutionPlan(intent=intent, steps=steps)
 
-        # Default chat path — enrich then compose via model
+        # Default chat path — layered retrieval then compose
         steps.extend(
             [
-                PipelineStep.RECALL_MEMORY,
-                PipelineStep.SEARCH_KNOWLEDGE,
+                PipelineStep.RETRIEVE,
                 PipelineStep.COMPOSE_RESPONSE,
             ]
         )
@@ -204,6 +201,9 @@ class DefaultOrchestrator:
     ) -> Any:
         if step == PipelineStep.ANALYZE_INTENT:
             return intent.model_dump()
+
+        if step == PipelineStep.RETRIEVE:
+            return await self._step_retrieve(intent, message, ctx)
 
         if step == PipelineStep.RECALL_MEMORY:
             return await self._step_recall(intent, message, ctx)
@@ -317,7 +317,41 @@ class DefaultOrchestrator:
                 )
             )
         ctx["stored_memory_id"] = mid
+        # Extract entities/relations into knowledge graph
+        from sage.knowledge.graph.interfaces import KnowledgeGraph
+
+        kg = self._container.try_resolve(KnowledgeGraph)
+        if kg:
+            try:
+                await kg.extract_and_merge(
+                    fact, source="user_memory", source_ref=mid, memory_id=mid
+                )
+            except Exception:
+                log.exception("orchestrator.graph_from_memory_failed")
         return f"Understood. I will remember that (id: {mid}).\n«{fact}»"
+
+    async def _step_retrieve(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str:
+        from sage.retrieval.interfaces import Retriever
+
+        retriever = self._container.try_resolve(Retriever)
+        query = intent.subject or message
+        if not retriever:
+            # Fallback to separate memory + knowledge
+            await self._step_recall(intent, message, ctx)
+            await self._step_knowledge(intent, message, ctx)
+            return "retrieve=fallback"
+        result = await retriever.retrieve(query, limit=10)
+        ctx["memories"] = list(result.memories)
+        ctx["graph_facts"] = list(result.graph_facts)
+        ctx["documents"] = list(result.documents)
+        ctx["knowledge"] = list(result.documents) + list(result.graph_facts)
+        ctx["retrieval"] = result
+        ctx["retrieval_confidence"] = result.overall_confidence
+        return (
+            f"retrieve=ok memories={len(result.memories)} "
+            f"graph={len(result.graph_facts)} docs={len(result.documents)} "
+            f"conf={result.overall_confidence:.2f}"
+        )
 
     async def _step_reason(self, intent: Intent, ctx: dict[str, Any]) -> str:
         from sage.reasoning.interfaces import ReasoningEngine
@@ -331,8 +365,21 @@ class DefaultOrchestrator:
             context=ReasoningContext(
                 memories=list(ctx.get("memories") or []),
                 knowledge=list(ctx.get("knowledge") or []),
+                graph_facts=list(ctx.get("graph_facts") or []),
+                documents=list(ctx.get("documents") or []),
+                metadata={
+                    "retrieval_explanation": getattr(
+                        ctx.get("retrieval"), "explanation", None
+                    )
+                    or [],
+                    "retrieval_confidence": ctx.get("retrieval_confidence"),
+                },
             ),
+            use_retrieval=False,  # already retrieved
         )
+        # Prefer full explainability report when present
+        if result.explainability is not None:
+            return result.explainability.format()
         lines = [
             f"Strategy: {result.strategy.value}",
             f"Confidence: {result.confidence:.2f}",
@@ -472,7 +519,13 @@ class DefaultOrchestrator:
         extra_bits: list[str] = []
         if ctx.get("memories"):
             extra_bits.append("Relevant memories:\n- " + "\n- ".join(ctx["memories"][:5]))
-        if ctx.get("knowledge"):
+        if ctx.get("graph_facts"):
+            extra_bits.append(
+                "Knowledge graph facts:\n- " + "\n- ".join(ctx["graph_facts"][:6])
+            )
+        if ctx.get("documents"):
+            extra_bits.append("Documents:\n- " + "\n- ".join(ctx["documents"][:3]))
+        elif ctx.get("knowledge"):
             extra_bits.append("Relevant knowledge:\n- " + "\n- ".join(ctx["knowledge"][:3]))
         if ctx.get("preferences"):
             extra_bits.append(f"User preferences: {ctx['preferences']}")

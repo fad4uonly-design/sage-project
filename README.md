@@ -88,14 +88,14 @@ pytest
 | Version | Focus | Status |
 |---|---|---|
 | **0.1.0** | Architecture, interfaces, modular boot | ✅ |
-| **0.1.1** | Core foundation complete — Orchestrator, Permissions, Secrets, Monitor, cognitive Memory | ✅ Current |
-| **0.2.0** | Intelligence layer — knowledge graph, reasoning strategies, learning | Next |
-| **0.3.0** | Domain intelligence — Agriculture, Finance, Accounting, Business, Programming agents | Planned |
+| **0.1.1** | Core foundation complete — Orchestrator, Permissions, Secrets, Monitor, cognitive Memory | ✅ |
+| **0.2.0** | Intelligence layer — Knowledge Graph, strategies, retrieval, learning, explainability, capabilities | ✅ Current |
+| **0.3.0** | Domain intelligence — Agriculture, Finance, Accounting, Business, Programming agents | Next |
 | **0.4.0** | Automation — workflows, advanced tools, plugin marketplace | Planned |
 | **0.5.0** | UX — Web dashboard, desktop, REST API, voice | Planned |
 | **1.0.0** | Production — hardening, backup/recovery, stable APIs | Planned |
 
-See [docs/architecture/OVERVIEW.md](docs/architecture/OVERVIEW.md) and [docs/architecture/FOUNDATION_v0.1.1.md](docs/architecture/FOUNDATION_v0.1.1.md).
+See [docs/architecture/OVERVIEW.md](docs/architecture/OVERVIEW.md), [FOUNDATION_v0.1.1.md](docs/architecture/FOUNDATION_v0.1.1.md), and [INTELLIGENCE_v0.2.0.md](docs/architecture/INTELLIGENCE_v0.2.0.md).
 
 ---
 

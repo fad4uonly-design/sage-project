@@ -39,6 +39,7 @@ class PipelineStep(str, Enum):
     ANALYZE_INTENT = "analyze_intent"
     RECALL_MEMORY = "recall_memory"
     SEARCH_KNOWLEDGE = "search_knowledge"
+    RETRIEVE = "retrieve"
     REASON = "reason"
     PLAN = "plan"
     DISPATCH_AGENT = "dispatch_agent"

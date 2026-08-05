@@ -1,6 +1,7 @@
-"""Knowledge Manager — document ingestion and retrieval."""
+"""Knowledge Manager — document ingestion, retrieval, and knowledge graph."""
 
+from sage.knowledge.graph.interfaces import KnowledgeGraph
 from sage.knowledge.interfaces import KnowledgeManager
 from sage.knowledge.service import KnowledgeModule
 
-__all__ = ["KnowledgeManager", "KnowledgeModule"]
+__all__ = ["KnowledgeGraph", "KnowledgeManager", "KnowledgeModule"]

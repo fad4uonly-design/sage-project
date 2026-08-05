@@ -1,4 +1,4 @@
-"""Agent registry and orchestrator."""
+"""Agent registry and orchestrator — capability-aware dispatch."""
 
 from __future__ import annotations
 
@@ -14,9 +14,15 @@ log = get_logger(__name__)
 
 
 class DefaultAgentOrchestrator:
-    def __init__(self, events: EventBus | None = None) -> None:
+    def __init__(
+        self,
+        events: EventBus | None = None,
+        *,
+        container: Any | None = None,
+    ) -> None:
         self._agents: dict[str, Agent] = {}
         self._events = events
+        self._container = container
 
     def register(self, agent: Agent) -> None:
         self._agents[agent.id] = agent
@@ -42,9 +48,34 @@ class DefaultAgentOrchestrator:
                 error="No agents registered",
             )
 
+        # Capability registry scores (domain + declared capabilities)
+        cap_boost: dict[str, float] = {}
+        if self._container is not None:
+            from sage.capabilities.interfaces import CapabilityRegistry
+
+            reg = self._container.try_resolve(CapabilityRegistry)
+            if reg:
+                try:
+                    matches = await reg.find_for_task(task.description)
+                    for desc, score in matches:
+                        # Map principal name → agent domain affinity
+                        cap_boost[desc.domain] = max(cap_boost.get(desc.domain, 0.0), score)
+                        cap_boost[desc.principal] = max(
+                            cap_boost.get(desc.principal, 0.0), score
+                        )
+                except Exception:
+                    log.exception("agents.capability_lookup_failed")
+
         scored: list[tuple[float, Agent]] = []
         for agent in self._agents.values():
             score = await agent.can_handle(task)
+            score += cap_boost.get(agent.domain, 0.0) * 0.5
+            # principal-style ids
+            for key, boost in cap_boost.items():
+                if key in agent.id or key.replace("_", "") in agent.id.replace("_", ""):
+                    score += boost * 0.2
+            if task.domain and task.domain == agent.domain:
+                score = max(score, 0.9)
             scored.append((score, agent))
         scored.sort(key=lambda x: x[0], reverse=True)
         best_score, best = scored[0]
@@ -53,7 +84,12 @@ class DefaultAgentOrchestrator:
             await self._events.publish(
                 Event(
                     type=AgentEvents.TASK_STARTED,
-                    payload={"task_id": task.id, "agent_id": best.id, "score": best_score},
+                    payload={
+                        "task_id": task.id,
+                        "agent_id": best.id,
+                        "score": best_score,
+                        "domain": best.domain,
+                    },
                     source="agents",
                 )
             )

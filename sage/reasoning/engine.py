@@ -1,29 +1,46 @@
-"""Explainable reasoning engine."""
+"""
+Strategy-based explainable reasoning engine.
+
+Selects one or more specialized strategies, optionally fuses results,
+and always emits an ExplainabilityReport.
+"""
 
 from __future__ import annotations
+
+from typing import Any
 
 from sage.logging import get_logger
 from sage.models.interfaces import CompletionRequest, Message, ModelRouter
 from sage.reasoning.models import (
+    ExplainabilityReport,
     ReasoningContext,
     ReasoningResult,
     ReasoningStep,
     StrategyKind,
 )
+from sage.reasoning.strategies.base import StrategyRegistry
+from sage.reasoning.strategies.builtin import register_builtin_strategies
 
 log = get_logger(__name__)
 
 
 class DefaultReasoningEngine:
-    """
-    Structured multi-step reasoner.
-
-    Always returns an explainable trace. Uses the model router when available,
-    with a deterministic local fallback path so offline mode still works.
-    """
-
-    def __init__(self, models: ModelRouter | None = None) -> None:
+    def __init__(
+        self,
+        models: ModelRouter | None = None,
+        *,
+        container: Any | None = None,
+        registry: StrategyRegistry | None = None,
+    ) -> None:
         self._models = models
+        self._container = container
+        self._registry = registry or StrategyRegistry()
+        if registry is None:
+            register_builtin_strategies(self._registry)
+
+    @property
+    def registry(self) -> StrategyRegistry:
+        return self._registry
 
     async def reason(
         self,
@@ -31,202 +48,201 @@ class DefaultReasoningEngine:
         *,
         context: ReasoningContext | None = None,
         strategy: StrategyKind = StrategyKind.AUTO,
+        use_retrieval: bool = True,
+        combine_top_k: int = 1,
     ) -> ReasoningResult:
         ctx = context or ReasoningContext()
-        resolved = self._resolve_strategy(problem, strategy)
-        trace: list[ReasoningStep] = []
 
-        trace.append(
+        # Auto-enrich from retrieval if empty-ish
+        if use_retrieval and self._container is not None:
+            if not (ctx.memories or ctx.graph_facts or ctx.documents):
+                ctx = await self._enrich_from_retrieval(problem, ctx)
+
+        strategies = self._registry.select(
+            problem,
+            ctx,
+            preferred=strategy if strategy != StrategyKind.AUTO else None,
+            top_k=max(1, combine_top_k),
+        )
+        if not strategies:
+            from sage.reasoning.strategies.builtin import MultiStepStrategy
+
+            strategies = [MultiStepStrategy()]
+
+        results: list[ReasoningResult] = []
+        for strat in strategies:
+            try:
+                results.append(await strat.apply(problem, ctx, models=self._models))
+            except Exception:
+                log.exception("reasoning.strategy_failed", strategy=strat.kind.value)
+
+        if not results:
+            results = [
+                ReasoningResult(
+                    problem=problem,
+                    strategy=StrategyKind.MULTI_STEP,
+                    conclusion=f"Unable to complete reasoning for: {problem}",
+                    confidence=0.2,
+                    trace=[
+                        ReasoningStep(index=0, thought="All strategies failed", kind="error", confidence=0.1)
+                    ],
+                )
+            ]
+
+        primary = results[0]
+        if len(results) > 1:
+            primary = self._fuse(results)
+
+        # Optional model polish of conclusion (does not replace trace)
+        polished = await self._model_assist(problem, primary.strategy, ctx)
+        if polished and not polished.startswith("[SAGE stub"):
+            primary.conclusion = polished
+            primary.trace.append(
+                ReasoningStep(
+                    index=len(primary.trace),
+                    thought="Model-assisted conclusion refinement applied.",
+                    kind="model_refine",
+                    confidence=primary.confidence,
+                )
+            )
+
+        primary.explainability = self._build_explainability(problem, ctx, primary, results)
+        primary.strategies_used = [r.strategy.value for r in results]
+        log.debug(
+            "reasoning.complete",
+            strategy=primary.strategy.value,
+            strategies=primary.strategies_used,
+            confidence=primary.confidence,
+            steps=len(primary.trace),
+        )
+        return primary
+
+    async def _enrich_from_retrieval(
+        self, problem: str, ctx: ReasoningContext
+    ) -> ReasoningContext:
+        from sage.retrieval.interfaces import Retriever
+
+        retriever = self._container.try_resolve(Retriever) if self._container else None
+        if not retriever:
+            return ctx
+        try:
+            result = await retriever.retrieve(problem, limit=10)
+        except Exception:
+            log.exception("reasoning.retrieval_enrich_failed")
+            return ctx
+        return ctx.model_copy(
+            update={
+                "memories": list(ctx.memories) + list(result.memories),
+                "graph_facts": list(ctx.graph_facts) + list(result.graph_facts),
+                "documents": list(ctx.documents) + list(result.documents),
+                "knowledge": list(ctx.knowledge)
+                + [i.content for i in result.ranked if i.layer.value == "document"][:5],
+                "metadata": {
+                    **ctx.metadata,
+                    "retrieval_confidence": result.overall_confidence,
+                    "retrieval_explanation": result.explanation,
+                },
+            }
+        )
+
+    def _fuse(self, results: list[ReasoningResult]) -> ReasoningResult:
+        """Combine multiple strategy outputs into one explainable result."""
+        primary = results[0]
+        # Confidence: weighted by individual confidence
+        total = sum(r.confidence for r in results) or 1.0
+        fused_conf = sum(r.confidence * r.confidence for r in results) / total
+        # Merge alternatives/risks
+        alts: list[str] = []
+        risks: list[str] = []
+        trace: list[ReasoningStep] = [
             ReasoningStep(
                 index=0,
-                thought=f"Understood problem: {problem}",
-                kind="understand",
-                confidence=0.9,
+                thought=f"Fusing {len(results)} strategies: "
+                + ", ".join(r.strategy.value for r in results),
+                kind="fuse",
+                confidence=fused_conf,
             )
-        )
-
-        if ctx.facts or ctx.memories or ctx.knowledge:
-            evidence = [*ctx.facts[:5], *ctx.memories[:5], *ctx.knowledge[:5]]
-            trace.append(
-                ReasoningStep(
-                    index=1,
-                    thought="Gathered relevant context from memory and knowledge.",
-                    kind="gather",
-                    evidence=evidence,
-                    confidence=0.7,
+        ]
+        idx = 1
+        conclusions: list[str] = []
+        for r in results:
+            conclusions.append(f"[{r.strategy.value}] {r.conclusion}")
+            for step in r.trace:
+                trace.append(
+                    ReasoningStep(
+                        index=idx,
+                        thought=f"({r.strategy.value}) {step.thought}",
+                        kind=step.kind,
+                        evidence=step.evidence,
+                        confidence=step.confidence,
+                    )
                 )
-            )
-        else:
-            trace.append(
-                ReasoningStep(
-                    index=1,
-                    thought="No prior context supplied; reasoning from the problem statement alone.",
-                    kind="gather",
-                    confidence=0.4,
-                )
-            )
+                idx += 1
+            for a in r.alternatives:
+                if a not in alts:
+                    alts.append(a)
+            for risk in r.risks:
+                if risk not in risks:
+                    risks.append(risk)
 
-        if ctx.constraints:
-            trace.append(
-                ReasoningStep(
-                    index=2,
-                    thought="Applied constraints: " + "; ".join(ctx.constraints),
-                    kind="constrain",
-                    evidence=list(ctx.constraints),
-                    confidence=0.8,
-                )
-            )
-
-        analysis = self._local_analysis(problem, resolved, ctx)
-        trace.append(
-            ReasoningStep(
-                index=len(trace),
-                thought=analysis["analysis"],
-                kind=resolved.value,
-                confidence=analysis["confidence"],
-            )
+        fused_conclusion = (
+            primary.conclusion
+            + "\n\nAdditional perspectives:\n"
+            + "\n".join(f"- {c}" for c in conclusions[1:])
         )
-
-        # Optional model enrichment
-        model_conclusion = await self._model_assist(problem, resolved, ctx, trace)
-        conclusion = model_conclusion or analysis["conclusion"]
-
-        trace.append(
-            ReasoningStep(
-                index=len(trace),
-                thought=f"Conclusion: {conclusion}",
-                kind="conclude",
-                confidence=analysis["confidence"],
-            )
-        )
-
-        result = ReasoningResult(
-            problem=problem,
-            strategy=resolved,
-            conclusion=conclusion,
+        return ReasoningResult(
+            problem=primary.problem,
+            strategy=primary.strategy,
+            conclusion=fused_conclusion,
             trace=trace,
-            confidence=analysis["confidence"],
-            alternatives=analysis.get("alternatives", []),
-            risks=analysis.get("risks", []),
+            confidence=min(0.92, fused_conf + 0.05),
+            alternatives=alts,
+            risks=risks,
+            strategies_used=[r.strategy.value for r in results],
         )
-        log.debug("reasoning.complete", strategy=resolved.value, steps=len(trace))
-        return result
 
-    def _resolve_strategy(self, problem: str, strategy: StrategyKind) -> StrategyKind:
-        if strategy != StrategyKind.AUTO:
-            return strategy
-        lower = problem.lower()
-        if any(w in lower for w in ("risk", "danger", "fail", "hazard")):
-            return StrategyKind.RISK
-        if any(w in lower for w in ("decide", "choose", "which", "option", "should i")):
-            return StrategyKind.DECISION
-        if any(w in lower for w in ("why", "cause", "because", "lead to")):
-            return StrategyKind.CAUSAL
-        if any(w in lower for w in ("pattern", "often", "usually", "trend")):
-            return StrategyKind.INDUCTION
-        if any(w in lower for w in ("if ", "therefore", "implies", "given that")):
-            return StrategyKind.DEDUCTION
-        if any(w in lower for w in ("step", "plan", "how to", "process")):
-            return StrategyKind.MULTI_STEP
-        return StrategyKind.MULTI_STEP
-
-    def _local_analysis(
+    def _build_explainability(
         self,
         problem: str,
-        strategy: StrategyKind,
         ctx: ReasoningContext,
-    ) -> dict:
-        alternatives: list[str] = []
-        risks: list[str] = []
-        confidence = 0.55
-
-        if strategy == StrategyKind.DECISION:
-            alternatives = [
-                "Option A: act immediately with current information",
-                "Option B: gather more evidence before acting",
-                "Option C: defer and monitor",
-            ]
-            analysis = (
-                "Decision framing: clarify objective, list options, score by utility "
-                "and risk, then pick the option with best expected outcome under constraints."
-            )
-            conclusion = (
-                f"For «{problem}», prefer the option that maximizes expected value "
-                "while respecting constraints"
-                + (f" ({', '.join(ctx.constraints)})" if ctx.constraints else "")
-                + ". Start with a reversible step to reduce downside."
-            )
-            risks = ["Incomplete information", "Irreversible commitment too early"]
-        elif strategy == StrategyKind.RISK:
-            analysis = "Risk analysis: identify hazards, likelihood, impact, and mitigations."
-            conclusion = (
-                f"Primary risks around «{problem}» should be mitigated with monitoring, "
-                "fallback plans, and staged rollout."
-            )
-            risks = ["Execution failure", "Resource overrun", "External dependency failure"]
-        elif strategy == StrategyKind.CAUSAL:
-            analysis = "Causal chain: map antecedents → mechanisms → effects."
-            conclusion = (
-                f"Likely causes related to «{problem}» should be validated with "
-                "intervening evidence before acting on the deepest controllable cause."
-            )
-        elif strategy == StrategyKind.DEDUCTION:
-            analysis = "Deductive path: apply general rules to specific premises."
-            conclusion = (
-                f"From the stated premises about «{problem}», the logically entailed "
-                "conclusion should be accepted only if all premises hold."
-            )
-            confidence = 0.6
-        elif strategy == StrategyKind.INDUCTION:
-            analysis = "Inductive path: generalize from repeated observations."
-            conclusion = (
-                f"Patterns related to «{problem}» suggest a provisional rule; "
-                "keep confidence modest until more samples confirm it."
-            )
-            confidence = 0.45
-        else:
-            analysis = (
-                "Multi-step decomposition: break the problem into sub-goals, "
-                "solve each, then recombine."
-            )
-            conclusion = (
-                f"Approach «{problem}» in stages: (1) clarify success criteria, "
-                "(2) inventory resources and constraints, (3) execute the highest-leverage "
-                "next action, (4) review and adapt."
-            )
-
-        if ctx.memories:
-            confidence = min(0.85, confidence + 0.1)
-
-        return {
-            "analysis": analysis,
-            "conclusion": conclusion,
-            "confidence": confidence,
-            "alternatives": alternatives,
-            "risks": risks,
-        }
+        primary: ReasoningResult,
+        all_results: list[ReasoningResult],
+    ) -> ExplainabilityReport:
+        return ExplainabilityReport(
+            question=problem,
+            relevant_memories=list(ctx.memories)[:8],
+            knowledge_graph_facts=list(ctx.graph_facts)[:8],
+            supporting_documents=list(ctx.documents)[:5],
+            reasoning_strategy=primary.strategy.value,
+            strategies_used=[r.strategy.value for r in all_results],
+            confidence_score=primary.confidence,
+            final_answer=primary.conclusion,
+            trace_summary=[f"({s.kind}) {s.thought}" for s in primary.trace],
+            retrieval_explanation=list(ctx.metadata.get("retrieval_explanation") or []),
+        )
 
     async def _model_assist(
         self,
         problem: str,
         strategy: StrategyKind,
         ctx: ReasoningContext,
-        trace: list[ReasoningStep],
     ) -> str | None:
         if self._models is None:
             return None
         try:
             lm = self._models.get_language_model()
             system = (
-                "You are the SAGE Reasoning Engine. Produce a concise, logical conclusion. "
+                "You are the SAGE Reasoning Engine. Produce a concise conclusion. "
                 f"Strategy: {strategy.value}. Be explainable and practical."
             )
-            ctx_blob = ""
+            parts: list[str] = []
+            if ctx.graph_facts:
+                parts.append("Graph facts:\n- " + "\n- ".join(ctx.graph_facts[:8]))
             if ctx.memories:
-                ctx_blob += "Memories:\n- " + "\n- ".join(ctx.memories[:8]) + "\n"
-            if ctx.knowledge:
-                ctx_blob += "Knowledge:\n- " + "\n- ".join(ctx.knowledge[:8]) + "\n"
-            user = f"Problem: {problem}\n{ctx_blob}\nProvide the best conclusion in 2-4 sentences."
+                parts.append("Memories:\n- " + "\n- ".join(ctx.memories[:8]))
+            if ctx.documents:
+                parts.append("Documents:\n- " + "\n- ".join(ctx.documents[:4]))
+            user = f"Problem: {problem}\n" + "\n".join(parts) + "\n\nConclusion in 2-4 sentences."
             resp = await lm.complete(
                 CompletionRequest(
                     messages=[
@@ -235,9 +251,7 @@ class DefaultReasoningEngine:
                     ]
                 )
             )
-            # Prefer model text only if non-empty and not pure stub banner for generic cases
-            text = (resp.content or "").strip()
-            return text or None
+            return (resp.content or "").strip() or None
         except Exception:
             log.exception("reasoning.model_assist_failed")
             return None

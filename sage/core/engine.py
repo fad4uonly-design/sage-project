@@ -109,6 +109,7 @@ class SageEngine:
           → orchestrator → conversation
         """
         from sage.agents.service import AgentModule
+        from sage.capabilities.service import CapabilitiesModule
         from sage.config.service import ConfigModule
         from sage.conversation.service import ConversationModule
         from sage.db.service import DatabaseModule
@@ -123,21 +124,26 @@ class SageEngine:
         from sage.planning.service import PlanningModule
         from sage.plugins.service import PluginModule
         from sage.reasoning.service import ReasoningModule
+        from sage.retrieval.service import RetrievalModule
         from sage.secrets.service import SecretsModule
         from sage.tools.service import ToolsModule
 
         b = self.bootstrapper
+        # Foundation
         b.register_module("database", lambda c: DatabaseModule(c), critical=True)
         b.register_module("secrets", lambda c: SecretsModule(c), critical=False)
         b.register_module("permissions", lambda c: PermissionsModule(c), critical=True)
         b.register_module("config", lambda c: ConfigModule(c), critical=True)
         b.register_module("memory", lambda c: MemoryModule(c), critical=True)
+        # Intelligence layer
         b.register_module("knowledge", lambda c: KnowledgeModule(c), critical=False)
         b.register_module("models", lambda c: ModelsModule(c), critical=False)
+        b.register_module("retrieval", lambda c: RetrievalModule(c), critical=False)
         b.register_module("reasoning", lambda c: ReasoningModule(c), critical=False)
         b.register_module("learning", lambda c: LearningModule(c), critical=False)
         b.register_module("planning", lambda c: PlanningModule(c), critical=False)
         b.register_module("tools", lambda c: ToolsModule(c), critical=False)
+        b.register_module("capabilities", lambda c: CapabilitiesModule(c), critical=False)
         b.register_module("agents", lambda c: AgentModule(c), critical=False)
         b.register_module("plugins", lambda c: PluginModule(c), critical=False)
         b.register_module("files", lambda c: FileModule(c), critical=False)

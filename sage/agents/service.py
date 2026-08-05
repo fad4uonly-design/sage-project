@@ -29,7 +29,7 @@ class AgentModule(BaseModule):
     async def _on_initialize(self) -> None:
         settings = self.container.resolve(Settings)
         events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
-        self._orch = DefaultAgentOrchestrator(events)
+        self._orch = DefaultAgentOrchestrator(events, container=self.container)
         if settings.agents.enabled:
             for agent in (
                 GeneralAssistantAgent(self.container),

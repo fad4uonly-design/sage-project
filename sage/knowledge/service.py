@@ -1,4 +1,4 @@
-"""Knowledge manager implementation (text-first; rich parsers in later milestones)."""
+"""Knowledge manager — documents + knowledge graph integration."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ from sage.db.connection import Database
 from sage.db.repository import BaseRepository
 from sage.events.bus import EventBus
 from sage.events.events import Event, KnowledgeEvents
+from sage.knowledge.graph.interfaces import KnowledgeGraph
+from sage.knowledge.graph.store import SQLiteKnowledgeGraph
 from sage.knowledge.interfaces import KnowledgeManager
 from sage.knowledge.models import DocumentRef, DocumentStatus, KnowledgeChunk, KnowledgeHit
 from sage.logging import get_logger
@@ -22,7 +24,6 @@ from sage.utils.time import utcnow_iso
 
 log = get_logger(__name__)
 
-# Keyword → category hints
 _CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
     "agriculture": ("crop", "soil", "farm", "harvest", "irrigation", "livestock"),
     "finance": ("budget", "invoice", "revenue", "profit", "investment", "cashflow"),
@@ -36,10 +37,20 @@ _CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
 
 
 class SQLiteKnowledgeManager(BaseRepository):
-    def __init__(self, db: Database, events: EventBus, settings: Settings) -> None:
+    def __init__(
+        self,
+        db: Database,
+        events: EventBus,
+        settings: Settings,
+        graph: KnowledgeGraph | None = None,
+    ) -> None:
         super().__init__(db)
         self._events = events
         self._settings = settings
+        self._graph = graph
+
+    def bind_graph(self, graph: KnowledgeGraph) -> None:
+        self._graph = graph
 
     async def ingest(self, path: Path | str, *, category: str | None = None) -> DocumentRef:
         p = Path(path).expanduser().resolve()
@@ -110,14 +121,52 @@ class SQLiteKnowledgeManager(BaseRepository):
                 (ch.id, ch.document_id, ch.chunk_index, ch.content, self.dumps(ch.metadata)),
             )
 
+        # Knowledge graph extraction from full text + per-chunk mentions
+        graph_stats = {"entities": 0, "edges": 0}
+        if self._graph is not None:
+            try:
+                extraction = await self._graph.extract_and_merge(
+                    text,
+                    source="document",
+                    source_ref=doc.id,
+                    document_id=doc.id,
+                )
+                graph_stats = {
+                    "entities": len(extraction.entities),
+                    "edges": len(extraction.edges),
+                }
+                # Link document title entity
+                if doc.title:
+                    await self._graph.extract_and_merge(
+                        f"{doc.title} is a document about {doc.category or 'knowledge'}",
+                        source="document_meta",
+                        source_ref=doc.id,
+                        document_id=doc.id,
+                    )
+            except Exception:
+                log.exception("knowledge.graph_extract_failed", doc=doc.id)
+
         await self._events.publish(
             Event(
                 type=KnowledgeEvents.INGESTED,
-                payload={"id": doc.id, "path": doc.path, "category": doc.category, "chunks": len(chunks)},
+                payload={
+                    "id": doc.id,
+                    "path": doc.path,
+                    "category": doc.category,
+                    "chunks": len(chunks),
+                    "graph": graph_stats,
+                },
                 source="knowledge",
             )
         )
-        log.info("knowledge.ingested", id=doc.id, path=str(p), chunks=len(chunks))
+        log.info(
+            "knowledge.ingested",
+            id=doc.id,
+            path=str(p),
+            chunks=len(chunks),
+            graph_entities=graph_stats["entities"],
+            graph_edges=graph_stats["edges"],
+        )
         return doc
 
     async def search(self, query: str, *, limit: int = 10) -> list[KnowledgeHit]:
@@ -180,6 +229,12 @@ class SQLiteKnowledgeManager(BaseRepository):
             """,
             (rid, source_id, target_id, relation, utcnow_iso()),
         )
+        # Mirror into knowledge graph when ids look like entity ids or names
+        if self._graph is not None:
+            try:
+                await self._graph.link(source_id, relation, target_id, confidence=0.7, provenance="manual")
+            except Exception:
+                log.debug("knowledge.graph_mirror_skipped", source=source_id, target=target_id)
         await self._events.publish(
             Event(
                 type=KnowledgeEvents.RELATED,
@@ -215,13 +270,10 @@ class SQLiteKnowledgeManager(BaseRepository):
         )
         return int(val or 0)
 
-    # --- helpers ---
-
     def _extract_text(self, path: Path, raw: bytes) -> str:
         ext = path.suffix.lower()
         if ext in {".txt", ".md", ".csv", ".py", ".json", ".yaml", ".yml", ".toml", ".log"}:
             return raw.decode("utf-8", errors="replace")
-        # Placeholder for PDF/DOCX/OCR — return notice + any decodable text
         try:
             return raw.decode("utf-8")
         except UnicodeDecodeError:
@@ -267,23 +319,52 @@ class SQLiteKnowledgeManager(BaseRepository):
 
 class KnowledgeModule(BaseModule):
     name = "knowledge"
-    version = "0.1.0"
+    version = "0.2.0"
     is_critical = False
 
     def __init__(self, container: Container) -> None:
         super().__init__(container)
         self._mgr: SQLiteKnowledgeManager | None = None
+        self._graph: SQLiteKnowledgeGraph | None = None
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
         events = self.container.resolve(EventBus)  # type: ignore[type-abstract]
         settings = self.container.resolve(Settings)
-        self._mgr = SQLiteKnowledgeManager(db, events, settings)
+        self._graph = SQLiteKnowledgeGraph(db, events)
+        self._mgr = SQLiteKnowledgeManager(db, events, settings, graph=self._graph)
+        self.container.register_instance(KnowledgeGraph, self._graph)  # type: ignore[type-abstract]
+        self.container.register_instance(SQLiteKnowledgeGraph, self._graph)
         self.container.register_instance(KnowledgeManager, self._mgr)  # type: ignore[type-abstract]
         self.container.register_instance(SQLiteKnowledgeManager, self._mgr)
 
+        # Seed a small core ontology
+        await self._seed_core_ontology()
+
+    async def _seed_core_ontology(self) -> None:
+        assert self._graph is not None
+        seed_text = """
+        Tomato is a crop. Tomato requires water. Tomato requires soil.
+        Tomato grows in warm climate. Tomato is affected by blight.
+        Tomato harvested after 90 days. Irrigation is used for water.
+        Basil is a crop. Basil requires water. Greenhouse is a place.
+        Budget is a metric. Revenue is a metric. SAGE is a concept.
+        Orchestrator is a concept. Memory is a concept.
+        """
+        try:
+            await self._graph.extract_and_merge(seed_text, source="seed_ontology", source_ref="boot")
+        except Exception:
+            log.exception("knowledge.seed_failed")
+
     async def _on_health(self) -> HealthStatus | None:
-        if self._mgr is None:
+        if self._mgr is None or self._graph is None:
             return HealthStatus.unhealthy(self.name, "not initialized")
         n = await self._mgr.count_documents()
-        return HealthStatus.healthy(self.name, "ok", documents=n)
+        stats = await self._graph.stats()
+        return HealthStatus.healthy(
+            self.name,
+            "ok",
+            documents=n,
+            kg_entities=stats.get("entities", 0),
+            kg_edges=stats.get("edges", 0),
+        )

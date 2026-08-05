@@ -13,7 +13,7 @@ async def test_boot_and_health(engine: SageEngine) -> None:
     health = await engine.health()
     assert health.is_ready
     names = {m.name for m in health.modules}
-    for required in ("database", "memory", "conversation"):
+    for required in ("database", "memory", "conversation", "orchestrator", "knowledge"):
         assert required in names
 
 

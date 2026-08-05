@@ -8,7 +8,7 @@ and assists through a modular, privacy-first architecture.
 
 from __future__ import annotations
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 __tagline__ = "Learn Better. Think Better. Live Better."
 
 from sage.core.engine import EngineState, SageEngine
