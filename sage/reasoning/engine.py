@@ -93,9 +93,9 @@ class DefaultReasoningEngine:
         if len(results) > 1:
             primary = self._fuse(results)
 
-        # Optional model polish of conclusion (does not replace trace)
+        # Optional model polish — skip stub/offline banners so strategy conclusions stay clean
         polished = await self._model_assist(problem, primary.strategy, ctx)
-        if polished and not polished.startswith("[SAGE stub"):
+        if polished and self._is_usable_model_text(polished):
             primary.conclusion = polished
             primary.trace.append(
                 ReasoningStep(
@@ -221,6 +221,20 @@ class DefaultReasoningEngine:
             retrieval_explanation=list(ctx.metadata.get("retrieval_explanation") or []),
         )
 
+    def _is_usable_model_text(self, text: str) -> bool:
+        lower = text.lower()
+        if not text.strip():
+            return False
+        if text.startswith("[SAGE stub"):
+            return False
+        if "stub model" in lower or "stub mode" in lower:
+            return False
+        if lower.startswith("reasoning (stub)"):
+            return False
+        if "connect a real model provider" in lower:
+            return False
+        return True
+
     async def _model_assist(
         self,
         problem: str,
@@ -231,9 +245,12 @@ class DefaultReasoningEngine:
             return None
         try:
             lm = self._models.get_language_model()
+            if getattr(lm, "provider", "") == "stub":
+                return None
             system = (
                 "You are the SAGE Reasoning Engine. Produce a concise conclusion. "
-                f"Strategy: {strategy.value}. Be explainable and practical."
+                f"Strategy: {strategy.value}. Be explainable and practical. "
+                "Output only the conclusion text, no preamble."
             )
             parts: list[str] = []
             if ctx.graph_facts:
