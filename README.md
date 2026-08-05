@@ -84,6 +84,13 @@ sage automations --enable morning_farm_briefing
 sage automations --run morning_farm_briefing
 sage audit --limit 20
 
+# Cognitive context (v0.5.0)
+sage project create --name SAGE --description "Personal AI OS" --activate
+sage goal create --title "Build AI Operating System" --horizon long
+sage context --refresh
+sage ask "what needs attention?"
+sage reflect
+
 # Run tests
 pytest
 ```
@@ -100,11 +107,12 @@ pytest
 | **0.3.0** | Domain intelligence — Agriculture, Finance, Business, Programming + Decision Engine + workflows | ✅ |
 | **0.3.1** | Business Intelligence Suite — 12 advisors, BI KG, 40+ workflows | ✅ |
 | **0.3.2** | Shared Skill Library — cross-domain reusable skills for automation | ✅ |
-| **0.4.0** | Automation — Workflow Engine, Tools, Approval, Audit, Automation Manager | ✅ Current |
-| **0.5.0** | Context Engine + UX foundations | Planned |
+| **0.4.0** | Automation — Workflow Engine, Tools, Approval, Audit, Automation Manager | ✅ |
+| **0.5.0** | Cognitive Context Engine — projects, goals, fusion, suggestions, reflection | ✅ Current |
+| **0.6.0** | User Experience — web, desktop, mobile, voice, REST/WS | Planned |
 | **1.0.0** | Production — hardening, backup/recovery, stable APIs | Planned |
 
-See [docs/architecture/](docs/architecture/) — especially [AUTOMATION_v0.4.0.md](docs/architecture/AUTOMATION_v0.4.0.md) and [SKILL_LIBRARY_v0.3.2.md](docs/architecture/SKILL_LIBRARY_v0.3.2.md).
+See [docs/architecture/](docs/architecture/) — especially [CONTEXT_v0.5.0.md](docs/architecture/CONTEXT_v0.5.0.md) and [AUTOMATION_v0.4.0.md](docs/architecture/AUTOMATION_v0.4.0.md).
 
 ---
 
@@ -145,6 +153,10 @@ sage/
 │   ├── approval/         # Approval Engine
 │   ├── audit/            # Execution Audit
 │   ├── automation/       # Automation Manager
+│   ├── projects/         # Project Manager
+│   ├── goals/            # Goal Engine
+│   ├── context/          # Cognitive Context Engine
+│   ├── reflection/       # Reflection Engine
 │   ├── plugins/          # Plugin manager
 │   ├── tools/            # Tool Framework
 │   ├── conversation/     # Conversation engine

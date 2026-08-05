@@ -313,5 +313,161 @@ def audit_cmd(
     _run(_go())
 
 
+@app.command("context")
+def context_cmd(
+    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    refresh: bool = typer.Option(False, "--refresh", help="Regenerate proactive suggestions"),
+) -> None:
+    """Show fused cognitive context and suggestions."""
+
+    async def _go() -> None:
+        from sage.context.engine import CognitiveContextEngine
+        from sage.core.engine import SageEngine
+
+        engine = await SageEngine.create(overrides=_overrides(data_dir))
+        try:
+            cce = engine.container.resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+            if refresh:
+                await cce.generate_suggestions()
+            ctx = await cce.fuse()
+            console.print(f"[bold cyan]Cognitive Context[/bold cyan]\n{ctx.summary}\n")
+            if ctx.active_projects:
+                console.print("[green]Projects[/green]")
+                for p in ctx.active_projects[:8]:
+                    console.print(f"  • {p.get('name')} [{p.get('status')}] p={p.get('priority')}")
+            if ctx.goals:
+                console.print("[green]Goals[/green]")
+                for g in ctx.goals[:8]:
+                    console.print(
+                        f"  • ({g.get('horizon')}) {g.get('title')} · {float(g.get('progress') or 0):.0%}"
+                    )
+            if ctx.suggestions:
+                console.print("[yellow]Suggestions[/yellow] (advisory only)")
+                for s in ctx.suggestions[:8]:
+                    console.print(f"  • {s.get('title')}")
+                    console.print(f"    [dim]{s.get('body')}[/dim]")
+            cont = ctx.session
+            console.print(
+                f"\n[dim]pending_approvals={len(ctx.pending_approvals)} "
+                f"open_workflows={len(ctx.running_workflows)} "
+                f"active_project={cont.active_project_id}[/dim]"
+            )
+        finally:
+            await engine.shutdown()
+
+    _run(_go())
+
+
+@app.command("project")
+def project_cmd(
+    action: str = typer.Argument("list", help="list|create|get"),
+    name: Optional[str] = typer.Option(None, "--name"),
+    description: str = typer.Option("", "--description"),
+    project_id: Optional[str] = typer.Option(None, "--id"),
+    activate: bool = typer.Option(False, "--activate"),
+    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+) -> None:
+    """Manage projects (Cognitive Context)."""
+
+    async def _go() -> None:
+        from sage.context.engine import CognitiveContextEngine
+        from sage.core.engine import SageEngine
+        from sage.projects.manager import ProjectManager
+
+        engine = await SageEngine.create(overrides=_overrides(data_dir))
+        try:
+            pm = engine.container.resolve(ProjectManager)  # type: ignore[type-abstract]
+            cce = engine.container.try_resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+            if action == "create":
+                if not name:
+                    console.print("[red]--name required[/red]")
+                    return
+                p = await pm.create(name, description=description)
+                if activate and cce:
+                    await cce.set_active_project(p.id)
+                console.print(f"[green]Created[/green] {p.id}  {p.name}")
+            elif action == "get" and project_id:
+                p = await pm.get(project_id)
+                console.print(p.model_dump() if p else "not found")
+            else:
+                rows = await pm.list(limit=30)
+                table = Table(title="Projects")
+                table.add_column("ID")
+                table.add_column("Name")
+                table.add_column("Status")
+                table.add_column("Priority")
+                for p in rows:
+                    table.add_row(p.id[:16], p.name, p.status.value, f"{p.priority:.2f}")
+                console.print(table)
+        finally:
+            await engine.shutdown()
+
+    _run(_go())
+
+
+@app.command("goal")
+def goal_cmd(
+    action: str = typer.Argument("list", help="list|create|complete"),
+    title: Optional[str] = typer.Option(None, "--title"),
+    horizon: str = typer.Option("medium", "--horizon", help="long|medium|daily"),
+    goal_id: Optional[str] = typer.Option(None, "--id"),
+    project_id: Optional[str] = typer.Option(None, "--project"),
+    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+) -> None:
+    """Manage goals (Cognitive Context)."""
+
+    async def _go() -> None:
+        from sage.core.engine import SageEngine
+        from sage.goals.engine import GoalEngine
+
+        engine = await SageEngine.create(overrides=_overrides(data_dir))
+        try:
+            ge = engine.container.resolve(GoalEngine)  # type: ignore[type-abstract]
+            if action == "create":
+                if not title:
+                    console.print("[red]--title required[/red]")
+                    return
+                g = await ge.create(title, horizon=horizon, project_id=project_id)
+                console.print(f"[green]Created[/green] {g.id}  {g.title} ({g.horizon.value})")
+            elif action == "complete" and goal_id:
+                g = await ge.complete(goal_id)
+                console.print(f"[green]Completed[/green] {g.title}")
+            else:
+                rows = await ge.list(limit=30)
+                table = Table(title="Goals")
+                table.add_column("ID")
+                table.add_column("Horizon")
+                table.add_column("Title")
+                table.add_column("Progress")
+                for g in rows:
+                    table.add_row(g.id[:14], g.horizon.value, g.title[:40], f"{g.progress:.0%}")
+                console.print(table)
+        finally:
+            await engine.shutdown()
+
+    _run(_go())
+
+
+@app.command("reflect")
+def reflect_cmd(
+    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+) -> None:
+    """Run the Reflection Engine once and print findings."""
+
+    async def _go() -> None:
+        from sage.core.engine import SageEngine
+        from sage.reflection.engine import ReflectionEngine
+
+        engine = await SageEngine.create(overrides=_overrides(data_dir))
+        try:
+            re_ = engine.container.resolve(ReflectionEngine)  # type: ignore[type-abstract]
+            reflection = await re_.reflect()
+            console.print(reflection.format())
+        finally:
+            await engine.shutdown()
+
+    _run(_go())
+
+
 if __name__ == "__main__":
     app()

@@ -21,6 +21,7 @@ from sage.orchestrator.models import (
     PipelineStep,
     StepResult,
 )
+from sage.utils.ids import new_id
 
 log = get_logger(__name__)
 
@@ -120,7 +121,14 @@ class DefaultOrchestrator:
         ctx.setdefault("knowledge", [])
         ctx.setdefault("preferences", {})
 
+        # Fuse cognitive context when available (v0.5.0)
+        await self._merge_unified_context(ctx, message)
+
         intent = await self.analyze_intent(message, context=ctx)
+        # Proactive suggestions intent
+        if intent.kind.value == "chat" and self._is_suggestions_query(message):
+            return await self._handle_suggestions(message, ctx, session_id, user_id)
+
         plan = self._build_plan(intent)
         step_results: list[StepResult] = []
         response_parts: list[str] = []
@@ -501,6 +509,8 @@ class DefaultOrchestrator:
             "memories": list(ctx.get("memories") or []),
             "graph_facts": list(ctx.get("graph_facts") or []),
             "documents": list(ctx.get("documents") or []),
+            "priorities": list(ctx.get("priorities") or []),
+            "context_summary": ctx.get("context_summary") or "",
         }
         # Provide decision engine hook for decision skills
         from sage.decision.engine import DecisionEngine
@@ -519,6 +529,112 @@ class DefaultOrchestrator:
         if result is None or not result.success:
             return None
         return f"### SAGE Skill Library\n\n{result.format()}"
+
+    async def _merge_unified_context(self, ctx: dict[str, Any], message: str) -> None:
+        from sage.context.engine import CognitiveContextEngine
+
+        cce = self._container.try_resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+        if not cce:
+            return
+        try:
+            unified = await cce.fuse()
+            fused = unified.as_orchestrator_context()
+            # Prefer fused memories/graph when retrieve hasn't filled them yet
+            if not ctx.get("memories") and fused.get("memories"):
+                ctx["memories"] = list(fused["memories"])
+            if not ctx.get("graph_facts") and fused.get("graph_facts"):
+                ctx["graph_facts"] = list(fused["graph_facts"])
+            for key in (
+                "context_summary",
+                "active_projects",
+                "priorities",
+                "open_tasks",
+                "long_term_interests",
+                "suggestions",
+                "environment",
+                "pending_approvals_count",
+                "running_workflows_count",
+            ):
+                if key in fused:
+                    ctx[key] = fused[key]
+            # Track interest from user message tokens
+            for token in message.lower().replace(",", " ").split():
+                if len(token) >= 5 and token.isalpha():
+                    await cce.record_interest(token, weight=0.02)
+                    break
+        except Exception:
+            log.exception("orchestrator.context_fuse_failed")
+
+    def _is_suggestions_query(self, message: str) -> bool:
+        lower = message.lower().strip()
+        return any(
+            p in lower
+            for p in (
+                "suggestions",
+                "what should i focus",
+                "what needs attention",
+                "proactive",
+                "remind me what",
+                "session status",
+                "context summary",
+                "where did we leave",
+            )
+        )
+
+    async def _handle_suggestions(
+        self,
+        message: str,
+        ctx: dict[str, Any],
+        session_id: str | None,
+        user_id: str,
+    ) -> OrchestratorResult:
+        from sage.context.engine import CognitiveContextEngine
+        from sage.orchestrator.models import Intent, IntentKind, OrchestratorResult
+
+        cce = self._container.try_resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+        lines = ["### Cognitive Context", ""]
+        if cce:
+            try:
+                await cce.generate_suggestions()
+                unified = await cce.fuse()
+                lines.append(f"**Summary:** {unified.summary}")
+                lines.append("")
+                if unified.session.active_project_id:
+                    lines.append(f"**Active project:** {unified.session.active_project_id}")
+                if unified.priorities:
+                    lines.append("**Priorities:**")
+                    lines.extend(f"- {p}" for p in unified.priorities[:6])
+                if unified.pending_approvals:
+                    lines.append(f"\n**Pending approvals:** {len(unified.pending_approvals)}")
+                if unified.running_workflows:
+                    lines.append(f"**Open workflows:** {len(unified.running_workflows)}")
+                lines.append("")
+                lines.append("**Suggestions** (advisory only — nothing runs unless you approve):")
+                sugg = await cce.suggestions(limit=8)
+                if not sugg:
+                    lines.append("- No open suggestions right now.")
+                for s in sugg:
+                    lines.append(f"- **{s.title}** ({s.category}, p={s.priority:.2f})")
+                    lines.append(f"  {s.body}")
+            except Exception as exc:
+                lines.append(f"Context unavailable: {exc}")
+        else:
+            lines.append("Context engine not loaded.")
+
+        text = "\n".join(lines)
+        return OrchestratorResult(
+            plan_id=new_id("xplan"),
+            intent=Intent(
+                kind=IntentKind.CHAT,
+                confidence=0.9,
+                subject=message,
+                raw_message=message,
+                hints=["context:suggestions"],
+            ),
+            response=text,
+            steps=[],
+            metadata={"session_id": session_id, "user_id": user_id, "mode": "context"},
+        )
 
     async def _step_compose(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str:
         # If earlier steps already produced a user-facing artifact for non-chat intents, use it
@@ -553,6 +669,14 @@ class DefaultOrchestrator:
             return f"I heard you, but no language model is configured. You said: «{message}»"
 
         extra_bits: list[str] = []
+        if ctx.get("context_summary"):
+            extra_bits.append(f"Cognitive context: {ctx['context_summary']}")
+        if ctx.get("priorities"):
+            extra_bits.append("Priorities:\n- " + "\n- ".join(str(p) for p in ctx["priorities"][:5]))
+        if ctx.get("active_projects"):
+            extra_bits.append(
+                "Active projects:\n- " + "\n- ".join(str(p) for p in ctx["active_projects"][:4])
+            )
         if ctx.get("memories"):
             extra_bits.append("Relevant memories:\n- " + "\n- ".join(ctx["memories"][:5]))
         if ctx.get("graph_facts"):

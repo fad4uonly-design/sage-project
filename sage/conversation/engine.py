@@ -153,6 +153,16 @@ class DefaultConversationEngine(BaseRepository):
                 source="conversation",
             )
         )
+        # Session continuity: remember last turn blurb
+        try:
+            from sage.context.engine import CognitiveContextEngine
+
+            cce = self._container.try_resolve(CognitiveContextEngine)
+            if cce:
+                blurb = f"User: {message[:120]} | SAGE: {reply[:160]}"
+                await cce._set_state("last_conversation_summary", blurb)  # noqa: SLF001
+        except Exception:
+            pass
         return turn
 
     async def end_session(self, session_id: str) -> None:

@@ -114,10 +114,12 @@ class SageEngine:
         from sage.automation.service import AutomationModule
         from sage.capabilities.service import CapabilitiesModule
         from sage.config.service import ConfigModule
+        from sage.context.service import ContextModule
         from sage.conversation.service import ConversationModule
         from sage.db.service import DatabaseModule
         from sage.decision.service import DecisionModule
         from sage.files.service import FileModule
+        from sage.goals.service import GoalsModule
         from sage.knowledge.service import KnowledgeModule
         from sage.learning.service import LearningModule
         from sage.memory.service import MemoryModule
@@ -127,7 +129,9 @@ class SageEngine:
         from sage.permissions.service import PermissionsModule
         from sage.planning.service import PlanningModule
         from sage.plugins.service import PluginModule
+        from sage.projects.service import ProjectsModule
         from sage.reasoning.service import ReasoningModule
+        from sage.reflection.service import ReflectionModule
         from sage.retrieval.service import RetrievalModule
         from sage.secrets.service import SecretsModule
         from sage.skills.service import SkillsModule
@@ -159,6 +163,11 @@ class SageEngine:
         # Domain intelligence
         b.register_module("agents", lambda c: AgentModule(c), critical=False)
         b.register_module("automation", lambda c: AutomationModule(c), critical=False)
+        # Cognitive context (after projects/goals dependencies exist via DB)
+        b.register_module("projects", lambda c: ProjectsModule(c), critical=False)
+        b.register_module("goals", lambda c: GoalsModule(c), critical=False)
+        b.register_module("context", lambda c: ContextModule(c), critical=False)
+        b.register_module("reflection", lambda c: ReflectionModule(c), critical=False)
         b.register_module("plugins", lambda c: PluginModule(c), critical=False)
         b.register_module("files", lambda c: FileModule(c), critical=False)
         b.register_module("orchestrator", lambda c: OrchestratorModule(c), critical=True)
