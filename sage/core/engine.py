@@ -113,6 +113,7 @@ class SageEngine:
         from sage.config.service import ConfigModule
         from sage.conversation.service import ConversationModule
         from sage.db.service import DatabaseModule
+        from sage.decision.service import DecisionModule
         from sage.files.service import FileModule
         from sage.knowledge.service import KnowledgeModule
         from sage.learning.service import LearningModule
@@ -142,8 +143,10 @@ class SageEngine:
         b.register_module("reasoning", lambda c: ReasoningModule(c), critical=False)
         b.register_module("learning", lambda c: LearningModule(c), critical=False)
         b.register_module("planning", lambda c: PlanningModule(c), critical=False)
+        b.register_module("decision", lambda c: DecisionModule(c), critical=False)
         b.register_module("tools", lambda c: ToolsModule(c), critical=False)
         b.register_module("capabilities", lambda c: CapabilitiesModule(c), critical=False)
+        # Domain intelligence
         b.register_module("agents", lambda c: AgentModule(c), critical=False)
         b.register_module("plugins", lambda c: PluginModule(c), critical=False)
         b.register_module("files", lambda c: FileModule(c), critical=False)

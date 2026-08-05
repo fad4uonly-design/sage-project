@@ -110,23 +110,84 @@ class IntentAnalyzer:
                 raw_message=text,
                 hints=["keyword:research"],
             )
-        if any(k in lower for k in ("agriculture", "crop", "farm", "irrigation")):
+        if any(
+            k in lower
+            for k in (
+                "agriculture",
+                "crop",
+                "farm",
+                "irrigation",
+                "fertilizer",
+                "blight",
+                "harvest",
+                "greenhouse",
+                "soil",
+                "pest",
+            )
+        ):
             return Intent(
                 kind=IntentKind.AGENT,
-                confidence=0.55,
+                confidence=0.72,
                 subject=text,
                 raw_message=text,
                 entities={"domain": "agriculture"},
                 hints=["domain:agriculture"],
             )
-        if any(k in lower for k in ("invoice", "budget", "ledger", "accounting")):
+        if any(
+            k in lower
+            for k in (
+                "invoice",
+                "budget",
+                "ledger",
+                "accounting",
+                "loan",
+                "cash flow",
+                "cashflow",
+                "investment",
+                "roi",
+                "expense",
+            )
+        ):
             return Intent(
                 kind=IntentKind.AGENT,
-                confidence=0.55,
+                confidence=0.72,
                 subject=text,
                 raw_message=text,
                 entities={"domain": "finance"},
                 hints=["domain:finance"],
+            )
+        if any(
+            k in lower
+            for k in ("swot", "business plan", "go-to-market", "gtm", "kpi", "pricing strategy", "competitor")
+        ):
+            return Intent(
+                kind=IntentKind.AGENT,
+                confidence=0.7,
+                subject=text,
+                raw_message=text,
+                entities={"domain": "business"},
+                hints=["domain:business"],
+            )
+        if any(
+            k in lower
+            for k in (
+                "write code",
+                "implement",
+                "debug",
+                "refactor",
+                "unit test",
+                "pytest",
+                "sage plugin",
+                "traceback",
+            )
+        ):
+            return Intent(
+                kind=IntentKind.AGENT,
+                confidence=0.7,
+                subject=text,
+                raw_message=text,
+                entities={"domain": "programming"},
+                hints=["domain:programming"],
             )
 
         return Intent(

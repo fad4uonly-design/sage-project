@@ -1,4 +1,4 @@
-"""Agent Framework."""
+"""Agent Framework — core + domain specialists + workflows."""
 
 from sage.agents.interfaces import Agent, AgentOrchestrator
 from sage.agents.service import AgentModule
