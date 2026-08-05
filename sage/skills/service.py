@@ -31,6 +31,8 @@ class SkillsModule(BaseModule):
         self.container.register_instance(DefaultSkillLibrary, self._lib)
         log.info("skills.ready", count=n)
 
+        # Optional audit wrapper via events is handled by callers (workflow/automation)
+
     async def _on_health(self) -> HealthStatus | None:
         if self._lib is None:
             return HealthStatus.unhealthy(self.name, "not initialized")

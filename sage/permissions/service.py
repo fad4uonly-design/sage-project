@@ -255,15 +255,22 @@ class PermissionsModule(BaseModule):
         self.container.register_instance(PermissionManager, self._mgr)  # type: ignore[type-abstract]
         self.container.register_instance(DefaultPermissionManager, self._mgr)
 
-        # Core principals always trusted for safe ops
-        for perm in (
-            Permission.MEMORY_READ,
-            Permission.MEMORY_WRITE,
-            Permission.TOOLS_INVOKE,
-            Permission.AGENTS_DISPATCH,
-            Permission.NOTIFICATIONS,
-        ):
-            await self._mgr.grant("core", perm, principal_type=PrincipalType.SYSTEM, granted_by="bootstrap")
+        # Core / automation principals trusted for safe ops
+        for principal in ("core", "automation", "cli"):
+            for perm in (
+                Permission.MEMORY_READ,
+                Permission.MEMORY_WRITE,
+                Permission.TOOLS_INVOKE,
+                Permission.AGENTS_DISPATCH,
+                Permission.NOTIFICATIONS,
+                Permission.FILESYSTEM_READ,
+            ):
+                await self._mgr.grant(
+                    principal,
+                    perm,
+                    principal_type=PrincipalType.SYSTEM,
+                    granted_by="bootstrap",
+                )
 
     async def _on_health(self) -> HealthStatus | None:
         if self._mgr is None:

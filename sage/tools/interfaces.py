@@ -1,4 +1,4 @@
-"""Tool protocols."""
+"""Tool protocols — extended for v0.4.0 Tool Framework."""
 
 from __future__ import annotations
 
@@ -17,7 +17,10 @@ class ToolResult(BaseModel):
 class ToolInfo(BaseModel):
     name: str
     description: str
+    category: str = "general"
     parameters_schema: dict[str, Any] = Field(default_factory=dict)
+    permissions: list[str] = Field(default_factory=list)
+    timeout_seconds: float = 30.0
 
 
 @runtime_checkable

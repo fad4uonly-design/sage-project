@@ -109,6 +109,9 @@ class SageEngine:
           → orchestrator → conversation
         """
         from sage.agents.service import AgentModule
+        from sage.approval.service import ApprovalModule
+        from sage.audit.service import AuditModule
+        from sage.automation.service import AutomationModule
         from sage.capabilities.service import CapabilitiesModule
         from sage.config.service import ConfigModule
         from sage.conversation.service import ConversationModule
@@ -129,6 +132,7 @@ class SageEngine:
         from sage.secrets.service import SecretsModule
         from sage.skills.service import SkillsModule
         from sage.tools.service import ToolsModule
+        from sage.workflow.service import WorkflowModule
 
         b = self.bootstrapper
         # Foundation
@@ -145,12 +149,16 @@ class SageEngine:
         b.register_module("learning", lambda c: LearningModule(c), critical=False)
         b.register_module("planning", lambda c: PlanningModule(c), critical=False)
         b.register_module("decision", lambda c: DecisionModule(c), critical=False)
+        # Automation control plane
+        b.register_module("audit", lambda c: AuditModule(c), critical=False)
+        b.register_module("approval", lambda c: ApprovalModule(c), critical=False)
         b.register_module("tools", lambda c: ToolsModule(c), critical=False)
-        # Shared Skill Library (before agents so they can orchestrate skills)
         b.register_module("skills", lambda c: SkillsModule(c), critical=False)
+        b.register_module("workflow", lambda c: WorkflowModule(c), critical=False)
         b.register_module("capabilities", lambda c: CapabilitiesModule(c), critical=False)
         # Domain intelligence
         b.register_module("agents", lambda c: AgentModule(c), critical=False)
+        b.register_module("automation", lambda c: AutomationModule(c), critical=False)
         b.register_module("plugins", lambda c: PluginModule(c), critical=False)
         b.register_module("files", lambda c: FileModule(c), critical=False)
         b.register_module("orchestrator", lambda c: OrchestratorModule(c), critical=True)

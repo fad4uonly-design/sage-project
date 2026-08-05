@@ -77,6 +77,13 @@ sage status
 # Run a one-shot prompt
 sage ask "What do you remember about me?"
 
+# Automation (v0.4.0)
+sage run-workflow business_expansion_report --task "Expand greenhouse sales"
+sage automations
+sage automations --enable morning_farm_briefing
+sage automations --run morning_farm_briefing
+sage audit --limit 20
+
 # Run tests
 pytest
 ```
@@ -92,12 +99,12 @@ pytest
 | **0.2.0** | Intelligence layer — Knowledge Graph, strategies, retrieval, learning, explainability, capabilities | ✅ |
 | **0.3.0** | Domain intelligence — Agriculture, Finance, Business, Programming + Decision Engine + workflows | ✅ |
 | **0.3.1** | Business Intelligence Suite — 12 advisors, BI KG, 40+ workflows | ✅ |
-| **0.3.2** | Shared Skill Library — cross-domain reusable skills for automation | ✅ Current |
-| **0.4.0** | Automation — workflow engine, tools, scheduler jobs, plugins, audit/approval | Next |
-| **0.5.0** | UX — Web dashboard, desktop, REST API, voice | Planned |
+| **0.3.2** | Shared Skill Library — cross-domain reusable skills for automation | ✅ |
+| **0.4.0** | Automation — Workflow Engine, Tools, Approval, Audit, Automation Manager | ✅ Current |
+| **0.5.0** | Context Engine + UX foundations | Planned |
 | **1.0.0** | Production — hardening, backup/recovery, stable APIs | Planned |
 
-See [docs/architecture/](docs/architecture/) — [BUSINESS_INTELLIGENCE_v0.3.1.md](docs/architecture/BUSINESS_INTELLIGENCE_v0.3.1.md), [SKILL_LIBRARY_v0.3.2.md](docs/architecture/SKILL_LIBRARY_v0.3.2.md).
+See [docs/architecture/](docs/architecture/) — especially [AUTOMATION_v0.4.0.md](docs/architecture/AUTOMATION_v0.4.0.md) and [SKILL_LIBRARY_v0.3.2.md](docs/architecture/SKILL_LIBRARY_v0.3.2.md).
 
 ---
 
@@ -133,8 +140,13 @@ sage/
 │   ├── learning/         # Learning engine
 │   ├── planning/         # Planning engine
 │   ├── agents/           # Agent framework
+│   ├── skills/           # Shared Skill Library
+│   ├── workflow/         # Workflow Engine
+│   ├── approval/         # Approval Engine
+│   ├── audit/            # Execution Audit
+│   ├── automation/       # Automation Manager
 │   ├── plugins/          # Plugin manager
-│   ├── tools/            # Tool manager
+│   ├── tools/            # Tool Framework
 │   ├── conversation/     # Conversation engine
 │   ├── files/            # File manager
 │   ├── db/               # Database layer

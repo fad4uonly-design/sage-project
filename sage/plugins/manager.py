@@ -92,7 +92,17 @@ class PluginManager:
         await plugin.on_load(self._container)
         self._plugins[manifest.id] = plugin
         self._enabled[manifest.id] = True
-        log.info("plugins.loaded", id=manifest.id, version=manifest.version)
+        log.info(
+            "plugins.loaded",
+            id=manifest.id,
+            version=manifest.version,
+            agents=manifest.agents,
+            skills=manifest.skills,
+            tools=manifest.tools,
+            workflows=manifest.workflows,
+        )
+        # Plugins may register extensions during on_load via container services.
+        # Manifest lists are declarative documentation + future marketplace metadata.
         return plugin
 
     async def _request_permissions(self, manifest: PluginManifest) -> None:

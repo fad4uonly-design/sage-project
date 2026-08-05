@@ -6,6 +6,7 @@ import ast
 import operator
 from typing import Any
 
+from sage.tools.base import BaseTool
 from sage.tools.interfaces import ToolResult
 from sage.utils.time import utcnow_iso
 
@@ -21,9 +22,10 @@ _SAFE_OPS = {
 }
 
 
-class EchoTool:
+class EchoTool(BaseTool):
     name = "echo"
     description = "Echo back the provided text."
+    category = "utility"
     parameters_schema = {
         "type": "object",
         "properties": {"text": {"type": "string"}},
@@ -34,18 +36,20 @@ class EchoTool:
         return ToolResult(success=True, output=str(params.get("text", "")))
 
 
-class TimeTool:
+class TimeTool(BaseTool):
     name = "current_time"
     description = "Return the current UTC time in ISO-8601 format."
+    category = "utility"
     parameters_schema = {"type": "object", "properties": {}}
 
     async def execute(self, **params: Any) -> ToolResult:
         return ToolResult(success=True, output=utcnow_iso())
 
 
-class CalculatorTool:
+class CalculatorTool(BaseTool):
     name = "calculator"
     description = "Evaluate a simple arithmetic expression (safe AST evaluator)."
+    category = "utility"
     parameters_schema = {
         "type": "object",
         "properties": {"expression": {"type": "string"}},
