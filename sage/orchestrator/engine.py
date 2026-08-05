@@ -490,6 +490,36 @@ class DefaultOrchestrator:
             )
         return "\n".join(lines) if lines else "Status unavailable."
 
+    async def _try_skill(self, message: str, ctx: dict[str, Any]) -> str | None:
+        """Run best matching shared skill for chat-like requests."""
+        from sage.skills.interfaces import SkillLibrary
+
+        lib = self._container.try_resolve(SkillLibrary)  # type: ignore[type-abstract]
+        if not lib:
+            return None
+        skill_ctx = {
+            "memories": list(ctx.get("memories") or []),
+            "graph_facts": list(ctx.get("graph_facts") or []),
+            "documents": list(ctx.get("documents") or []),
+        }
+        # Provide decision engine hook for decision skills
+        from sage.decision.engine import DecisionEngine
+
+        de = self._container.try_resolve(DecisionEngine)  # type: ignore[type-abstract]
+        if de:
+
+            async def _decide_fn(req: Any) -> Any:
+                return await de.decide(req)
+
+            skill_ctx["_decide_fn"] = _decide_fn
+
+        result = await lib.invoke_best(
+            message, context=skill_ctx, principal="core", min_score=0.35
+        )
+        if result is None or not result.success:
+            return None
+        return f"### SAGE Skill Library\n\n{result.format()}"
+
     async def _step_compose(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str:
         # If earlier steps already produced a user-facing artifact for non-chat intents, use it
         artifacts = ctx.get("_artifacts") or []
@@ -507,6 +537,12 @@ class DefaultOrchestrator:
             IntentKind.LEARN,
         } and artifacts:
             return str(artifacts[-1])
+
+        # Shared Skill Library — prefer reusable skills over stub/chat model when matched
+        if intent.kind == IntentKind.CHAT:
+            skill_text = await self._try_skill(message, ctx)
+            if skill_text:
+                return skill_text
 
         from sage.conversation.personality import build_system_prompt
         from sage.models.interfaces import CompletionRequest, Message, ModelRouter
