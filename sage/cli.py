@@ -334,12 +334,16 @@ def context_cmd(
             if ctx.active_projects:
                 console.print("[green]Projects[/green]")
                 for p in ctx.active_projects[:8]:
-                    console.print(f"  • {p.get('name')} [{p.get('status')}] p={p.get('priority')}")
+                    st = p.get("status")
+                    st_s = getattr(st, "value", st)
+                    console.print(f"  • {p.get('name')} [{st_s}] p={p.get('priority')}")
             if ctx.goals:
                 console.print("[green]Goals[/green]")
                 for g in ctx.goals[:8]:
+                    hz = g.get("horizon")
+                    hz_s = getattr(hz, "value", hz)
                     console.print(
-                        f"  • ({g.get('horizon')}) {g.get('title')} · {float(g.get('progress') or 0):.0%}"
+                        f"  • ({hz_s}) {g.get('title')} · {float(g.get('progress') or 0):.0%}"
                     )
             if ctx.suggestions:
                 console.print("[yellow]Suggestions[/yellow] (advisory only)")
