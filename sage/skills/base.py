@@ -19,9 +19,11 @@ class BaseSkill:
         name = self.manifest.name.lower()
         if name in lower or self.manifest.id.replace("_", " ") in lower:
             score += 0.5
-        hits = sum(1 for t in self.manifest.tags if t.lower() in lower)
-        if self.manifest.tags:
-            score += min(0.5, hits / max(len(self.manifest.tags), 1) * 0.8)
+        # Any single strong tag hit should be enough to surface the skill
+        tag_hits = [t for t in self.manifest.tags if t.lower() in lower]
+        if tag_hits:
+            # First hit is valuable; additional hits refine
+            score += min(0.55, 0.35 + 0.1 * (len(tag_hits) - 1))
         if domain and self.manifest.domains:
             if domain in self.manifest.domains or "shared" in self.manifest.domains:
                 score += 0.1

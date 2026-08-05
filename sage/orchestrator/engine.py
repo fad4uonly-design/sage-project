@@ -514,7 +514,7 @@ class DefaultOrchestrator:
             skill_ctx["_decide_fn"] = _decide_fn
 
         result = await lib.invoke_best(
-            message, context=skill_ctx, principal="core", min_score=0.35
+            message, context=skill_ctx, principal="core", min_score=0.30
         )
         if result is None or not result.success:
             return None
