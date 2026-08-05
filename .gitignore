@@ -1,0 +1,69 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+secrets/
+
+# SAGE runtime data (local user data — never commit)
+data/memory/*
+data/knowledge/*
+data/logs/*
+!data/memory/.gitkeep
+!data/knowledge/.gitkeep
+!data/logs/.gitkeep
+!data/config/.gitkeep
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs build
+site/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local plugins (user-installed)
+plugins/local/

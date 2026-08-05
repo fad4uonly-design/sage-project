@@ -1,0 +1,43 @@
+"""Tool protocols."""
+
+from __future__ import annotations
+
+from typing import Any, Protocol, runtime_checkable
+
+from pydantic import BaseModel, Field
+
+
+class ToolResult(BaseModel):
+    success: bool
+    output: Any = None
+    error: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ToolInfo(BaseModel):
+    name: str
+    description: str
+    parameters_schema: dict[str, Any] = Field(default_factory=dict)
+
+
+@runtime_checkable
+class Tool(Protocol):
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def description(self) -> str: ...
+
+    @property
+    def parameters_schema(self) -> dict[str, Any]: ...
+
+    async def execute(self, **params: Any) -> ToolResult: ...
+
+
+@runtime_checkable
+class ToolManager(Protocol):
+    def register(self, tool: Tool) -> None: ...
+
+    async def invoke(self, name: str, **params: Any) -> ToolResult: ...
+
+    def list_tools(self) -> list[ToolInfo]: ...

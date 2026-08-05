@@ -1,0 +1,67 @@
+# SAGE default configuration
+# User overrides: $SAGE_DATA_DIR/config/sage.yaml and environment variables
+
+env: development
+
+data_dir: ./data
+db_path: ./data/sage.db
+
+logging:
+  level: INFO
+  format: console  # console | json
+
+memory:
+  short_term_ttl_minutes: 120
+  consolidation_interval_minutes: 30
+  default_recall_limit: 10
+
+knowledge:
+  watch_enabled: false
+  supported_extensions:
+    - .pdf
+    - .docx
+    - .txt
+    - .md
+    - .csv
+    - .xlsx
+    - .png
+    - .jpg
+    - .jpeg
+
+models:
+  default_provider: stub
+  default_model_name: stub-v1
+  temperature: 0.7
+  max_tokens: 2048
+
+agents:
+  enabled: true
+  max_concurrent_tasks: 4
+
+plugins:
+  enabled: true
+  directories:
+    - ./plugins
+  auto_load: true
+
+tools:
+  # Dangerous tools require explicit allow
+  allow_shell: false
+  allow_network: false
+
+scheduler:
+  enabled: true
+  tick_seconds: 60
+
+api:
+  enabled: false
+  host: 127.0.0.1
+  port: 8742
+
+conversation:
+  max_history_turns: 50
+  default_user_id: default
+
+files:
+  index_on_startup: false
+  watch_directories: []

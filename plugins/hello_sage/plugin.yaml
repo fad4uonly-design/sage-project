@@ -1,0 +1,8 @@
+id: hello_sage
+name: Hello SAGE
+version: 0.1.0
+description: Example plugin that logs a greeting on load
+author: SAGE Team
+entrypoint: plugin:HelloPlugin
+enabled: true
+permissions: []
