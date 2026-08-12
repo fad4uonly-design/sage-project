@@ -1,0 +1,13 @@
+{
+  "change_set_digest": "sha256:cbea3329ad211fd942bc8b2b3adbd90919b88c8d541e9ccf765b3ec0da5bc2b5",
+  "created_at": "2026-08-10T09:00:00+00:00",
+  "package_digest": "sha256:de57f06f66f4a35ed24accf90b4fb9a682f5924b83696686c8a0f46a62b4298b",
+  "package_id": "proposed-integration-package:5cd55c391ce4d4337d12899419b14505",
+  "permission_set_digest": "sha256:4add851b23c801442bcb67ffae019ef660a054ba57da5af1b84ff38128f7f537",
+  "policy_digest": "sha256:a019cc3e6c1bfa90ec950dc3183e0971acdf40a9b54af8dc0e4afd5e248e5de5",
+  "request_id": "approval-request:969363383664116c31c89ae6cf6631b7",
+  "rollback_plan_digest": "sha256:eacaac1bafec3a7ef46114ca905194641497959aec6767c8ad1157d18c28ab60",
+  "scope_digest": "sha256:969363383664116c31c89ae6cf6631b7ad303e335e20c3b81e32036681115562",
+  "state": "PENDING_HUMAN_APPROVAL",
+  "target_snapshot_digest": "sha256:8f25169867ab3edb0e2e1e701315a7d9bee80adf51aaecaf825cda467e83a749"
+}

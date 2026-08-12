@@ -1,0 +1,20 @@
+{
+  "assertions": {
+    "no_hardcoded_model_name_dispatch": true,
+    "no_qwen3_branch": true,
+    "no_qwen_branch": true,
+    "no_qwen_specific_adapter": true,
+    "no_sage_import": true
+  },
+  "findings": {
+    "hardcoded_model_identity_dispatch": [],
+    "qwen3_token": [],
+    "qwen_adapter_filename": [],
+    "qwen_token": [],
+    "sage_import": []
+  },
+  "method": "case-insensitive Qwen token/filename scan plus AST direct model identity operand comparisons to string literals",
+  "production_files_scanned": 49,
+  "scan_root": "src/model_integration_engine",
+  "status": "PASS"
+}

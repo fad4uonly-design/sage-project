@@ -1,0 +1,26 @@
+{
+  "actual_lifecycle_state": "NOT_REACHED",
+  "artifact_kind": "INTEGRATION_PACKAGE_PRODUCTION_STATUS",
+  "desired_lifecycle_state": "DRAFT_PENDING_APPROVAL",
+  "failed_layer": "OLLAMA_DISCOVERY",
+  "fixture_package_substituted": false,
+  "is_integration_package": false,
+  "package_digest": null,
+  "problem_code": "RUNTIME_UNREACHABLE",
+  "prohibited_actions_confirmed": [
+    "no SAGE access",
+    "no application",
+    "no registration",
+    "no approval",
+    "no fixture evidence substitution"
+  ],
+  "reason": "A real package cannot be truthfully built without live runtime/model/deployment evidence.",
+  "required_to_produce": [
+    "reachable external Ollama endpoint",
+    "live /api/version response",
+    "live /api/tags response",
+    "live /api/show response for the supplied runtime reference"
+  ],
+  "schema_version": "0.3.0",
+  "status": "NOT_PRODUCED_ENVIRONMENT_UNAVAILABLE"
+}

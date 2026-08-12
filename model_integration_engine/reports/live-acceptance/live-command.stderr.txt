@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/model-integration-engine/src/model_integration_engine/live_validation.py", line 100, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/home/user/model-integration-engine/src/model_integration_engine/live_validation.py", line 93, in main
+    document = asyncio.run(collect(args.endpoint, args.model))
+  File "/usr/local/lib/python3.13/asyncio/runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/user/model-integration-engine/src/model_integration_engine/live_validation.py", line 23, in collect
+    raise RuntimeError(
+        discovery.problem.message if discovery.problem else "runtime not discovered"
+    )
+RuntimeError: Ollama endpoint is unavailable

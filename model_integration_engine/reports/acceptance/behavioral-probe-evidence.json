@@ -1,0 +1,137 @@
+{
+  "classification": "BEHAVIORAL TEST EVIDENCE",
+  "problem": {
+    "code": "SANDBOX_CONTROL_UNAVAILABLE",
+    "details": {
+      "missing_controls": [
+        "ephemeral_scratch",
+        "network_allowlist",
+        "no_target_mount",
+        "read_only_inputs",
+        "resource_limits"
+      ]
+    },
+    "message": "Mandatory probe isolation controls were not enforced.",
+    "remediation": [
+      "Use a backend that enforces every mandatory control."
+    ],
+    "retryable": false,
+    "stage": "SANDBOXED"
+  },
+  "production_security_boundary": false,
+  "results": [
+    {
+      "capability_key": "generation.text",
+      "evidence_id": null,
+      "kind": "BASIC_GENERATION",
+      "outcome": "BLOCKED",
+      "probe_id": "probe:6de53687ece35dbc6dd5b3964cc58f5e",
+      "reason": "SANDBOX_CONTROL_UNAVAILABLE",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      }
+    },
+    {
+      "capability_key": "instruction.following",
+      "evidence_id": null,
+      "kind": "INSTRUCTION_FOLLOWING",
+      "outcome": "BLOCKED",
+      "probe_id": "probe:2f7e1147b1aaa96ef8cb75a1ffb984ee",
+      "reason": "SANDBOX_CONTROL_UNAVAILABLE",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      }
+    },
+    {
+      "capability_key": "output.schema_constrained",
+      "evidence_id": null,
+      "kind": "STRUCTURED_OUTPUT",
+      "outcome": "BLOCKED",
+      "probe_id": "probe:ff157ea8146f299905e891f9ede6bd23",
+      "reason": "SANDBOX_CONTROL_UNAVAILABLE",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      }
+    },
+    {
+      "capability_key": "protocol.streaming",
+      "evidence_id": null,
+      "kind": "STREAMING",
+      "outcome": "BLOCKED",
+      "probe_id": "probe:95c67278ccad3aecd1ef95ee9b291796",
+      "reason": "SANDBOX_CONTROL_UNAVAILABLE",
+      "subject": {
+        "digest": "sha256:359edfac050fb558df23ee6548b7421d187bd59e1d3b38f08193c98e59bfd349",
+        "kind": "RUNTIME",
+        "subject_id": "runtime:ollama:e3b5e3b26bba5f1efc1c1a65af0c701f",
+        "version": "0.32.6"
+      }
+    },
+    {
+      "capability_key": "failure.invalid_input",
+      "evidence_id": null,
+      "kind": "ERROR_HANDLING",
+      "outcome": "BLOCKED",
+      "probe_id": "probe:7da0eb937c3b3bf5a3d28fe8163e6983",
+      "reason": "SANDBOX_CONTROL_UNAVAILABLE",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      }
+    },
+    {
+      "capability_key": "failure.timeout",
+      "evidence_id": null,
+      "kind": "TIMEOUT_HANDLING",
+      "outcome": "BLOCKED",
+      "probe_id": "probe:85240345c3730b24b72528c70e1c4b4a",
+      "reason": "SANDBOX_CONTROL_UNAVAILABLE",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      }
+    },
+    {
+      "capability_key": "tools.function_calling",
+      "evidence_id": null,
+      "kind": "TOOL_CALLING",
+      "outcome": "BLOCKED",
+      "probe_id": "probe:102fca57550c70a9b865938fb49a61f1",
+      "reason": "SANDBOX_CONTROL_UNAVAILABLE",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      }
+    },
+    {
+      "capability_key": "context.handling",
+      "evidence_id": null,
+      "kind": "CONTEXT_HANDLING",
+      "outcome": "BLOCKED",
+      "probe_id": "probe:0f7c8762d8f43a088936ecdba50f4e1b",
+      "reason": "SANDBOX_CONTROL_UNAVAILABLE",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      }
+    }
+  ],
+  "status": "BLOCKED_PRODUCTION_SANDBOX_UNAVAILABLE"
+}

@@ -1,0 +1,205 @@
+{
+  "description": "Fixture evidence chain; not live model evidence.",
+  "links": [
+    {
+      "from": "evidence:687e2b1631b3a08690197109add0793f",
+      "relation": "supports_hypothesis",
+      "to": "claim:8f2bc6014f173ac9bfa7dd6c28713b2f"
+    },
+    {
+      "from": "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+      "relation": "validates_behavior",
+      "to": "claim:8f2bc6014f173ac9bfa7dd6c28713b2f"
+    },
+    {
+      "from": "claim:8f2bc6014f173ac9bfa7dd6c28713b2f",
+      "relation": "bound_to_composition_inputs",
+      "to": "evidence:0b2f49507c2a20a16abca6d0bf009580"
+    }
+  ],
+  "nodes": [
+    {
+      "evidence": {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:687e2b1631b3a08690197109add0793f",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "capabilities",
+        "observed_value": [
+          "completion",
+          "thinking",
+          "tools"
+        ],
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/capabilities",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      "role": "metadata_declaration"
+    },
+    {
+      "evidence": {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.probes.safe-vertical-slice",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": "env:registry-fixture",
+        "evidence_id": "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+        "kind": "TEST_RESULT",
+        "level": "VALIDATED_BY_TEST",
+        "observation_key": "probe.basic_generation",
+        "observed_value": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "assertions": {
+            "exact_token": true,
+            "unambiguous": true
+          },
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "error_code": null,
+          "error_message": null,
+          "measurements": {}
+        },
+        "outcome": "PASS",
+        "redacted": true,
+        "source": {
+          "digest": "sha256:20d684ad255b1ff4f78921234da5ebadf16110f7f24859bd3c0f9e1e022ccb68",
+          "locator": "/result",
+          "uri": "sandbox://deterministic-fixture-sandbox/fixture-sandbox-run/probe:1e83815becfaacbf47fd72682fd6ae08"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      "role": "behavioral_probe"
+    },
+    {
+      "claim": {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "generation.text",
+        "claim_id": "claim:8f2bc6014f173ac9bfa7dd6c28713b2f",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:687e2b1631b3a08690197109add0793f",
+          "evidence:3a4e0300697d0eac32edb11025b9b1a5"
+        ],
+        "evidence_levels": [
+          "DETECTED_FROM_METADATA",
+          "VALIDATED_BY_TEST"
+        ],
+        "limitations": [
+          "Runtime/model-detail declaration only; behavior is not validated.",
+          "Validated only under the recorded probe profile."
+        ],
+        "parameters": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "environment_id": "env:registry-fixture",
+          "probe_id": "probe:1e83815becfaacbf47fd72682fd6ae08",
+          "runtime_declaration": "completion"
+        },
+        "policy_version": "probe-policy-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "SUPPORTED",
+        "validation": "VALIDATED"
+      },
+      "role": "validated_capability"
+    },
+    {
+      "evidence": {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.identity.reconciler",
+        "collector_version": "0.3.0",
+        "derived_from": [
+          "evidence:4893e4af47892d121145e2e02f0c6268",
+          "evidence:700e8c9136db3c2acc6887056d607e60",
+          "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+          "evidence:b517ef91edf94119cfc8830e6ec9e696",
+          "evidence:ba78310038a3c72c3cb5d30d05f418e8",
+          "evidence:6aa44ecdb03be79c22098cb6a6a294af",
+          "evidence:24101b8cc78cdf2ed02107334a3b3d19",
+          "evidence:ff7ecd2578dfa10b70130a734e8c6cf5",
+          "evidence:e3880e896f0bc32f27b4e5021c1b03af",
+          "evidence:cc99563142e98c0c24d8c2aae7909407",
+          "evidence:39718ba1faf202a63c8ed1ddbf388104",
+          "evidence:a83dee6b1f333e80cb3c735ba060fdba",
+          "evidence:16f006ceb58ebc8d4b28a9f55b5d91f5",
+          "evidence:b07a10502e91d79936ec9b8216151b62",
+          "evidence:aa9d220663f583290aa3b783af1dc3db",
+          "evidence:dc97e29dfd7adfe268089c101a9cee65",
+          "evidence:356db81a2cf43b5d00e0f315e9317d31",
+          "evidence:edb9a2082487aae22af7be7481c02b6c",
+          "evidence:3bc3ad0060fde2ef7f81e5d8d3ea6ef0",
+          "evidence:50e97781e593ffad88abfceec0c1af24",
+          "evidence:7a8aad0ae090f257b1d761a3d12b574a",
+          "evidence:687e2b1631b3a08690197109add0793f",
+          "evidence:ca9194e8af149c08797e1ba6935f9cf0",
+          "evidence:d97b0ae65de7b41ed00f60cc57af2f20",
+          "evidence:cdc3fda04e5e2c7936063dac9835bba8"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:0b2f49507c2a20a16abca6d0bf009580",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "identity.reconciliation",
+        "observed_value": {
+          "alias_collision": false,
+          "components": {
+            "adapter_digest": "sha256:328f9415bd338ec162d1352816a003cacf3fdc1dcacd5b3afb8c5e51c155386b",
+            "adapter_id": "mie.adapter.ollama-chat",
+            "artifact_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "configuration_digest": "sha256:8a9d1306ceadc0a8d2b33be58111fd4c1afc9de82343d30a50920fdba1083152",
+            "deployment_digest": "sha256:21ee53dd379e3d08f61cec549f37bef2cc562e5310b40dba687b7821fb49fe4a",
+            "environment_digest": "sha256:8e0a6b587472548083b877f752935fd2b2dafc241efab0ff9c0faa1eda77ac2b",
+            "metadata_identity": {
+              "general.architecture": "generic_transformer"
+            },
+            "runtime_digest": "sha256:cc374f2415ab9a7d0333f53016763094c785de4b837d91b03060e7412fef71cb",
+            "runtime_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+            "runtime_kind": "ollama",
+            "runtime_model_reference": "example-model:4b"
+          },
+          "identity_material_digest": "sha256:8bc6cd9a3a54f47f37ca15f220a608c0263566224dad08dc5e01e6a719118247",
+          "status": "CONTENT_RECONCILED"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "source": {
+          "digest": "sha256:99842d834ee6b4724f1dc4fa1c57b97213a3f62de034a58ef9ae2308493943db",
+          "locator": "reconcile",
+          "uri": "urn:mie:identity-policy:identity-policy-0.3.0"
+        },
+        "subject": {
+          "digest": "sha256:3bf1608e8ff7db983554d63229db08aedd55eb27d4a2750c4b39f76ef9e2c03c",
+          "kind": "INTEGRATION",
+          "subject_id": "composition:556fffb41c86d3503a092612eac55d60",
+          "version": null
+        }
+      },
+      "role": "composition_identity_derivation"
+    }
+  ],
+  "schema_version": "0.3.0"
+}

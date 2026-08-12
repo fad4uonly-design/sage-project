@@ -1,0 +1,5 @@
+timestamp_utc=2026-08-10T09:56:57Z
+MIE_LIVE_OLLAMA_ENDPOINT=not_configured
+OLLAMA_HOST=not_configured
+ollama_executable=unavailable
+localhost_11434=unreachable

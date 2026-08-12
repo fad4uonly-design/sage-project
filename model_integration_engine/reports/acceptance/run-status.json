@@ -1,0 +1,10 @@
+{
+  "approval_request_created": false,
+  "approval_state": "NOT_REQUESTED",
+  "behavioral_probes": "BLOCKED_PRODUCTION_SANDBOX_UNAVAILABLE",
+  "package_digest": "sha256:fb263d3b91afae9c25977080a9933d4123c7c90e0a7ac759a918d0eb29cebc81",
+  "registry_modified": false,
+  "sage_accessed": false,
+  "security_verdict": "BLOCKED",
+  "state": "DRAFT_PENDING_APPROVAL"
+}

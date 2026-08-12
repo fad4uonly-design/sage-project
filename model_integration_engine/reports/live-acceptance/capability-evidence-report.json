@@ -1,0 +1,62 @@
+{
+  "capabilities": [
+    {
+      "attempt": "BLOCKED_ENVIRONMENT_UNAVAILABLE",
+      "capability_key": "generation.text",
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "attempt": "BLOCKED_ENVIRONMENT_UNAVAILABLE",
+      "capability_key": "instruction.following",
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "attempt": "BLOCKED_ENVIRONMENT_UNAVAILABLE",
+      "capability_key": "protocol.streaming",
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "attempt": "BLOCKED_ENVIRONMENT_UNAVAILABLE",
+      "capability_key": "output.schema_constrained",
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "attempt": "BLOCKED_ENVIRONMENT_UNAVAILABLE",
+      "capability_key": "context.handling",
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "attempt": "NOT_ATTEMPTED_NO_METADATA_AND_NO_PRODUCTION_SANDBOX",
+      "capability_key": "tools.function_calling",
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "attempt": "NOT_CLAIMED_FROM_EXTERNAL_REFERENCE",
+      "capability_key": "reasoning.general",
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    }
+  ],
+  "classification": "ENVIRONMENT_UNAVAILABLE",
+  "evidence_scope": "NO_LIVE_DEPLOYMENT_EVIDENCE",
+  "fixture_evidence_reused": false,
+  "hypotheses_generated_from_live_metadata": false,
+  "live_evidence_ids": [],
+  "probe_qualification": {
+    "arbitrary_model_generated_code_executed": false,
+    "behavioral_results_promoted": false,
+    "production_sandbox_available": false,
+    "reference_subprocess_is_security_boundary": false,
+    "untrusted_generated_code_executed": false
+  },
+  "reason": "Ollama discovery failed before model metadata could be obtained.",
+  "sandbox_status": "BLOCKED_PRODUCTION_SANDBOX_UNAVAILABLE",
+  "schema_version": "0.3.0",
+  "validation_status": "NOT_RUN_ENVIRONMENT_UNAVAILABLE"
+}

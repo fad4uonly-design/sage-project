@@ -1,0 +1,97 @@
+{
+  "entries": [
+    {
+      "capabilities": [
+        {
+          "capability_class": "INTEGRATION_CAPABILITY",
+          "capability_key": "generation.text",
+          "claim_id": "claim:8f2bc6014f173ac9bfa7dd6c28713b2f",
+          "evidence": [
+            {
+              "evidence_digest": "sha256:c5aef268f268d21a2e5d882527a6b09284ea617709da84ed5f7672aac70771b0",
+              "evidence_id": "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+              "outcome": "PASS",
+              "suite_id": "mie.safe-vertical-slice",
+              "suite_version": "0.2.0",
+              "test_run_id": "fixture-sandbox-run"
+            }
+          ],
+          "evidence_levels": [
+            "VALIDATED_BY_TEST"
+          ],
+          "limitations": [
+            "Registered composition only"
+          ],
+          "parameters": {},
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "support": "SUPPORTED",
+          "validated_at": "2026-08-10T09:59:00Z",
+          "validation": "VALIDATED"
+        }
+      ],
+      "composition": {
+        "adapter": {
+          "digest": "sha256:1b8857dbba40e8f044f02920c3bcfb9908bbd02b238d57b260fb63561989e7c5",
+          "kind": "ADAPTER",
+          "subject_id": "mie.adapter.ollama-chat",
+          "version": "0.2.0"
+        },
+        "artifact": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+        "deployment": {
+          "digest": "sha256:3bf1608e8ff7db983554d63229db08aedd55eb27d4a2750c4b39f76ef9e2c03c",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "environment_constraints": {
+          "environment_id": "env:registry-fixture"
+        },
+        "model": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "MODEL",
+          "subject_id": "model:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "runtime": {
+          "digest": "sha256:c703241d88243e4e87d2c23a9739a3c8520fc4d4b9cf3ae6751b38bcd41a3c00",
+          "kind": "RUNTIME",
+          "subject_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+          "version": "0.12.6"
+        }
+      },
+      "disable_reason": null,
+      "disabled_at": null,
+      "health": {
+        "check_id": "health:test",
+        "checked_at": "2026-08-10T09:59:30Z",
+        "evidence_id": "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+        "status": "HEALTHY"
+      },
+      "integration_package": {
+        "approval_event_ref": "approval:test",
+        "package_digest": "sha256:de57f06f66f4a35ed24accf90b4fb9a682f5924b83696686c8a0f46a62b4298b",
+        "package_id": "proposed-integration-package:5cd55c391ce4d4337d12899419b14505",
+        "post_application_regression_id": "regression:post",
+        "post_application_regression_outcome": "PASS",
+        "schema_version": "0.3.0"
+      },
+      "registered_at": "2026-08-10T10:00:00Z",
+      "registered_by": "human:test",
+      "registration_id": "registration:part3-example",
+      "rollback_ref": "rollback-plan:remove-proposed-binding",
+      "status": "ACTIVE"
+    }
+  ],
+  "policy_version": "registry-policy-0.3.0",
+  "previous_registry_digest": "sha256:a44c957122c38865121669458b2478f8c7c830c31112be006a6ea9cb89f299e7",
+  "registry_id": "mie-validated-capability-registry",
+  "registry_version": "1",
+  "schema_version": "0.1.0",
+  "updated_at": "2026-08-10T08:49:35.718201Z"
+}

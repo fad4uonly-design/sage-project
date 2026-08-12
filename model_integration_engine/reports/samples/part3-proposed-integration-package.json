@@ -1,0 +1,2852 @@
+{
+  "adapter_artifact": {
+    "adapter_id": "mie.adapter.ollama-chat",
+    "artifact_digest": "sha256:328f9415bd338ec162d1352816a003cacf3fdc1dcacd5b3afb8c5e51c155386b",
+    "configuration_digest": "sha256:8a9d1306ceadc0a8d2b33be58111fd4c1afc9de82343d30a50920fdba1083152",
+    "resolution": "CONFIGURE",
+    "sandbox_required": false,
+    "trust": "REVIEW_REQUIRED"
+  },
+  "approval_binding_material": {
+    "change_set_digest": "sha256:cbea3329ad211fd942bc8b2b3adbd90919b88c8d541e9ccf765b3ec0da5bc2b5",
+    "permission_set_digest": "sha256:4add851b23c801442bcb67ffae019ef660a054ba57da5af1b84ff38128f7f537",
+    "policy_digest": "sha256:a019cc3e6c1bfa90ec950dc3183e0971acdf40a9b54af8dc0e4afd5e248e5de5",
+    "rollback_plan_digest": "sha256:eacaac1bafec3a7ef46114ca905194641497959aec6767c8ad1157d18c28ab60",
+    "target_snapshot_digest": "sha256:8f25169867ab3edb0e2e1e701315a7d9bee80adf51aaecaf825cda467e83a749"
+  },
+  "artifact_manifest": {
+    "artifacts": [
+      {
+        "artifact_id": "probe-attestation",
+        "digest": "sha256:24744f87ec1567c53f38ed9bdbc66f938638c1675081d9ce09e003f5e4289dc9",
+        "media_type": "application/json",
+        "provenance": {
+          "resolver_id": "mie.artifacts.secure-resolver",
+          "resolver_version": "0.3.0",
+          "run_id": "fixture-sandbox-run",
+          "source_relative_path": "probe-attestation.json",
+          "source_reported_digest": "sha256:24744f87ec1567c53f38ed9bdbc66f938638c1675081d9ce09e003f5e4289dc9"
+        },
+        "size_bytes": 17
+      }
+    ],
+    "manifest_digest": "sha256:ca4c7704b28dabfa8ab93cde6199ad01bdee69a0bbc3e9751235f66ab142b348"
+  },
+  "base_package": {
+    "adapter": {
+      "adapter_id": "mie.adapter.ollama-chat",
+      "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+      "contract_version": "normalized-inference-0.1.0",
+      "disposition": "CONFIGURE",
+      "evidence_ids": [
+        "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+        "evidence:400266cb5d8c4c58c90720c5a67c329f",
+        "evidence:27619d016a2ff6293b83d76e7505752d",
+        "evidence:bc574d50faafbd8140dc0a360979f8bb",
+        "evidence:5de195f603016fa4fac06b78200524c9",
+        "evidence:6ec180942fbaf5268fe177eb77af8d44"
+      ],
+      "generation_reason": null,
+      "limitations": [
+        "Validated only for operations represented by passing probe evidence."
+      ],
+      "origin": "CONFIGURED",
+      "required_permissions": [
+        "network:http://fixture-ollama.invalid:11434"
+      ],
+      "source_manifest_digest": "sha256:1b8857dbba40e8f044f02920c3bcfb9908bbd02b238d57b260fb63561989e7c5",
+      "supported_operations": [
+        "chat",
+        "stream",
+        "structured_output",
+        "tools"
+      ],
+      "trust": "REVIEW_REQUIRED",
+      "validation": "VALIDATED",
+      "version": "0.2.0"
+    },
+    "approval": {
+      "actor_id": null,
+      "conditions": [
+        "Machine lifecycle state is DRAFT_PENDING_APPROVAL; Phase 2 stops here."
+      ],
+      "decided_at": null,
+      "event_ref": null,
+      "scope": null,
+      "state": "NOT_REQUESTED"
+    },
+    "artifacts": [
+      {
+        "artifact_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "evidence_ids": [
+          "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+          "evidence:b517ef91edf94119cfc8830e6ec9e696"
+        ],
+        "file_count": 1,
+        "format": "GGUF",
+        "media_type": "application/x-gguf",
+        "read_only": true,
+        "relationships": [],
+        "size_bytes": 2500000000,
+        "trust": "UNTRUSTED",
+        "uri": "ollama-manifest://runtime-ollama-139e4a4e85635d84b2950f96ebdbd2ef/example-model:4b"
+      }
+    ],
+    "assumptions": [
+      {
+        "assumption_id": "assumption-upstream-revision",
+        "evidence_ids": [
+          "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+          "evidence:b517ef91edf94119cfc8830e6ec9e696"
+        ],
+        "impact": "Logical model identity remains provisional; behavioral evidence is deployment-scoped.",
+        "statement": "The runtime content digest corresponds to the intended upstream model revision.",
+        "verification_status": "UNVERIFIED"
+      }
+    ],
+    "capabilities": [
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "context.handling",
+        "claim_id": "claim:5cc96173c4ce4b8bf2e0ad114bb7319e",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:6ec180942fbaf5268fe177eb77af8d44"
+        ],
+        "evidence_levels": [
+          "VALIDATED_BY_TEST"
+        ],
+        "limitations": [
+          "Validated only under the recorded probe profile."
+        ],
+        "parameters": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "environment_id": "env:registry-fixture",
+          "probe_id": "probe:d178351377ee5242dd23f6e9ba09a03e"
+        },
+        "policy_version": "probe-policy-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "SUPPORTED",
+        "validation": "VALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "context.long",
+        "claim_id": "claim:ccfbfe7cc1c2d46af07c6014ab1ebc34",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:dc97e29dfd7adfe268089c101a9cee65"
+        ],
+        "evidence_levels": [
+          "DETECTED_FROM_METADATA"
+        ],
+        "limitations": [
+          "Declared context metadata only; usable context is not validated."
+        ],
+        "parameters": {
+          "declared_context_length": 65536,
+          "threshold": 32768
+        },
+        "policy_version": "capability-hypotheses-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "SUPPORTED",
+        "validation": "UNVALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "generation.embeddings",
+        "claim_id": "claim:9087b7f15303bc5b86094eb3c15d9047",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:761e38e027ec716fd03257789c91d734"
+        ],
+        "evidence_levels": [
+          "INFERRED"
+        ],
+        "limitations": [
+          "No affirmative declaration or behavioral validation was found."
+        ],
+        "parameters": {},
+        "policy_version": "capability-hypotheses-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "UNKNOWN",
+        "validation": "UNVALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "generation.text",
+        "claim_id": "claim:8f2bc6014f173ac9bfa7dd6c28713b2f",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:687e2b1631b3a08690197109add0793f",
+          "evidence:3a4e0300697d0eac32edb11025b9b1a5"
+        ],
+        "evidence_levels": [
+          "DETECTED_FROM_METADATA",
+          "VALIDATED_BY_TEST"
+        ],
+        "limitations": [
+          "Runtime/model-detail declaration only; behavior is not validated.",
+          "Validated only under the recorded probe profile."
+        ],
+        "parameters": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "environment_id": "env:registry-fixture",
+          "probe_id": "probe:1e83815becfaacbf47fd72682fd6ae08",
+          "runtime_declaration": "completion"
+        },
+        "policy_version": "probe-policy-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "SUPPORTED",
+        "validation": "VALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "instruction.following",
+        "claim_id": "claim:1adf8b4215a3a969904716971dffb9f1",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:a5ad741837463ff917ae075c97cff818",
+          "evidence:400266cb5d8c4c58c90720c5a67c329f"
+        ],
+        "evidence_levels": [
+          "INFERRED",
+          "VALIDATED_BY_TEST"
+        ],
+        "limitations": [
+          "Requires behavioral validation.",
+          "Validated only under the recorded probe profile."
+        ],
+        "parameters": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "environment_id": "env:registry-fixture",
+          "probe_id": "probe:d805f0b2ddc4f5e784b3bc0f1efdb4df"
+        },
+        "policy_version": "probe-policy-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "SUPPORTED",
+        "validation": "VALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "modality.vision.input",
+        "claim_id": "claim:5de92bcecdfe185dd2abed8dd8647397",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:7fcfdd6cbfc05ab36505a241f1fbf4e9"
+        ],
+        "evidence_levels": [
+          "INFERRED"
+        ],
+        "limitations": [
+          "No affirmative declaration or behavioral validation was found."
+        ],
+        "parameters": {},
+        "policy_version": "capability-hypotheses-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "UNKNOWN",
+        "validation": "UNVALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "output.schema_constrained",
+        "claim_id": "claim:dc709cfc52b0ee08c0c71f79df4ef674",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:017764794c7fffd4ccc320bd6a7ccaf2",
+          "evidence:27619d016a2ff6293b83d76e7505752d"
+        ],
+        "evidence_levels": [
+          "INFERRED",
+          "VALIDATED_BY_TEST"
+        ],
+        "limitations": [
+          "Requires schema-conformance probe.",
+          "Validated only under the recorded probe profile."
+        ],
+        "parameters": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "environment_id": "env:registry-fixture",
+          "probe_id": "probe:8d0e23dafff52c56dbd89af271ca95bb"
+        },
+        "policy_version": "probe-policy-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "SUPPORTED",
+        "validation": "VALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "output.thinking_channel",
+        "claim_id": "claim:f852a7224955b7ebb1cded83e68354a9",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:687e2b1631b3a08690197109add0793f"
+        ],
+        "evidence_levels": [
+          "DETECTED_FROM_METADATA"
+        ],
+        "limitations": [
+          "Runtime/model-detail declaration only; behavior is not validated."
+        ],
+        "parameters": {
+          "runtime_declaration": "thinking"
+        },
+        "policy_version": "capability-hypotheses-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "SUPPORTED",
+        "validation": "UNVALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "RUNTIME_CAPABILITY",
+        "capability_key": "protocol.streaming",
+        "claim_id": "claim:028385568f3ffc0e9221338996bc3a2c",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:ea796d6efc0cc6640aa94a614670c471",
+          "evidence:bc574d50faafbd8140dc0a360979f8bb"
+        ],
+        "evidence_levels": [
+          "INFERRED",
+          "VALIDATED_BY_TEST"
+        ],
+        "limitations": [
+          "Protocol streaming has not been validated on this runtime.",
+          "Validated only under the recorded probe profile."
+        ],
+        "parameters": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "environment_id": "env:registry-fixture",
+          "probe_id": "probe:d2c131dc2454b8462a78ceec90d2fe1c"
+        },
+        "policy_version": "probe-policy-0.2.0",
+        "subject": {
+          "digest": "sha256:cc374f2415ab9a7d0333f53016763094c785de4b837d91b03060e7412fef71cb",
+          "kind": "RUNTIME",
+          "subject_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+          "version": "0.12.6"
+        },
+        "support": "SUPPORTED",
+        "validation": "VALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "reasoning.general",
+        "claim_id": "claim:2972dbdb2123a9c2536a410867a0364e",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:a9fc291454f8bbfaec0025fd678d18f2"
+        ],
+        "evidence_levels": [
+          "INFERRED"
+        ],
+        "limitations": [
+          "Reasoning outcomes have not been tested."
+        ],
+        "parameters": {},
+        "policy_version": "capability-hypotheses-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "UNKNOWN",
+        "validation": "UNVALIDATED"
+      },
+      {
+        "assessed_at": "2026-08-10T09:00:00Z",
+        "capability_class": "MODEL_CAPABILITY",
+        "capability_key": "tools.function_calling",
+        "claim_id": "claim:5254fd17457c1af7135286be961fb889",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:687e2b1631b3a08690197109add0793f",
+          "evidence:5de195f603016fa4fac06b78200524c9"
+        ],
+        "evidence_levels": [
+          "DETECTED_FROM_METADATA",
+          "VALIDATED_BY_TEST"
+        ],
+        "limitations": [
+          "Runtime/model-detail declaration only; behavior is not validated.",
+          "Validated only under the recorded probe profile."
+        ],
+        "parameters": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "environment_id": "env:registry-fixture",
+          "probe_id": "probe:a9cb23ec416c126b13533c0ac8db4eb8",
+          "runtime_declaration": "tools"
+        },
+        "policy_version": "probe-policy-0.2.0",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "support": "SUPPORTED",
+        "validation": "VALIDATED"
+      }
+    ],
+    "capability_delta": {
+      "added": [
+        "claim:5cc96173c4ce4b8bf2e0ad114bb7319e",
+        "claim:8f2bc6014f173ac9bfa7dd6c28713b2f",
+        "claim:1adf8b4215a3a969904716971dffb9f1",
+        "claim:dc709cfc52b0ee08c0c71f79df4ef674",
+        "claim:028385568f3ffc0e9221338996bc3a2c",
+        "claim:5254fd17457c1af7135286be961fb889"
+      ],
+      "baseline_snapshot_digest": "sha256:29462b5e7ea113c5a6404f67e1e11ee4215da565ab04dd5aa41689c5994551ee",
+      "improved": [],
+      "policy_version": "delta-policy-0.2.0",
+      "redundant": [],
+      "regressed": [],
+      "unknown": [
+        "claim:ccfbfe7cc1c2d46af07c6014ab1ebc34",
+        "claim:9087b7f15303bc5b86094eb3c15d9047",
+        "claim:5de92bcecdfe185dd2abed8dd8647397",
+        "claim:f852a7224955b7ebb1cded83e68354a9",
+        "claim:2972dbdb2123a9c2536a410867a0364e"
+      ]
+    },
+    "compatibility": {
+      "assessed_at": "2026-08-10T09:00:00Z",
+      "assessment_id": "compatibility:b13c7dcd01a3c97ccdcce7e2ba7363f3",
+      "blockers": [],
+      "policy_version": "compatibility-policy-0.2.0",
+      "required_permissions": [
+        "network:http://fixture-ollama.invalid:11434"
+      ],
+      "requirements": [
+        {
+          "adapter_obligations": [
+            "Use adapter mie.adapter.ollama-chat under its recorded configuration."
+          ],
+          "description": "Target requires generation.text",
+          "evidence_ids": [
+            "evidence:687e2b1631b3a08690197109add0793f",
+            "evidence:3a4e0300697d0eac32edb11025b9b1a5"
+          ],
+          "mandatory": true,
+          "remediation": [],
+          "requirement_id": "text",
+          "risks": [],
+          "status": "SATISFIED_WITH_ADAPTER"
+        },
+        {
+          "adapter_obligations": [
+            "Use adapter mie.adapter.ollama-chat under its recorded configuration."
+          ],
+          "description": "Target requires instruction.following",
+          "evidence_ids": [
+            "evidence:a5ad741837463ff917ae075c97cff818",
+            "evidence:400266cb5d8c4c58c90720c5a67c329f"
+          ],
+          "mandatory": true,
+          "remediation": [],
+          "requirement_id": "instruction",
+          "risks": [],
+          "status": "SATISFIED_WITH_ADAPTER"
+        },
+        {
+          "adapter_obligations": [
+            "Use adapter mie.adapter.ollama-chat under its recorded configuration."
+          ],
+          "description": "Target requires output.schema_constrained",
+          "evidence_ids": [
+            "evidence:017764794c7fffd4ccc320bd6a7ccaf2",
+            "evidence:27619d016a2ff6293b83d76e7505752d"
+          ],
+          "mandatory": false,
+          "remediation": [],
+          "requirement_id": "structured",
+          "risks": [],
+          "status": "SATISFIED_WITH_ADAPTER"
+        },
+        {
+          "adapter_obligations": [
+            "Use adapter mie.adapter.ollama-chat under its recorded configuration."
+          ],
+          "description": "Target requires protocol.streaming",
+          "evidence_ids": [
+            "evidence:ea796d6efc0cc6640aa94a614670c471",
+            "evidence:bc574d50faafbd8140dc0a360979f8bb"
+          ],
+          "mandatory": false,
+          "remediation": [],
+          "requirement_id": "stream",
+          "risks": [],
+          "status": "SATISFIED_WITH_ADAPTER"
+        },
+        {
+          "adapter_obligations": [
+            "Use adapter mie.adapter.ollama-chat under its recorded configuration."
+          ],
+          "description": "Target requires tools.function_calling",
+          "evidence_ids": [
+            "evidence:687e2b1631b3a08690197109add0793f",
+            "evidence:5de195f603016fa4fac06b78200524c9"
+          ],
+          "mandatory": false,
+          "remediation": [],
+          "requirement_id": "tools",
+          "risks": [],
+          "status": "SATISFIED_WITH_ADAPTER"
+        }
+      ],
+      "status": "COMPATIBLE_WITH_ADAPTER",
+      "subject": {
+        "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+        "version": null
+      },
+      "target_profile": {
+        "digest": "sha256:989471fa2507f0fb4282af8a1d265838c1215a70c0f015eae33273c4c5537877",
+        "target_id": "target:synthetic-normalized-model-interface",
+        "version": "0.2.0"
+      },
+      "unknowns": []
+    },
+    "configuration": {
+      "artifacts": [
+        {
+          "digest": "sha256:43aab96293f74398c8308be012bd884d083d1ead1ac04867df1647d01f73514a",
+          "path": "config/model-binding.json"
+        }
+      ],
+      "contains_secrets": false,
+      "manifest_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+      "values": {
+        "deployment_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+        "environment": {
+          "attributes": {},
+          "environment_id": "env:registry-fixture",
+          "machine": "x86_64",
+          "platform": "Linux-6.1.158+-x86_64-with-glibc2.41",
+          "python_version": "3.13.14",
+          "runtime_endpoint_locality": "REMOTE",
+          "sandbox_backend_id": "deterministic-fixture-sandbox"
+        },
+        "lifecycle_state": "DRAFT_PENDING_APPROVAL",
+        "model_reference": "example-model:4b",
+        "runtime_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+        "runtime_owns_template": true
+      }
+    },
+    "created_at": "2026-08-10T09:00:00Z",
+    "engine": {
+      "build_digest": "sha256:7fdf83790f74a4c64fd64d7532caaec35d3306e4c4683d74a928972db8c8549b",
+      "contract_version": "0.1.0",
+      "name": "model-integration-engine",
+      "policy_versions": {
+        "capability": "0.2.0",
+        "compatibility": "compatibility-policy-0.2.0",
+        "evidence": "0.2.0",
+        "sandbox": "0.2.0"
+      },
+      "version": "0.2.0a0"
+    },
+    "evaluations": [
+      {
+        "adapter_id": "mie.adapter.ollama-chat",
+        "aggregate_metrics": {
+          "errors": 0,
+          "failed": 0,
+          "passed": 6,
+          "total": 6
+        },
+        "evaluation_id": "evaluation:79fba9577fb2225cab6371a7f65fc8f7",
+        "evidence_ids": [
+          "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+          "evidence:400266cb5d8c4c58c90720c5a67c329f",
+          "evidence:27619d016a2ff6293b83d76e7505752d",
+          "evidence:bc574d50faafbd8140dc0a360979f8bb",
+          "evidence:5de195f603016fa4fac06b78200524c9",
+          "evidence:6ec180942fbaf5268fe177eb77af8d44"
+        ],
+        "limitations": [
+          "Phase 2 minimal safe probes only; quality benchmarking is out of scope."
+        ],
+        "results": [
+          {
+            "assertions": {
+              "exact_token": true,
+              "unambiguous": true
+            },
+            "environment_id": "env:registry-fixture",
+            "evidence_ids": [
+              "evidence:3a4e0300697d0eac32edb11025b9b1a5"
+            ],
+            "fixture_digest": "sha256:38efe14ffa307a79a3148d6f3220ec8e6b86131fa0e388268a3b000c8e5b5b9e",
+            "measurements": {},
+            "outcome": "PASS",
+            "output_digest": "sha256:20d684ad255b1ff4f78921234da5ebadf16110f7f24859bd3c0f9e1e022ccb68",
+            "subject": {
+              "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+              "kind": "DEPLOYMENT",
+              "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+              "version": null
+            },
+            "suite_id": "mie.safe-vertical-slice",
+            "suite_version": "0.2.0",
+            "test_id": "probe:1e83815becfaacbf47fd72682fd6ae08"
+          },
+          {
+            "assertions": {
+              "instruction_exact": true,
+              "unambiguous": true
+            },
+            "environment_id": "env:registry-fixture",
+            "evidence_ids": [
+              "evidence:400266cb5d8c4c58c90720c5a67c329f"
+            ],
+            "fixture_digest": "sha256:00e70c2fc0d85898c876e2f445fec5cdf535c03584e78891307661933a03dc15",
+            "measurements": {},
+            "outcome": "PASS",
+            "output_digest": "sha256:1f8105603a73c64ce1ccb8c81a76b258ad4588a048a1e8c078975b1cd4af2941",
+            "subject": {
+              "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+              "kind": "DEPLOYMENT",
+              "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+              "version": null
+            },
+            "suite_id": "mie.safe-vertical-slice",
+            "suite_version": "0.2.0",
+            "test_id": "probe:d805f0b2ddc4f5e784b3bc0f1efdb4df"
+          },
+          {
+            "assertions": {
+              "schema_exact": true,
+              "unambiguous": true,
+              "valid_json": true
+            },
+            "environment_id": "env:registry-fixture",
+            "evidence_ids": [
+              "evidence:27619d016a2ff6293b83d76e7505752d"
+            ],
+            "fixture_digest": "sha256:66fba9ffd46a22efc56c3e9bef39c79dd2a402c429cb1725a92b88d91e942c35",
+            "measurements": {},
+            "outcome": "PASS",
+            "output_digest": "sha256:b2adb661b2797d53fc35b28d1fe66b4c96b923982915db1e3af53dd1620dbf12",
+            "subject": {
+              "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+              "kind": "DEPLOYMENT",
+              "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+              "version": null
+            },
+            "suite_id": "mie.safe-vertical-slice",
+            "suite_version": "0.2.0",
+            "test_id": "probe:8d0e23dafff52c56dbd89af271ca95bb"
+          },
+          {
+            "assertions": {
+              "assembled_exact": true,
+              "multiple_events": true,
+              "single_terminal": true,
+              "unambiguous": true
+            },
+            "environment_id": "env:registry-fixture",
+            "evidence_ids": [
+              "evidence:bc574d50faafbd8140dc0a360979f8bb"
+            ],
+            "fixture_digest": "sha256:61a3e03860404efcf801531a584503cf09421a68707675474888494f92d44e36",
+            "measurements": {
+              "event_count": 2
+            },
+            "outcome": "PASS",
+            "output_digest": "sha256:d5b5f97273984bb360c682b37cff5ad9ea4fae466cebe04db8a0b5d295242f29",
+            "subject": {
+              "digest": "sha256:cc374f2415ab9a7d0333f53016763094c785de4b837d91b03060e7412fef71cb",
+              "kind": "RUNTIME",
+              "subject_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+              "version": "0.12.6"
+            },
+            "suite_id": "mie.safe-vertical-slice",
+            "suite_version": "0.2.0",
+            "test_id": "probe:d2c131dc2454b8462a78ceec90d2fe1c"
+          },
+          {
+            "assertions": {
+              "single_exact_tool_call": true,
+              "unambiguous": true
+            },
+            "environment_id": "env:registry-fixture",
+            "evidence_ids": [
+              "evidence:5de195f603016fa4fac06b78200524c9"
+            ],
+            "fixture_digest": "sha256:17da18e4323d9be8c3acbece73f6c0e372a91e1fa161e0d30ca905a704fef950",
+            "measurements": {
+              "tool_call_count": 1
+            },
+            "outcome": "PASS",
+            "output_digest": "sha256:a79a3bcdb5fd5d332b1fbe224067f9a95d75ba89259fa34320369ce476726084",
+            "subject": {
+              "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+              "kind": "DEPLOYMENT",
+              "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+              "version": null
+            },
+            "suite_id": "mie.safe-vertical-slice",
+            "suite_version": "0.2.0",
+            "test_id": "probe:a9cb23ec416c126b13533c0ac8db4eb8"
+          },
+          {
+            "assertions": {
+              "retrieved_canary": true,
+              "unambiguous": true
+            },
+            "environment_id": "env:registry-fixture",
+            "evidence_ids": [
+              "evidence:6ec180942fbaf5268fe177eb77af8d44"
+            ],
+            "fixture_digest": "sha256:9de38f0c06582c3d67f246cbbc37be01b0a5ccd96d0a6992da4361e9d46af03e",
+            "measurements": {
+              "input_characters": 4395
+            },
+            "outcome": "PASS",
+            "output_digest": "sha256:9c12e63a677d0b36e82eb9e49f28938924a0841fc295fd29ec98b2c1cf897b15",
+            "subject": {
+              "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+              "kind": "DEPLOYMENT",
+              "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+              "version": null
+            },
+            "suite_id": "mie.safe-vertical-slice",
+            "suite_version": "0.2.0",
+            "test_id": "probe:d178351377ee5242dd23f6e9ba09a03e"
+          }
+        ],
+        "sandbox_run_id": "fixture-sandbox-run",
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "suite_digest": "sha256:718e68e6d56d99667dd60604e6c79d7b8fb5f10c4d703b647d6e1f775125a8a2",
+        "suite_id": "mie.safe-vertical-slice",
+        "suite_version": "0.2.0",
+        "verdict": "PASS"
+      }
+    ],
+    "evidence": [
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.capabilities.generic-hypotheses",
+        "collector_version": "0.2.0",
+        "derived_from": [
+          "evidence:4893e4af47892d121145e2e02f0c6268",
+          "evidence:700e8c9136db3c2acc6887056d607e60"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:017764794c7fffd4ccc320bd6a7ccaf2",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "hypothesis.output.schema_constrained",
+        "observed_value": {
+          "rule": "runtime-format-parameter-does-not-prove-model-adherence",
+          "status": "hypothesis"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:37998fecefa228dd869c056e115b006114ef7c2bd2cdf17f51fd70f2a74aa328",
+          "locator": "runtime-format-parameter-does-not-prove-model-adherence",
+          "uri": "urn:mie:capability-rule:runtime-format-parameter-does-not-prove-model-adherence"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:16f006ceb58ebc8d4b28a9f55b5d91f5",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "general.file_type",
+        "observed_value": 15,
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/general/file_type",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.discovery.ollama-api",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+        "kind": "RUNTIME_OBSERVATION",
+        "level": "DETECTED_FROM_RUNTIME",
+        "observation_key": "deployment.model_summary",
+        "observed_value": {
+          "details": {
+            "families": [
+              "generic_transformer"
+            ],
+            "family": "generic_transformer",
+            "format": "gguf",
+            "parameter_size": "4.02B",
+            "quantization_level": "Q4_K_M"
+          },
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "fixture_extension": {
+            "preserved": true
+          },
+          "model": "example-model:4b",
+          "modified_at": "2026-08-01T12:00:00Z",
+          "name": "example-model:4b",
+          "size": 2500000000
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:176d5c7f1e6b66b6454e788138c5934e1ece62af5ce34e149e630cc0675d4e85",
+          "locator": "/models/0",
+          "uri": "http://fixture-ollama.invalid:11434/api/tags"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:24101b8cc78cdf2ed02107334a3b3d19",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "details.family",
+        "observed_value": "generic_transformer",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/details/family",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.probes.safe-vertical-slice",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": "env:registry-fixture",
+        "evidence_id": "evidence:27619d016a2ff6293b83d76e7505752d",
+        "kind": "TEST_RESULT",
+        "level": "VALIDATED_BY_TEST",
+        "observation_key": "probe.structured_output",
+        "observed_value": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "assertions": {
+            "schema_exact": true,
+            "unambiguous": true,
+            "valid_json": true
+          },
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "error_code": null,
+          "error_message": null,
+          "measurements": {}
+        },
+        "outcome": "PASS",
+        "redacted": true,
+        "source": {
+          "digest": "sha256:b2adb661b2797d53fc35b28d1fe66b4c96b923982915db1e3af53dd1620dbf12",
+          "locator": "/result",
+          "uri": "sandbox://deterministic-fixture-sandbox/fixture-sandbox-run/probe:8d0e23dafff52c56dbd89af271ca95bb"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:356db81a2cf43b5d00e0f315e9317d31",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "generic_transformer.embedding_length",
+        "observed_value": 2560,
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/generic_transformer/embedding_length",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:39718ba1faf202a63c8ed1ddbf388104",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "details.quantization_level",
+        "observed_value": "Q4_K_M",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/details/quantization_level",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.probes.safe-vertical-slice",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": "env:registry-fixture",
+        "evidence_id": "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+        "kind": "TEST_RESULT",
+        "level": "VALIDATED_BY_TEST",
+        "observation_key": "probe.basic_generation",
+        "observed_value": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "assertions": {
+            "exact_token": true,
+            "unambiguous": true
+          },
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "error_code": null,
+          "error_message": null,
+          "measurements": {}
+        },
+        "outcome": "PASS",
+        "redacted": true,
+        "source": {
+          "digest": "sha256:20d684ad255b1ff4f78921234da5ebadf16110f7f24859bd3c0f9e1e022ccb68",
+          "locator": "/result",
+          "uri": "sandbox://deterministic-fixture-sandbox/fixture-sandbox-run/probe:1e83815becfaacbf47fd72682fd6ae08"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:3bc3ad0060fde2ef7f81e5d8d3ea6ef0",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "tokenizer.ggml.eos_token_id",
+        "observed_value": 2,
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/tokenizer/ggml/eos_token_id",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.probes.safe-vertical-slice",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": "env:registry-fixture",
+        "evidence_id": "evidence:400266cb5d8c4c58c90720c5a67c329f",
+        "kind": "TEST_RESULT",
+        "level": "VALIDATED_BY_TEST",
+        "observation_key": "probe.instruction_following",
+        "observed_value": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "assertions": {
+            "instruction_exact": true,
+            "unambiguous": true
+          },
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "error_code": null,
+          "error_message": null,
+          "measurements": {}
+        },
+        "outcome": "PASS",
+        "redacted": true,
+        "source": {
+          "digest": "sha256:1f8105603a73c64ce1ccb8c81a76b258ad4588a048a1e8c078975b1cd4af2941",
+          "locator": "/result",
+          "uri": "sandbox://deterministic-fixture-sandbox/fixture-sandbox-run/probe:d805f0b2ddc4f5e784b3bc0f1efdb4df"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.discovery.ollama-api",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:4893e4af47892d121145e2e02f0c6268",
+        "kind": "RUNTIME_OBSERVATION",
+        "level": "DETECTED_FROM_RUNTIME",
+        "observation_key": "runtime.version",
+        "observed_value": "0.12.6",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:b6516e0d1f59a2c2c1bf644cef3834c42abec23131effc864ba0f67705590653",
+          "locator": "/version",
+          "uri": "http://fixture-ollama.invalid:11434/api/version"
+        },
+        "subject": {
+          "digest": "sha256:cc374f2415ab9a7d0333f53016763094c785de4b837d91b03060e7412fef71cb",
+          "kind": "RUNTIME",
+          "subject_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+          "version": "0.12.6"
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:50e97781e593ffad88abfceec0c1af24",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "tokenizer.ggml.model",
+        "observed_value": "gpt2",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/tokenizer/ggml/model",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.probes.safe-vertical-slice",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": "env:registry-fixture",
+        "evidence_id": "evidence:554549c7dc34052c62f5156be75dc291",
+        "kind": "RUNTIME_OBSERVATION",
+        "level": "DETECTED_FROM_RUNTIME",
+        "observation_key": "sandbox.isolation_attestation",
+        "observed_value": {
+          "backend_id": "deterministic-fixture-sandbox",
+          "backend_version": "test-double-1",
+          "cleanup_complete": true,
+          "enforced_controls": [
+            "read_only_inputs",
+            "ephemeral_scratch",
+            "network_allowlist",
+            "no_target_mount",
+            "resource_limits"
+          ],
+          "host_write_observed": false
+        },
+        "outcome": "PASS",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:41e23b70ea06d07693fa090d75937486099166034d46c173fefd50aa873a2042",
+          "locator": "/attestation",
+          "uri": "sandbox://deterministic-fixture-sandbox/fixture-sandbox-run"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.probes.safe-vertical-slice",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": "env:registry-fixture",
+        "evidence_id": "evidence:5de195f603016fa4fac06b78200524c9",
+        "kind": "TEST_RESULT",
+        "level": "VALIDATED_BY_TEST",
+        "observation_key": "probe.tool_calling",
+        "observed_value": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "assertions": {
+            "single_exact_tool_call": true,
+            "unambiguous": true
+          },
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "error_code": null,
+          "error_message": null,
+          "measurements": {
+            "tool_call_count": 1
+          }
+        },
+        "outcome": "PASS",
+        "redacted": true,
+        "source": {
+          "digest": "sha256:a79a3bcdb5fd5d332b1fbe224067f9a95d75ba89259fa34320369ce476726084",
+          "locator": "/result",
+          "uri": "sandbox://deterministic-fixture-sandbox/fixture-sandbox-run/probe:a9cb23ec416c126b13533c0ac8db4eb8"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:687e2b1631b3a08690197109add0793f",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "capabilities",
+        "observed_value": [
+          "completion",
+          "thinking",
+          "tools"
+        ],
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/capabilities",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:6aa44ecdb03be79c22098cb6a6a294af",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "details.families",
+        "observed_value": [
+          "generic_transformer"
+        ],
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/details/families",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.probes.safe-vertical-slice",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": "env:registry-fixture",
+        "evidence_id": "evidence:6ec180942fbaf5268fe177eb77af8d44",
+        "kind": "TEST_RESULT",
+        "level": "VALIDATED_BY_TEST",
+        "observation_key": "probe.context_handling",
+        "observed_value": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "assertions": {
+            "retrieved_canary": true,
+            "unambiguous": true
+          },
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "error_code": null,
+          "error_message": null,
+          "measurements": {
+            "input_characters": 4395
+          }
+        },
+        "outcome": "PASS",
+        "redacted": true,
+        "source": {
+          "digest": "sha256:9c12e63a677d0b36e82eb9e49f28938924a0841fc295fd29ec98b2c1cf897b15",
+          "locator": "/result",
+          "uri": "sandbox://deterministic-fixture-sandbox/fixture-sandbox-run/probe:d178351377ee5242dd23f6e9ba09a03e"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.discovery.ollama-api",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:700e8c9136db3c2acc6887056d607e60",
+        "kind": "RUNTIME_OBSERVATION",
+        "level": "DETECTED_FROM_RUNTIME",
+        "observation_key": "runtime.model_list",
+        "observed_value": {
+          "count": 1
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:176d5c7f1e6b66b6454e788138c5934e1ece62af5ce34e149e630cc0675d4e85",
+          "locator": "/models",
+          "uri": "http://fixture-ollama.invalid:11434/api/tags"
+        },
+        "subject": {
+          "digest": "sha256:cc374f2415ab9a7d0333f53016763094c785de4b837d91b03060e7412fef71cb",
+          "kind": "RUNTIME",
+          "subject_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+          "version": "0.12.6"
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.capabilities.generic-hypotheses",
+        "collector_version": "0.2.0",
+        "derived_from": [
+          "evidence:4893e4af47892d121145e2e02f0c6268",
+          "evidence:700e8c9136db3c2acc6887056d607e60"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:761e38e027ec716fd03257789c91d734",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "hypothesis.generation.embeddings",
+        "observed_value": {
+          "rule": "declaration-absent-does-not-prove-negative:embedding",
+          "status": "hypothesis"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c1a25c1472cb7239f080c490a8921d7987e9fd2c2fd885e2757808ad12e14587",
+          "locator": "declaration-absent-does-not-prove-negative:embedding",
+          "uri": "urn:mie:capability-rule:declaration-absent-does-not-prove-negative:embedding"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:7a8aad0ae090f257b1d761a3d12b574a",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "template",
+        "observed_value": {
+          "digest": "sha256:458523d0290257351fca80b0d82c76ba8ed0c45e410b599bb8e94207d3bafbfc",
+          "length": 71
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/template",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.capabilities.generic-hypotheses",
+        "collector_version": "0.2.0",
+        "derived_from": [
+          "evidence:4893e4af47892d121145e2e02f0c6268",
+          "evidence:700e8c9136db3c2acc6887056d607e60"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:7fcfdd6cbfc05ab36505a241f1fbf4e9",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "hypothesis.modality.vision.input",
+        "observed_value": {
+          "rule": "declaration-absent-does-not-prove-negative:vision",
+          "status": "hypothesis"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:b3fe00680d5fed30b3f123a7e9070ba5f9b112cf3c974709d38ae7e22fe8c9d8",
+          "locator": "declaration-absent-does-not-prove-negative:vision",
+          "uri": "urn:mie:capability-rule:declaration-absent-does-not-prove-negative:vision"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.compatibility.generic",
+        "collector_version": "0.2.0",
+        "derived_from": [
+          "evidence:687e2b1631b3a08690197109add0793f",
+          "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+          "evidence:a5ad741837463ff917ae075c97cff818",
+          "evidence:400266cb5d8c4c58c90720c5a67c329f",
+          "evidence:017764794c7fffd4ccc320bd6a7ccaf2",
+          "evidence:27619d016a2ff6293b83d76e7505752d",
+          "evidence:ea796d6efc0cc6640aa94a614670c471",
+          "evidence:bc574d50faafbd8140dc0a360979f8bb",
+          "evidence:5de195f603016fa4fac06b78200524c9"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:9d791478f891bb6c1529f50f26abe8b5",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "compatibility.overall",
+        "observed_value": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "external_label": "CONDITIONALLY_COMPATIBLE",
+          "reasons": [
+            "text is validated through adapter mie.adapter.ollama-chat.",
+            "instruction is validated through adapter mie.adapter.ollama-chat.",
+            "structured is validated through adapter mie.adapter.ollama-chat.",
+            "stream is validated through adapter mie.adapter.ollama-chat.",
+            "tools is validated through adapter mie.adapter.ollama-chat."
+          ],
+          "status": "COMPATIBLE_WITH_ADAPTER",
+          "target_profile_digest": "sha256:989471fa2507f0fb4282af8a1d265838c1215a70c0f015eae33273c4c5537877"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:a9d83f3f086706d0ed8ea8055eaccc03dddecb89f87d5c7fa2530dd83bdfedc2",
+          "locator": "overall",
+          "uri": "urn:mie:compatibility-policy:compatibility-policy-0.2.0"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.capabilities.generic-hypotheses",
+        "collector_version": "0.2.0",
+        "derived_from": [
+          "evidence:7a8aad0ae090f257b1d761a3d12b574a"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:a5ad741837463ff917ae075c97cff818",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "hypothesis.instruction.following",
+        "observed_value": {
+          "rule": "chat-template-suggests-instruction-interface",
+          "status": "hypothesis"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:daae931c71e45f3888e8a85736ab1250dbcd0d38f1c855aeaa3bffeb6453ff82",
+          "locator": "chat-template-suggests-instruction-interface",
+          "uri": "urn:mie:capability-rule:chat-template-suggests-instruction-interface"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:a83dee6b1f333e80cb3c735ba060fdba",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "general.architecture",
+        "observed_value": "generic_transformer",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/general/architecture",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.capabilities.generic-hypotheses",
+        "collector_version": "0.2.0",
+        "derived_from": [
+          "evidence:687e2b1631b3a08690197109add0793f"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:a9fc291454f8bbfaec0025fd678d18f2",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "hypothesis.reasoning.general",
+        "observed_value": {
+          "rule": "thinking-channel-is-not-reasoning-validation",
+          "status": "hypothesis"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:b16839890c0a992b8bee1cdc140b1e5ee6c43348bef954137a5c2d9640d7cad0",
+          "locator": "thinking-channel-is-not-reasoning-validation",
+          "uri": "urn:mie:capability-rule:thinking-channel-is-not-reasoning-validation"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:aa9d220663f583290aa3b783af1dc3db",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "generic_transformer.block_count",
+        "observed_value": 36,
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/generic_transformer/block_count",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:b07a10502e91d79936ec9b8216151b62",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "general.quantization_version",
+        "observed_value": 2,
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/general/quantization_version",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.discovery.ollama-api",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:b517ef91edf94119cfc8830e6ec9e696",
+        "kind": "RUNTIME_OBSERVATION",
+        "level": "DETECTED_FROM_RUNTIME",
+        "observation_key": "deployment.content_digest",
+        "observed_value": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:176d5c7f1e6b66b6454e788138c5934e1ece62af5ce34e149e630cc0675d4e85",
+          "locator": "/models/0/digest",
+          "uri": "http://fixture-ollama.invalid:11434/api/tags"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:ba78310038a3c72c3cb5d30d05f418e8",
+        "kind": "RUNTIME_OBSERVATION",
+        "level": "DETECTED_FROM_RUNTIME",
+        "observation_key": "deployment.model_details_response",
+        "observed_value": {
+          "response_digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "top_level_fields": [
+            "capabilities",
+            "details",
+            "future_field",
+            "license",
+            "model_info",
+            "modified_at",
+            "parameters",
+            "template"
+          ]
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.probes.safe-vertical-slice",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": "env:registry-fixture",
+        "evidence_id": "evidence:bc574d50faafbd8140dc0a360979f8bb",
+        "kind": "TEST_RESULT",
+        "level": "VALIDATED_BY_TEST",
+        "observation_key": "probe.streaming",
+        "observed_value": {
+          "adapter_id": "mie.adapter.ollama-chat",
+          "assertions": {
+            "assembled_exact": true,
+            "multiple_events": true,
+            "single_terminal": true,
+            "unambiguous": true
+          },
+          "configuration_digest": "sha256:18d2239a7f139bad87ba0891c3cb28bb2d3cfce6b5fb736a1adc6156675efbda",
+          "error_code": null,
+          "error_message": null,
+          "measurements": {
+            "event_count": 2
+          }
+        },
+        "outcome": "PASS",
+        "redacted": true,
+        "source": {
+          "digest": "sha256:d5b5f97273984bb360c682b37cff5ad9ea4fae466cebe04db8a0b5d295242f29",
+          "locator": "/result",
+          "uri": "sandbox://deterministic-fixture-sandbox/fixture-sandbox-run/probe:d2c131dc2454b8462a78ceec90d2fe1c"
+        },
+        "subject": {
+          "digest": "sha256:cc374f2415ab9a7d0333f53016763094c785de4b837d91b03060e7412fef71cb",
+          "kind": "RUNTIME",
+          "subject_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+          "version": "0.12.6"
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:ca9194e8af149c08797e1ba6935f9cf0",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "parameters",
+        "observed_value": {
+          "digest": "sha256:15350d9cd2270aa03d024bf10f2b3d63b7e846bbb007eab9577b1ab085d40d44",
+          "length": 27
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/parameters",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:cc99563142e98c0c24d8c2aae7909407",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "details.parent_model",
+        "observed_value": "",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/details/parent_model",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [
+          "evidence:e3880e896f0bc32f27b4e5021c1b03af"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:cdc3fda04e5e2c7936063dac9835bba8",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "derived.parameter_count_estimate",
+        "observed_value": {
+          "estimate": 4020000000,
+          "source_label": "4.02B"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:8d6a0c55723304dfb332cd2e912c4a4b1a40f20bdc56e9958ea4c6fe3bf5ef09",
+          "locator": "si-size-label-v1",
+          "uri": "urn:mie:derivation:parameter-size-label"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "MODEL",
+          "subject_id": "model:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:d97b0ae65de7b41ed00f60cc57af2f20",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "license",
+        "observed_value": {
+          "digest": "sha256:20e5b38018d805cb79b7c39ab2a1439e90187cf90833961ca9c7e0ce9f0eae2f",
+          "length": 20
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/license",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:dc97e29dfd7adfe268089c101a9cee65",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "generic_transformer.context_length",
+        "observed_value": 65536,
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/generic_transformer/context_length",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:e3880e896f0bc32f27b4e5021c1b03af",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "details.parameter_size",
+        "observed_value": "4.02B",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/details/parameter_size",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.capabilities.generic-hypotheses",
+        "collector_version": "0.2.0",
+        "derived_from": [
+          "evidence:4893e4af47892d121145e2e02f0c6268",
+          "evidence:700e8c9136db3c2acc6887056d607e60"
+        ],
+        "environment_id": null,
+        "evidence_id": "evidence:ea796d6efc0cc6640aa94a614670c471",
+        "kind": "DERIVATION",
+        "level": "INFERRED",
+        "observation_key": "hypothesis.protocol.streaming",
+        "observed_value": {
+          "rule": "adapter-has-stream-operation-runtime-not-yet-probed",
+          "status": "hypothesis"
+        },
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:8d371f890f87ddc6f0038bc0bfe22433abaa738d87fb0b6bd1f5ece9f78471e9",
+          "locator": "adapter-has-stream-operation-runtime-not-yet-probed",
+          "uri": "urn:mie:capability-rule:adapter-has-stream-operation-runtime-not-yet-probed"
+        },
+        "subject": {
+          "digest": "sha256:cc374f2415ab9a7d0333f53016763094c785de4b837d91b03060e7412fef71cb",
+          "kind": "RUNTIME",
+          "subject_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+          "version": "0.12.6"
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:edb9a2082487aae22af7be7481c02b6c",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "tokenizer.ggml.bos_token_id",
+        "observed_value": 1,
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/tokenizer/ggml/bos_token_id",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      },
+      {
+        "collected_at": "2026-08-10T09:00:00Z",
+        "collector_id": "mie.inspector.ollama-model-details",
+        "collector_version": "0.2.0",
+        "derived_from": [],
+        "environment_id": null,
+        "evidence_id": "evidence:ff7ecd2578dfa10b70130a734e8c6cf5",
+        "kind": "METADATA_FIELD",
+        "level": "DETECTED_FROM_METADATA",
+        "observation_key": "details.format",
+        "observed_value": "gguf",
+        "outcome": "NOT_APPLICABLE",
+        "redacted": false,
+        "source": {
+          "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+          "locator": "/details/format",
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        },
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "supersedes": []
+      }
+    ],
+    "inspections": [
+      {
+        "completed_at": "2026-08-10T09:00:00Z",
+        "completed_levels": [
+          "IDENTITY_ONLY",
+          "METADATA",
+          "TEMPLATE",
+          "TOKENIZER"
+        ],
+        "completeness": "COMPLETE",
+        "contradictions": [],
+        "evidence_ids": [
+          "evidence:ba78310038a3c72c3cb5d30d05f418e8",
+          "evidence:6aa44ecdb03be79c22098cb6a6a294af",
+          "evidence:24101b8cc78cdf2ed02107334a3b3d19",
+          "evidence:ff7ecd2578dfa10b70130a734e8c6cf5",
+          "evidence:e3880e896f0bc32f27b4e5021c1b03af",
+          "evidence:cc99563142e98c0c24d8c2aae7909407",
+          "evidence:39718ba1faf202a63c8ed1ddbf388104",
+          "evidence:a83dee6b1f333e80cb3c735ba060fdba",
+          "evidence:16f006ceb58ebc8d4b28a9f55b5d91f5",
+          "evidence:b07a10502e91d79936ec9b8216151b62",
+          "evidence:aa9d220663f583290aa3b783af1dc3db",
+          "evidence:dc97e29dfd7adfe268089c101a9cee65",
+          "evidence:356db81a2cf43b5d00e0f315e9317d31",
+          "evidence:edb9a2082487aae22af7be7481c02b6c",
+          "evidence:3bc3ad0060fde2ef7f81e5d8d3ea6ef0",
+          "evidence:50e97781e593ffad88abfceec0c1af24",
+          "evidence:7a8aad0ae090f257b1d761a3d12b574a",
+          "evidence:687e2b1631b3a08690197109add0793f",
+          "evidence:ca9194e8af149c08797e1ba6935f9cf0",
+          "evidence:d97b0ae65de7b41ed00f60cc57af2f20",
+          "evidence:cdc3fda04e5e2c7936063dac9835bba8"
+        ],
+        "findings": [
+          {
+            "evidence_id": "evidence:6aa44ecdb03be79c22098cb6a6a294af",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": [
+              "generic_transformer"
+            ],
+            "path": "details.families",
+            "raw_value": [
+              "generic_transformer"
+            ],
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/details/families",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "list",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:24101b8cc78cdf2ed02107334a3b3d19",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": "generic_transformer",
+            "path": "details.family",
+            "raw_value": "generic_transformer",
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/details/family",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "str",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:ff7ecd2578dfa10b70130a734e8c6cf5",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": "gguf",
+            "path": "details.format",
+            "raw_value": "gguf",
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/details/format",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "str",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:e3880e896f0bc32f27b4e5021c1b03af",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": "4.02B",
+            "path": "details.parameter_size",
+            "raw_value": "4.02B",
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/details/parameter_size",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "str",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:cc99563142e98c0c24d8c2aae7909407",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": "",
+            "path": "details.parent_model",
+            "raw_value": "",
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/details/parent_model",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "str",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:39718ba1faf202a63c8ed1ddbf388104",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": "Q4_K_M",
+            "path": "details.quantization_level",
+            "raw_value": "Q4_K_M",
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/details/quantization_level",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "str",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:a83dee6b1f333e80cb3c735ba060fdba",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": "generic_transformer",
+            "path": "general.architecture",
+            "raw_value": "generic_transformer",
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/general/architecture",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "str",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:16f006ceb58ebc8d4b28a9f55b5d91f5",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": 15,
+            "path": "general.file_type",
+            "raw_value": 15,
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/general/file_type",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "int",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:b07a10502e91d79936ec9b8216151b62",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": 2,
+            "path": "general.quantization_version",
+            "raw_value": 2,
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/general/quantization_version",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "int",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:aa9d220663f583290aa3b783af1dc3db",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": 36,
+            "path": "generic_transformer.block_count",
+            "raw_value": 36,
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/generic_transformer/block_count",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "int",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:dc97e29dfd7adfe268089c101a9cee65",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": 65536,
+            "path": "generic_transformer.context_length",
+            "raw_value": 65536,
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/generic_transformer/context_length",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "int",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:356db81a2cf43b5d00e0f315e9317d31",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": 2560,
+            "path": "generic_transformer.embedding_length",
+            "raw_value": 2560,
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/generic_transformer/embedding_length",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "int",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:edb9a2082487aae22af7be7481c02b6c",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": 1,
+            "path": "tokenizer.ggml.bos_token_id",
+            "raw_value": 1,
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/tokenizer/ggml/bos_token_id",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "int",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:3bc3ad0060fde2ef7f81e5d8d3ea6ef0",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": 2,
+            "path": "tokenizer.ggml.eos_token_id",
+            "raw_value": 2,
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/tokenizer/ggml/eos_token_id",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "int",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:50e97781e593ffad88abfceec0c1af24",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": "gpt2",
+            "path": "tokenizer.ggml.model",
+            "raw_value": "gpt2",
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/tokenizer/ggml/model",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "str",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:7a8aad0ae090f257b1d761a3d12b574a",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": {
+              "digest": "sha256:458523d0290257351fca80b0d82c76ba8ed0c45e410b599bb8e94207d3bafbfc",
+              "length": 71
+            },
+            "path": "template",
+            "raw_value": {
+              "digest": "sha256:458523d0290257351fca80b0d82c76ba8ed0c45e410b599bb8e94207d3bafbfc",
+              "length": 71
+            },
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/template",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "dict",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:687e2b1631b3a08690197109add0793f",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": [
+              "completion",
+              "thinking",
+              "tools"
+            ],
+            "path": "capabilities",
+            "raw_value": [
+              "completion",
+              "thinking",
+              "tools"
+            ],
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/capabilities",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "list",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:ca9194e8af149c08797e1ba6935f9cf0",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": {
+              "digest": "sha256:15350d9cd2270aa03d024bf10f2b3d63b7e846bbb007eab9577b1ab085d40d44",
+              "length": 27
+            },
+            "path": "parameters",
+            "raw_value": {
+              "digest": "sha256:15350d9cd2270aa03d024bf10f2b3d63b7e846bbb007eab9577b1ab085d40d44",
+              "length": 27
+            },
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/parameters",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "dict",
+            "warnings": []
+          },
+          {
+            "evidence_id": "evidence:d97b0ae65de7b41ed00f60cc57af2f20",
+            "evidence_level": "DETECTED_FROM_METADATA",
+            "normalized_value": {
+              "digest": "sha256:20e5b38018d805cb79b7c39ab2a1439e90187cf90833961ca9c7e0ce9f0eae2f",
+              "length": 20
+            },
+            "path": "license",
+            "raw_value": {
+              "digest": "sha256:20e5b38018d805cb79b7c39ab2a1439e90187cf90833961ca9c7e0ce9f0eae2f",
+              "length": 20
+            },
+            "source": {
+              "digest": "sha256:c3c686fcb2ce7b3dabff6767c6d42cfb65e33af98b406f88790de8135228a3c8",
+              "locator": "/license",
+              "uri": "http://fixture-ollama.invalid:11434/api/show"
+            },
+            "value_type": "dict",
+            "warnings": []
+          }
+        ],
+        "inspection_id": "inspection:1b3f99d534af78ac3981cded05d7a108",
+        "inspector_id": "mie.inspector.ollama-model-details",
+        "inspector_version": "0.2.0",
+        "requested_levels": [
+          "IDENTITY_ONLY",
+          "METADATA",
+          "TOKENIZER",
+          "TEMPLATE"
+        ],
+        "started_at": "2026-08-10T09:00:00Z",
+        "subject": {
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1",
+          "version": null
+        },
+        "unknown_fields": {}
+      }
+    ],
+    "limitations": [
+      "Phase 2 stops before approval, application, regression, or registry update.",
+      "No SAGE files or interfaces were accessed.",
+      "Fixture evidence is not a substitute for live deployment validation."
+    ],
+    "model": {
+      "architecture_label": "generic_transformer",
+      "artifact_ids": [
+        "artifact:ollama:eeefcbd39a1d224afbb518f1932725e1"
+      ],
+      "identity_basis_evidence_ids": [
+        "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+        "evidence:b517ef91edf94119cfc8830e6ec9e696"
+      ],
+      "identity_status": "RECONCILED",
+      "model_id": "model:ollama:eeefcbd39a1d224afbb518f1932725e1",
+      "names": [
+        "example-model:4b"
+      ],
+      "publisher": null,
+      "revision": null,
+      "upstream_uri": null
+    },
+    "package_id": "integration-package-draft:fbbc10004af1f4960c3d471fb3d866d3",
+    "package_state": "DRAFT",
+    "permissions": [
+      {
+        "data_exposure": "non-sensitive deterministic probe prompts",
+        "duration": "single vertical-slice run",
+        "mitigations": [
+          "Endpoint allowlist",
+          "No model mutation methods",
+          "Sandbox resource limits"
+        ],
+        "permission_id": "permission-ollama-read-infer",
+        "purpose": "Read runtime metadata and run bounded non-destructive probes.",
+        "required": true,
+        "scope": "network:http://fixture-ollama.invalid:11434",
+        "stage": "DISCOVER_TO_EVALUATE"
+      },
+      {
+        "data_exposure": "sanitized metadata and evidence",
+        "duration": "single vertical-slice run",
+        "mitigations": [
+          "No target/SAGE mount",
+          "No credentials in package"
+        ],
+        "permission_id": "permission-engine-workspace",
+        "purpose": "Write evidence and the draft package.",
+        "required": true,
+        "scope": "filesystem:engine-workspace-only",
+        "stage": "ALL"
+      }
+    ],
+    "proposed_changes": [
+      {
+        "affected_test_ids": [
+          "probe:1e83815becfaacbf47fd72682fd6ae08",
+          "probe:d805f0b2ddc4f5e784b3bc0f1efdb4df",
+          "probe:8d0e23dafff52c56dbd89af271ca95bb",
+          "probe:d2c131dc2454b8462a78ceec90d2fe1c",
+          "probe:a9cb23ec416c126b13533c0ac8db4eb8",
+          "probe:d178351377ee5242dd23f6e9ba09a03e"
+        ],
+        "after_digest": "sha256:43aab96293f74398c8308be012bd884d083d1ead1ac04867df1647d01f73514a",
+        "artifact_ref": "config/model-binding.json",
+        "before_digest": null,
+        "capability_claim_ids": [
+          "claim:5cc96173c4ce4b8bf2e0ad114bb7319e",
+          "claim:8f2bc6014f173ac9bfa7dd6c28713b2f",
+          "claim:1adf8b4215a3a969904716971dffb9f1",
+          "claim:dc709cfc52b0ee08c0c71f79df4ef674",
+          "claim:028385568f3ffc0e9221338996bc3a2c",
+          "claim:5254fd17457c1af7135286be961fb889"
+        ],
+        "change_id": "change-staged-model-binding",
+        "operation": "ADD",
+        "preconditions": [
+          "Live validation replaces fixture evidence where applicable.",
+          "Explicit user approval is recorded for the exact package digest.",
+          "Preflight regression succeeds."
+        ],
+        "reason": "Propose a generic adapter binding; no change is applied in Phase 2.",
+        "reversible": true,
+        "rollback_ref": "rollback-remove-staged-binding",
+        "target": "target:synthetic-normalized-model-interface"
+      }
+    ],
+    "provenance": {
+      "canonicalization_policy": "mie-canonical-json-phase2-0.2.0",
+      "contains_credentials": false,
+      "generated_outputs": [
+        {
+          "digest": "sha256:43aab96293f74398c8308be012bd884d083d1ead1ac04867df1647d01f73514a",
+          "evidence_ids": [
+            "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+            "evidence:400266cb5d8c4c58c90720c5a67c329f",
+            "evidence:27619d016a2ff6293b83d76e7505752d",
+            "evidence:bc574d50faafbd8140dc0a360979f8bb",
+            "evidence:5de195f603016fa4fac06b78200524c9",
+            "evidence:6ec180942fbaf5268fe177eb77af8d44"
+          ],
+          "item_id": "config-model-binding",
+          "kind": "adapter-configuration",
+          "license": null,
+          "uri": "package://integration-package-draft:fbbc10004af1f4960c3d471fb3d866d3/config/model-binding.json"
+        }
+      ],
+      "inputs": [
+        {
+          "digest": "sha256:5e799adf3b2d7fecdb033721e2712d52bf595756464fbe7875eb7c048a5389c2",
+          "evidence_ids": [
+            "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+            "evidence:b517ef91edf94119cfc8830e6ec9e696"
+          ],
+          "item_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+          "kind": "ollama-deployment",
+          "license": null,
+          "uri": "http://fixture-ollama.invalid:11434/api/show"
+        }
+      ]
+    },
+    "regression": {
+      "affected_tests": [
+        "probe:1e83815becfaacbf47fd72682fd6ae08",
+        "probe:d805f0b2ddc4f5e784b3bc0f1efdb4df",
+        "probe:8d0e23dafff52c56dbd89af271ca95bb",
+        "probe:d2c131dc2454b8462a78ceec90d2fe1c",
+        "probe:a9cb23ec416c126b13533c0ac8db4eb8",
+        "probe:d178351377ee5242dd23f6e9ba09a03e"
+      ],
+      "baseline_digest": null,
+      "baseline_run_id": null,
+      "candidate_digest": null,
+      "candidate_run_id": null,
+      "evidence_ids": [],
+      "known_baseline_failures": [],
+      "post_application_outcome": "NOT_APPLICABLE",
+      "preflight_outcome": "NOT_RUN",
+      "suite_ref": null
+    },
+    "risks": [
+      {
+        "blocking": false,
+        "category": "identity",
+        "description": "Runtime content is addressed, but the exact upstream revision is unverified.",
+        "evidence_ids": [
+          "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+          "evidence:b517ef91edf94119cfc8830e6ec9e696"
+        ],
+        "likelihood": "MEDIUM",
+        "mitigation": "Keep behavioral evidence deployment-scoped.",
+        "residual_severity": "LOW",
+        "risk_id": "risk-upstream-revision",
+        "severity": "MEDIUM"
+      },
+      {
+        "blocking": true,
+        "category": "validation",
+        "description": "Results were produced with deterministic fixtures, not a live deployment.",
+        "evidence_ids": [],
+        "likelihood": "MEDIUM",
+        "mitigation": "Run the same plan against an approved live endpoint in a real sandbox.",
+        "residual_severity": "HIGH",
+        "risk_id": "risk-fixture-only",
+        "severity": "HIGH"
+      }
+    ],
+    "rollback": {
+      "irreversible_effects": [],
+      "method": "Remove the proposed model binding and restore the prior target snapshot.",
+      "plan_digest": "sha256:1d24e8c799d596cc5b2120118de0c483f632b6e3f6a84eddb7e7f29cc0082778",
+      "plan_id": "rollback-remove-staged-binding",
+      "preconditions": [
+        "Prior target snapshot is available."
+      ],
+      "restores_digest": "sha256:29462b5e7ea113c5a6404f67e1e11ee4215da565ab04dd5aa41689c5994551ee",
+      "steps": [
+        "Disable the proposed binding.",
+        "Restore the prior target snapshot.",
+        "Rerun target smoke tests."
+      ],
+      "test_evidence_ids": [],
+      "tested": false
+    },
+    "runtime": {
+      "authentication_ref": null,
+      "deployment_id": "deployment:ollama:39a3d39b2ef41d304c3f9606945da0a9",
+      "endpoint": "http://fixture-ollama.invalid:11434",
+      "evidence_ids": [
+        "evidence:4893e4af47892d121145e2e02f0c6268"
+      ],
+      "kind": "ollama",
+      "locality": "REMOTE",
+      "model_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "model_reference": "example-model:4b",
+      "protocols": [
+        "ollama-native-http"
+      ],
+      "runtime_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+      "version": "0.12.6"
+    },
+    "sandbox": {
+      "policy_version": "sandbox-policy-0.2.0",
+      "required": true,
+      "runs": [
+        {
+          "allowed_endpoints": [
+            "http://fixture-ollama.invalid:11434"
+          ],
+          "backend_id": "deterministic-fixture-sandbox",
+          "backend_version": "test-double-1",
+          "cleanup_complete": true,
+          "completed_at": "2026-08-10T09:00:01Z",
+          "enforced_controls": [
+            "read_only_inputs",
+            "ephemeral_scratch",
+            "network_allowlist",
+            "no_target_mount",
+            "resource_limits"
+          ],
+          "evidence_ids": [
+            "evidence:554549c7dc34052c62f5156be75dc291"
+          ],
+          "host_write_observed": false,
+          "job_digest": "sha256:41e23b70ea06d07693fa090d75937486099166034d46c173fefd50aa873a2042",
+          "missing_controls": [],
+          "outcome": "PASS",
+          "output_artifact_digests": [
+            "sha256:1f8105603a73c64ce1ccb8c81a76b258ad4588a048a1e8c078975b1cd4af2941",
+            "sha256:20d684ad255b1ff4f78921234da5ebadf16110f7f24859bd3c0f9e1e022ccb68",
+            "sha256:9c12e63a677d0b36e82eb9e49f28938924a0841fc295fd29ec98b2c1cf897b15",
+            "sha256:a79a3bcdb5fd5d332b1fbe224067f9a95d75ba89259fa34320369ce476726084",
+            "sha256:b2adb661b2797d53fc35b28d1fe66b4c96b923982915db1e3af53dd1620dbf12",
+            "sha256:d5b5f97273984bb360c682b37cff5ad9ea4fae466cebe04db8a0b5d295242f29"
+          ],
+          "requested_controls": [
+            "read_only_inputs",
+            "ephemeral_scratch",
+            "network_allowlist",
+            "no_target_mount",
+            "resource_limits"
+          ],
+          "resource_limits": {},
+          "run_id": "fixture-sandbox-run",
+          "started_at": "2026-08-10T09:00:00Z"
+        }
+      ]
+    },
+    "schema_version": "0.1.0",
+    "workflow": {
+      "idempotency_key": "idempotency:a3f181e5af19fc6e6ec75a6b16c9598a",
+      "run_id": "phase2-fixture-run",
+      "stage": "PROPOSED",
+      "started_at": "2026-08-10T09:00:00Z",
+      "transitions": [
+        {
+          "actor_id": "mie.phase2.vertical-slice",
+          "actor_type": "ENGINE",
+          "at": "2026-08-10T09:00:00Z",
+          "evidence_ids": [
+            "evidence:017764794c7fffd4ccc320bd6a7ccaf2",
+            "evidence:16f006ceb58ebc8d4b28a9f55b5d91f5",
+            "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+            "evidence:24101b8cc78cdf2ed02107334a3b3d19",
+            "evidence:27619d016a2ff6293b83d76e7505752d",
+            "evidence:356db81a2cf43b5d00e0f315e9317d31",
+            "evidence:39718ba1faf202a63c8ed1ddbf388104",
+            "evidence:3a4e0300697d0eac32edb11025b9b1a5",
+            "evidence:3bc3ad0060fde2ef7f81e5d8d3ea6ef0",
+            "evidence:400266cb5d8c4c58c90720c5a67c329f",
+            "evidence:4893e4af47892d121145e2e02f0c6268",
+            "evidence:50e97781e593ffad88abfceec0c1af24",
+            "evidence:554549c7dc34052c62f5156be75dc291",
+            "evidence:5de195f603016fa4fac06b78200524c9",
+            "evidence:687e2b1631b3a08690197109add0793f",
+            "evidence:6aa44ecdb03be79c22098cb6a6a294af",
+            "evidence:6ec180942fbaf5268fe177eb77af8d44",
+            "evidence:700e8c9136db3c2acc6887056d607e60",
+            "evidence:761e38e027ec716fd03257789c91d734",
+            "evidence:7a8aad0ae090f257b1d761a3d12b574a",
+            "evidence:7fcfdd6cbfc05ab36505a241f1fbf4e9",
+            "evidence:9d791478f891bb6c1529f50f26abe8b5",
+            "evidence:a5ad741837463ff917ae075c97cff818",
+            "evidence:a83dee6b1f333e80cb3c735ba060fdba",
+            "evidence:a9fc291454f8bbfaec0025fd678d18f2",
+            "evidence:aa9d220663f583290aa3b783af1dc3db",
+            "evidence:b07a10502e91d79936ec9b8216151b62",
+            "evidence:b517ef91edf94119cfc8830e6ec9e696",
+            "evidence:ba78310038a3c72c3cb5d30d05f418e8",
+            "evidence:bc574d50faafbd8140dc0a360979f8bb",
+            "evidence:ca9194e8af149c08797e1ba6935f9cf0",
+            "evidence:cc99563142e98c0c24d8c2aae7909407",
+            "evidence:cdc3fda04e5e2c7936063dac9835bba8",
+            "evidence:d97b0ae65de7b41ed00f60cc57af2f20",
+            "evidence:dc97e29dfd7adfe268089c101a9cee65",
+            "evidence:e3880e896f0bc32f27b4e5021c1b03af",
+            "evidence:ea796d6efc0cc6640aa94a614670c471",
+            "evidence:edb9a2082487aae22af7be7481c02b6c",
+            "evidence:ff7ecd2578dfa10b70130a734e8c6cf5"
+          ],
+          "from": "EVALUATED",
+          "input_digest": "sha256:033c9fdf24fae311209060b356fab11b6696f5b05fc7f5415a8f700959624331",
+          "output_digest": "sha256:8475b63f050757dd9234c59cbf472fe30dcd0607c93946696b9a255c7cb8ee62",
+          "to": "PROPOSED",
+          "transition_id": "transition:ed38b4f1637bf9a124a362e186d61788"
+        }
+      ],
+      "updated_at": "2026-08-10T09:00:00Z"
+    }
+  },
+  "base_package_digest": "sha256:cce802606422677a59a1e83221bfd01dd4175510a695ef701ffc9ec48ce1f585",
+  "change_set": {
+    "changes": [
+      {
+        "after": "sha256:43aab96293f74398c8308be012bd884d083d1ead1ac04867df1647d01f73514a",
+        "before": null,
+        "operation": "ADD",
+        "path": "model-bindings/proposed.json"
+      }
+    ],
+    "context_paths": [
+      "capability-registry.json",
+      "configuration.json"
+    ],
+    "digest": "sha256:cbea3329ad211fd942bc8b2b3adbd90919b88c8d541e9ccf765b3ec0da5bc2b5",
+    "id": "change-set:proposed-model-binding"
+  },
+  "created_at": "2026-08-10T09:00:00Z",
+  "environment_identity": {
+    "attributes": {
+      "attributes": {},
+      "environment_id": "env:registry-fixture",
+      "machine": "x86_64",
+      "platform": "Linux-6.1.158+-x86_64-with-glibc2.41",
+      "python_version": "3.13.14",
+      "runtime_endpoint_locality": "REMOTE",
+      "sandbox_backend_id": "deterministic-fixture-sandbox"
+    },
+    "digest": "sha256:8e0a6b587472548083b877f752935fd2b2dafc241efab0ff9c0faa1eda77ac2b",
+    "id": "env:registry-fixture"
+  },
+  "evidence_extensions": [
+    {
+      "collected_at": "2026-08-10T09:00:00Z",
+      "collector_id": "mie.identity.reconciler",
+      "collector_version": "0.3.0",
+      "derived_from": [
+        "evidence:4893e4af47892d121145e2e02f0c6268",
+        "evidence:700e8c9136db3c2acc6887056d607e60",
+        "evidence:1b8c4b6a52cc5412b8182a0ebe8e0d1e",
+        "evidence:b517ef91edf94119cfc8830e6ec9e696",
+        "evidence:ba78310038a3c72c3cb5d30d05f418e8",
+        "evidence:6aa44ecdb03be79c22098cb6a6a294af",
+        "evidence:24101b8cc78cdf2ed02107334a3b3d19",
+        "evidence:ff7ecd2578dfa10b70130a734e8c6cf5",
+        "evidence:e3880e896f0bc32f27b4e5021c1b03af",
+        "evidence:cc99563142e98c0c24d8c2aae7909407",
+        "evidence:39718ba1faf202a63c8ed1ddbf388104",
+        "evidence:a83dee6b1f333e80cb3c735ba060fdba",
+        "evidence:16f006ceb58ebc8d4b28a9f55b5d91f5",
+        "evidence:b07a10502e91d79936ec9b8216151b62",
+        "evidence:aa9d220663f583290aa3b783af1dc3db",
+        "evidence:dc97e29dfd7adfe268089c101a9cee65",
+        "evidence:356db81a2cf43b5d00e0f315e9317d31",
+        "evidence:edb9a2082487aae22af7be7481c02b6c",
+        "evidence:3bc3ad0060fde2ef7f81e5d8d3ea6ef0",
+        "evidence:50e97781e593ffad88abfceec0c1af24",
+        "evidence:7a8aad0ae090f257b1d761a3d12b574a",
+        "evidence:687e2b1631b3a08690197109add0793f",
+        "evidence:ca9194e8af149c08797e1ba6935f9cf0",
+        "evidence:d97b0ae65de7b41ed00f60cc57af2f20",
+        "evidence:cdc3fda04e5e2c7936063dac9835bba8"
+      ],
+      "environment_id": null,
+      "evidence_id": "evidence:0b2f49507c2a20a16abca6d0bf009580",
+      "kind": "DERIVATION",
+      "level": "INFERRED",
+      "observation_key": "identity.reconciliation",
+      "observed_value": {
+        "alias_collision": false,
+        "components": {
+          "adapter_digest": "sha256:328f9415bd338ec162d1352816a003cacf3fdc1dcacd5b3afb8c5e51c155386b",
+          "adapter_id": "mie.adapter.ollama-chat",
+          "artifact_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "configuration_digest": "sha256:8a9d1306ceadc0a8d2b33be58111fd4c1afc9de82343d30a50920fdba1083152",
+          "deployment_digest": "sha256:21ee53dd379e3d08f61cec549f37bef2cc562e5310b40dba687b7821fb49fe4a",
+          "environment_digest": "sha256:8e0a6b587472548083b877f752935fd2b2dafc241efab0ff9c0faa1eda77ac2b",
+          "metadata_identity": {
+            "general.architecture": "generic_transformer"
+          },
+          "runtime_digest": "sha256:cc374f2415ab9a7d0333f53016763094c785de4b837d91b03060e7412fef71cb",
+          "runtime_id": "runtime:ollama:139e4a4e85635d84b2950f96ebdbd2ef",
+          "runtime_kind": "ollama",
+          "runtime_model_reference": "example-model:4b"
+        },
+        "identity_material_digest": "sha256:8bc6cd9a3a54f47f37ca15f220a608c0263566224dad08dc5e01e6a719118247",
+        "status": "CONTENT_RECONCILED"
+      },
+      "outcome": "NOT_APPLICABLE",
+      "source": {
+        "digest": "sha256:99842d834ee6b4724f1dc4fa1c57b97213a3f62de034a58ef9ae2308493943db",
+        "locator": "reconcile",
+        "uri": "urn:mie:identity-policy:identity-policy-0.3.0"
+      },
+      "subject": {
+        "digest": "sha256:3bf1608e8ff7db983554d63229db08aedd55eb27d4a2750c4b39f76ef9e2c03c",
+        "kind": "INTEGRATION",
+        "subject_id": "composition:556fffb41c86d3503a092612eac55d60",
+        "version": null
+      }
+    }
+  ],
+  "immutability": {
+    "canonicalization": "mie-canonical-json-phase3-0.3.0",
+    "mutation_policy": "CONTENT_ADDRESSED_NEW_PACKAGE_REQUIRED"
+  },
+  "lifecycle_state": "DRAFT_PENDING_APPROVAL",
+  "package_id": "proposed-integration-package:5cd55c391ce4d4337d12899419b14505",
+  "permission_set": {
+    "digest": "sha256:4add851b23c801442bcb67ffae019ef660a054ba57da5af1b84ff38128f7f537",
+    "permissions": [
+      "filesystem:engine-workspace-only",
+      "network:http://fixture-ollama.invalid:11434"
+    ]
+  },
+  "policy_set": {
+    "digest": "sha256:a019cc3e6c1bfa90ec950dc3183e0971acdf40a9b54af8dc0e4afd5e248e5de5",
+    "versions": {
+      "approval": "0.3.0",
+      "capability": "0.3.0",
+      "evidence": "0.3.0",
+      "identity": "0.3.0",
+      "regression": "0.3.0",
+      "sandbox": "0.3.0",
+      "security": "security-policy-0.3.0"
+    }
+  },
+  "reconciled_identity": {
+    "alias_collision": false,
+    "artifact_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "composition_digest": "sha256:3bf1608e8ff7db983554d63229db08aedd55eb27d4a2750c4b39f76ef9e2c03c",
+    "composition_id": "composition:556fffb41c86d3503a092612eac55d60",
+    "deployment_id": "deployment:reconciled:e809fe1b6790e94c7f2087ea160dbc96",
+    "evidence_ids": [
+      "evidence:0b2f49507c2a20a16abca6d0bf009580"
+    ],
+    "logical_model_id": "model:reconciled:88bbb40184b39808a6d2298531f04dc5",
+    "status": "CONTENT_RECONCILED"
+  },
+  "regression_plan": {
+    "digest": "sha256:5a2f2a235dacddb6f9ef060a4863e51abad24ef7939125964bdca81af97d712c",
+    "expected_configuration_changes": [
+      "model_binding"
+    ],
+    "fail_closed": true,
+    "id": "regression-plan:part3-default",
+    "mandatory_checks": [
+      "functional:basic_generation",
+      "functional:instruction_following",
+      "capability:generation.text",
+      "compatibility:overall",
+      "configuration:model_binding",
+      "risk:security"
+    ]
+  },
+  "rollback_plan": {
+    "digest": "sha256:eacaac1bafec3a7ef46114ca905194641497959aec6767c8ad1157d18c28ab60",
+    "id": "rollback-plan:remove-proposed-binding",
+    "method": "restore-content-addressed-target-snapshot",
+    "steps": [
+      "restore prior configuration",
+      "restore prior registry state",
+      "remove newly added binding",
+      "run mandatory smoke regression"
+    ],
+    "tested": false
+  },
+  "schema_version": "0.3.0",
+  "security_assessment": {
+    "artifact_manifest_digest": "sha256:ca4c7704b28dabfa8ab93cde6199ad01bdee69a0bbc3e9751235f66ab142b348",
+    "assessment_id": "security:19a247db2ddf4de8c20546412e8d30e1",
+    "findings": [
+      {
+        "blocking": false,
+        "category": "sandbox",
+        "description": "The selected backend is not a production security boundary.",
+        "finding_id": "sandbox-not-production",
+        "mitigation": "Use a backend that truthfully enforces filesystem, network, and permission isolation.",
+        "severity": "HIGH"
+      }
+    ],
+    "generated_code_trust": "REVIEW_REQUIRED",
+    "permissions_digest": "sha256:4add851b23c801442bcb67ffae019ef660a054ba57da5af1b84ff38128f7f537",
+    "policy_version": "security-policy-0.3.0",
+    "sandbox_isolation_class": "TEST_DOUBLE",
+    "verdict": "CONDITIONAL"
+  },
+  "target_snapshot": {
+    "capability_snapshot_digest": "sha256:29462b5e7ea113c5a6404f67e1e11ee4215da565ab04dd5aa41689c5994551ee",
+    "digest": "sha256:8f25169867ab3edb0e2e1e701315a7d9bee80adf51aaecaf825cda467e83a749",
+    "id": "target-snapshot:read-only-profile",
+    "source": "read-only-target-profile",
+    "target_profile_digest": "sha256:989471fa2507f0fb4282af8a1d265838c1215a70c0f015eae33273c4c5537877"
+  }
+}

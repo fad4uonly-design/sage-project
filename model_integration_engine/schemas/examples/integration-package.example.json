@@ -1,0 +1,664 @@
+{
+  "schema_version": "0.1.0",
+  "package_id": "pkg-example-001",
+  "created_at": "2026-08-10T09:00:00Z",
+  "package_state": "AWAITING_APPROVAL",
+  "engine": {
+    "name": "model-integration-engine",
+    "version": "0.1.0a0",
+    "build_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "contract_version": "0.1.0",
+    "policy_versions": {
+      "evidence": "0.1.0",
+      "sandbox": "0.1.0",
+      "evaluation": "0.1.0"
+    }
+  },
+  "workflow": {
+    "run_id": "run-example-001",
+    "stage": "AWAITING_APPROVAL",
+    "idempotency_key": "idem-example-001",
+    "started_at": "2026-08-10T09:00:00Z",
+    "updated_at": "2026-08-10T09:15:00Z",
+    "transitions": [
+      {
+        "transition_id": "tr-001",
+        "from": "PROPOSED",
+        "to": "AWAITING_APPROVAL",
+        "at": "2026-08-10T09:15:00Z",
+        "actor_type": "ENGINE",
+        "actor_id": "mie.workflow",
+        "input_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "output_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "evidence_ids": [
+          "ev-basic",
+          "ev-adapter"
+        ]
+      }
+    ]
+  },
+  "model": {
+    "model_id": "model:example-4b",
+    "names": [
+      "example:4b"
+    ],
+    "publisher": null,
+    "upstream_uri": null,
+    "revision": null,
+    "architecture_label": "generic_transformer",
+    "artifact_ids": [
+      "artifact:example-4b"
+    ],
+    "identity_basis_evidence_ids": [
+      "ev-artifact"
+    ],
+    "identity_status": "PROVISIONAL"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:example-4b",
+      "format": "GGUF",
+      "uri": "runtime-artifact://local-example/example:4b",
+      "media_type": "application/x-gguf",
+      "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "size_bytes": 2500000000,
+      "file_count": 1,
+      "relationships": [],
+      "trust": "UNTRUSTED",
+      "read_only": true,
+      "evidence_ids": [
+        "ev-artifact"
+      ]
+    }
+  ],
+  "runtime": {
+    "runtime_id": "runtime:local-example",
+    "kind": "example-runtime",
+    "version": "1.2.3",
+    "endpoint": "http://approved-local-runtime.invalid:11434",
+    "locality": "LOCAL",
+    "protocols": [
+      "example-chat-http-v1"
+    ],
+    "deployment_id": "deployment:local-example/example:4b",
+    "model_reference": "example:4b",
+    "model_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "authentication_ref": null,
+    "evidence_ids": [
+      "ev-runtime"
+    ]
+  },
+  "inspections": [
+    {
+      "inspection_id": "inspect-001",
+      "inspector_id": "mie.inspectors.runtime-metadata",
+      "inspector_version": "0.1.0",
+      "subject": {
+        "kind": "ARTIFACT",
+        "subject_id": "artifact:example-4b",
+        "version": "3",
+        "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "requested_levels": [
+        "IDENTITY_ONLY",
+        "METADATA",
+        "TOKENIZER",
+        "TEMPLATE"
+      ],
+      "completed_levels": [
+        "IDENTITY_ONLY",
+        "METADATA"
+      ],
+      "started_at": "2026-08-10T09:01:00Z",
+      "completed_at": "2026-08-10T09:01:01Z",
+      "completeness": "PARTIAL",
+      "findings": [
+        {
+          "path": "general.architecture",
+          "raw_value": "generic_transformer",
+          "normalized_value": "generic_transformer",
+          "value_type": "string",
+          "source": {
+            "uri": "runtime://local-example/models/example:4b",
+            "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+            "locator": "model_info.general.architecture"
+          },
+          "evidence_level": "DETECTED_FROM_METADATA",
+          "evidence_id": "ev-artifact",
+          "warnings": []
+        }
+      ],
+      "unknown_fields": {},
+      "contradictions": [],
+      "evidence_ids": [
+        "ev-artifact"
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "claim_id": "claim-text",
+      "capability_key": "generation.text",
+      "capability_class": "MODEL_CAPABILITY",
+      "subject": {
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:local-example/example:4b",
+        "version": null,
+        "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "support": "SUPPORTED",
+      "validation": "VALIDATED",
+      "evidence_levels": [
+        "DETECTED_FROM_RUNTIME",
+        "VALIDATED_BY_TEST"
+      ],
+      "evidence_ids": [
+        "ev-basic"
+      ],
+      "parameters": {
+        "profile": "basic-chat-v1",
+        "trials": 3
+      },
+      "limitations": [
+        "Validated only under recorded deployment and generation profile."
+      ],
+      "contradictions": [],
+      "policy_version": "capability-policy-0.1.0",
+      "assessed_at": "2026-08-10T09:10:00Z"
+    },
+    {
+      "claim_id": "claim-reasoning",
+      "capability_key": "reasoning.general",
+      "capability_class": "MODEL_CAPABILITY",
+      "subject": {
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:local-example/example:4b",
+        "version": null,
+        "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED",
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "evidence_ids": [
+        "ev-provider-hypothesis"
+      ],
+      "parameters": {},
+      "limitations": [
+        "No behavioral reasoning suite has been run."
+      ],
+      "contradictions": [],
+      "policy_version": "capability-policy-0.1.0",
+      "assessed_at": "2026-08-10T09:10:00Z"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "ev-artifact",
+      "kind": "METADATA_FIELD",
+      "level": "DETECTED_FROM_METADATA",
+      "subject": {
+        "kind": "ARTIFACT",
+        "subject_id": "artifact:example-4b",
+        "version": "3",
+        "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "observation_key": "general.architecture",
+      "observed_value": "generic_transformer",
+      "source": {
+        "uri": "runtime://local-example/models/example:4b",
+        "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "locator": "model_info.general.architecture"
+      },
+      "collector_id": "mie.inspectors.runtime-metadata",
+      "collector_version": "0.1.0",
+      "collected_at": "2026-08-10T09:01:01Z",
+      "outcome": null,
+      "environment_id": null,
+      "derived_from": [],
+      "supersedes": [],
+      "redacted": false
+    },
+    {
+      "evidence_id": "ev-runtime",
+      "kind": "RUNTIME_OBSERVATION",
+      "level": "DETECTED_FROM_RUNTIME",
+      "subject": {
+        "kind": "RUNTIME",
+        "subject_id": "runtime:local-example",
+        "version": "1.2.3",
+        "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "observation_key": "runtime.version",
+      "observed_value": "1.2.3",
+      "source": {
+        "uri": "http://approved-local-runtime.invalid:11434/version",
+        "digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "locator": "version"
+      },
+      "collector_id": "mie.discovery.generic-runtime",
+      "collector_version": "0.1.0",
+      "collected_at": "2026-08-10T09:00:30Z",
+      "outcome": "NOT_APPLICABLE",
+      "environment_id": "env-example",
+      "derived_from": [],
+      "supersedes": [],
+      "redacted": false
+    },
+    {
+      "evidence_id": "ev-basic",
+      "kind": "TEST_RESULT",
+      "level": "VALIDATED_BY_TEST",
+      "subject": {
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:local-example/example:4b",
+        "version": null,
+        "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "observation_key": "generation.text.basic-chat-v1",
+      "observed_value": {
+        "passed_trials": 3,
+        "total_trials": 3
+      },
+      "source": {
+        "uri": "evidence://tests/basic-chat-v1/run-001",
+        "digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "locator": "results"
+      },
+      "collector_id": "mie.evaluator.basic",
+      "collector_version": "0.1.0",
+      "collected_at": "2026-08-10T09:08:00Z",
+      "outcome": "PASS",
+      "environment_id": "env-example",
+      "derived_from": [],
+      "supersedes": [],
+      "redacted": true
+    },
+    {
+      "evidence_id": "ev-adapter",
+      "kind": "TEST_RESULT",
+      "level": "VALIDATED_BY_TEST",
+      "subject": {
+        "kind": "ADAPTER",
+        "subject_id": "adapter:generic-chat-http",
+        "version": "1.0.0",
+        "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+      },
+      "observation_key": "adapter.normalized-chat.contract",
+      "observed_value": {
+        "passed": true
+      },
+      "source": {
+        "uri": "evidence://tests/adapter-contract/run-001",
+        "digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "locator": "results"
+      },
+      "collector_id": "mie.evaluator.adapter-contract",
+      "collector_version": "0.1.0",
+      "collected_at": "2026-08-10T09:09:00Z",
+      "outcome": "PASS",
+      "environment_id": "env-example",
+      "derived_from": [],
+      "supersedes": [],
+      "redacted": false
+    },
+    {
+      "evidence_id": "ev-provider-hypothesis",
+      "kind": "PROVIDER_DOCUMENT",
+      "level": "INFERRED",
+      "subject": {
+        "kind": "MODEL",
+        "subject_id": "model:example-4b",
+        "version": null,
+        "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "observation_key": "hypothesis.reasoning.general",
+      "observed_value": "Provider description suggests reasoning; not locally validated.",
+      "source": {
+        "uri": "https://provider.invalid/example",
+        "digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+        "locator": "description"
+      },
+      "collector_id": "mie.enrichment.provider-doc",
+      "collector_version": "0.1.0",
+      "collected_at": "2026-08-10T09:02:00Z",
+      "outcome": "NOT_APPLICABLE",
+      "environment_id": null,
+      "derived_from": [],
+      "supersedes": [],
+      "redacted": false
+    }
+  ],
+  "compatibility": {
+    "assessment_id": "compat-001",
+    "status": "COMPATIBLE_WITH_ADAPTER",
+    "target_profile": {
+      "target_id": "target:synthetic",
+      "version": "0.1.0",
+      "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    "subject": {
+      "kind": "DEPLOYMENT",
+      "subject_id": "deployment:local-example/example:4b",
+      "version": null,
+      "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    "requirements": [
+      {
+        "requirement_id": "req-chat",
+        "description": "Normalized text chat operation",
+        "mandatory": true,
+        "status": "SATISFIED_WITH_ADAPTER",
+        "evidence_ids": [
+          "ev-basic",
+          "ev-adapter"
+        ],
+        "adapter_obligations": [
+          "Map normalized messages and errors."
+        ],
+        "remediation": [],
+        "risks": []
+      }
+    ],
+    "blockers": [],
+    "unknowns": [
+      "Reasoning quality is not established."
+    ],
+    "required_permissions": [
+      "network:http://approved-local-runtime.invalid:11434"
+    ],
+    "policy_version": "compatibility-policy-0.1.0",
+    "assessed_at": "2026-08-10T09:11:00Z"
+  },
+  "capability_delta": {
+    "baseline_snapshot_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "added": [
+      "claim-text"
+    ],
+    "improved": [],
+    "redundant": [],
+    "regressed": [],
+    "unknown": [
+      "claim-reasoning"
+    ],
+    "policy_version": "delta-policy-0.1.0"
+  },
+  "adapter": {
+    "disposition": "REUSE",
+    "adapter_id": "adapter:generic-chat-http",
+    "version": "1.0.0",
+    "origin": "EXISTING",
+    "trust": "TRUSTED_EXISTING",
+    "contract_version": "normalized-inference-0.1.0",
+    "source_manifest_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "configuration_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "supported_operations": [
+      "chat",
+      "stream"
+    ],
+    "required_permissions": [
+      "network:http://approved-local-runtime.invalid:11434"
+    ],
+    "validation": "VALIDATED",
+    "evidence_ids": [
+      "ev-adapter"
+    ],
+    "limitations": [
+      "Endpoint must implement the recorded protocol profile."
+    ],
+    "generation_reason": null
+  },
+  "configuration": {
+    "manifest_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "artifacts": [
+      {
+        "path": "config/deployment.json",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "values": {
+      "deployment_id": "deployment:local-example/example:4b",
+      "runtime_template_ownership": true
+    },
+    "contains_secrets": false
+  },
+  "sandbox": {
+    "required": true,
+    "policy_version": "sandbox-policy-0.1.0",
+    "runs": [
+      {
+        "run_id": "sandbox-001",
+        "backend_id": "example-isolated-backend",
+        "backend_version": "1.0.0",
+        "job_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "outcome": "PASS",
+        "requested_controls": [
+          "read_only_inputs",
+          "ephemeral_scratch",
+          "network_allowlist",
+          "no_target_mount"
+        ],
+        "enforced_controls": [
+          "read_only_inputs",
+          "ephemeral_scratch",
+          "network_allowlist",
+          "no_target_mount"
+        ],
+        "missing_controls": [],
+        "allowed_endpoints": [
+          "http://approved-local-runtime.invalid:11434"
+        ],
+        "resource_limits": {
+          "timeout_seconds": 60,
+          "memory_bytes": 1073741824
+        },
+        "started_at": "2026-08-10T09:05:00Z",
+        "completed_at": "2026-08-10T09:10:00Z",
+        "host_write_observed": false,
+        "cleanup_complete": true,
+        "output_artifact_digests": [
+          "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+          "sha256:8888888888888888888888888888888888888888888888888888888888888888"
+        ],
+        "evidence_ids": [
+          "ev-basic",
+          "ev-adapter"
+        ]
+      }
+    ]
+  },
+  "evaluations": [
+    {
+      "evaluation_id": "eval-001",
+      "suite_id": "minimal-inference",
+      "suite_version": "0.1.0",
+      "suite_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "subject": {
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:local-example/example:4b",
+        "version": null,
+        "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "adapter_id": "adapter:generic-chat-http",
+      "sandbox_run_id": "sandbox-001",
+      "verdict": "PASS",
+      "results": [
+        {
+          "test_id": "basic-chat",
+          "suite_id": "minimal-inference",
+          "suite_version": "0.1.0",
+          "subject": {
+            "kind": "DEPLOYMENT",
+            "subject_id": "deployment:local-example/example:4b",
+            "version": null,
+            "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+          },
+          "environment_id": "env-example",
+          "fixture_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "outcome": "PASS",
+          "assertions": {
+            "nonce_exact": true
+          },
+          "measurements": {
+            "trials": 3
+          },
+          "output_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+          "evidence_ids": [
+            "ev-basic"
+          ]
+        }
+      ],
+      "aggregate_metrics": {
+        "passed": 1,
+        "failed": 0
+      },
+      "evidence_ids": [
+        "ev-basic"
+      ],
+      "limitations": [
+        "Only the minimal slice was evaluated."
+      ]
+    }
+  ],
+  "regression": {
+    "preflight_outcome": "PASS",
+    "baseline_run_id": "reg-base-001",
+    "candidate_run_id": "reg-candidate-001",
+    "baseline_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "candidate_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+    "suite_ref": "synthetic-regression@0.1.0",
+    "affected_tests": [
+      "basic-chat",
+      "adapter-contract"
+    ],
+    "known_baseline_failures": [],
+    "evidence_ids": [
+      "ev-basic",
+      "ev-adapter"
+    ],
+    "post_application_outcome": "NOT_APPLICABLE"
+  },
+  "risks": [
+    {
+      "risk_id": "risk-identity",
+      "category": "identity",
+      "description": "Upstream revision is not proven.",
+      "severity": "MEDIUM",
+      "likelihood": "MEDIUM",
+      "evidence_ids": [
+        "ev-artifact"
+      ],
+      "mitigation": "Bind all current evidence to deployment and artifact digests.",
+      "residual_severity": "LOW",
+      "blocking": false
+    }
+  ],
+  "permissions": [
+    {
+      "permission_id": "perm-runtime",
+      "scope": "network:http://approved-local-runtime.invalid:11434",
+      "purpose": "Run bounded inference probes.",
+      "stage": "SANDBOXED",
+      "required": true,
+      "duration": "single sandbox job",
+      "data_exposure": "non-sensitive test prompts only",
+      "mitigations": [
+        "Endpoint allowlist",
+        "Request and output limits"
+      ]
+    }
+  ],
+  "proposed_changes": [
+    {
+      "change_id": "change-config",
+      "target": "target://synthetic/model-bindings/example",
+      "operation": "ADD",
+      "before_digest": null,
+      "after_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "artifact_ref": "config/deployment.json",
+      "reason": "Add the validated text-generation deployment binding.",
+      "capability_claim_ids": [
+        "claim-text"
+      ],
+      "preconditions": [
+        "Explicit approval",
+        "Target state digest unchanged"
+      ],
+      "reversible": true,
+      "rollback_ref": "rollback-001",
+      "affected_test_ids": [
+        "basic-chat",
+        "adapter-contract"
+      ]
+    }
+  ],
+  "rollback": {
+    "plan_id": "rollback-001",
+    "plan_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "method": "Remove the staged binding and restore the prior registry snapshot.",
+    "preconditions": [
+      "Recorded prior snapshot is available."
+    ],
+    "steps": [
+      "Disable the new binding.",
+      "Restore the prior registry snapshot.",
+      "Rerun smoke tests."
+    ],
+    "restores_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "tested": false,
+    "test_evidence_ids": [],
+    "irreversible_effects": []
+  },
+  "approval": {
+    "state": "AWAITING_APPROVAL",
+    "scope": null,
+    "actor_id": null,
+    "decided_at": null,
+    "event_ref": null,
+    "conditions": []
+  },
+  "provenance": {
+    "inputs": [
+      {
+        "item_id": "artifact:example-4b",
+        "kind": "model-artifact",
+        "uri": "runtime-artifact://local-example/example:4b",
+        "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "license": null,
+        "evidence_ids": [
+          "ev-artifact"
+        ]
+      }
+    ],
+    "generated_outputs": [
+      {
+        "item_id": "config-example",
+        "kind": "adapter-configuration",
+        "uri": "package://pkg-example-001/config/deployment.json",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "license": null,
+        "evidence_ids": [
+          "ev-adapter"
+        ]
+      }
+    ],
+    "canonicalization_policy": "rfc8785-profile-0.1.0",
+    "contains_credentials": false
+  },
+  "assumptions": [
+    {
+      "assumption_id": "assumption-upstream",
+      "statement": "The runtime tag corresponds to the intended upstream revision.",
+      "verification_status": "UNVERIFIED",
+      "evidence_ids": [
+        "ev-artifact"
+      ],
+      "impact": "Model identity remains provisional; behavior evidence is deployment-scoped."
+    }
+  ],
+  "limitations": [
+    "This is a synthetic schema example, not evidence of a real model integration.",
+    "No SAGE component was accessed or modified."
+  ]
+}

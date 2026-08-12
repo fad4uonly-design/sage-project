@@ -1,0 +1,69 @@
+{
+  "artifact_kind": "LIVE_DEPLOYMENT_ACCEPTANCE_EVIDENCE",
+  "classification": "ENVIRONMENT_UNAVAILABLE",
+  "contains_live_deployment_evidence": false,
+  "diagnostic_endpoint": "http://127.0.0.1:11434",
+  "diagnostic_endpoint_is_external_target": false,
+  "diagnostic_evidence": [
+    {
+      "collector": "mie.discovery.ollama-api",
+      "collector_id": "mie.discovery.ollama-api",
+      "collector_version": "0.2.0",
+      "evidence_id": "acceptance-environment:72860d767497d1779d7c898bbeee5e6f",
+      "kind": "RUNTIME_OBSERVATION",
+      "level": "UNKNOWN",
+      "observation": {
+        "message": "Ollama endpoint is unavailable",
+        "problem_code": "RUNTIME_UNREACHABLE",
+        "reachable": false
+      },
+      "observation_key": "runtime.connectivity",
+      "scope": "ENVIRONMENT_DIAGNOSTIC_NOT_LIVE_TARGET_EVIDENCE",
+      "source": {
+        "digest": null,
+        "locator": "connection-attempt",
+        "uri": "http://127.0.0.1:11434/api/version"
+      },
+      "subject": {
+        "digest": null,
+        "kind": "RUNTIME",
+        "subject_id": "runtime:diagnostic-unavailable",
+        "version": null
+      },
+      "timestamp": "2026-08-10T09:58:32.302440+00:00"
+    }
+  ],
+  "discovery_completeness": "FAILED",
+  "engine_failure": false,
+  "failed_layer": "OLLAMA_DISCOVERY",
+  "fixture_evidence_reused": false,
+  "live_deployment_evidence": [],
+  "models_discovered": 0,
+  "problem": {
+    "code": "RUNTIME_UNREACHABLE",
+    "message": "Ollama endpoint is unavailable",
+    "remediation": [
+      "Verify the configured Ollama endpoint and retry."
+    ],
+    "retryable": true,
+    "stage": "NEW"
+  },
+  "requested_runtime_reference": "qwen3:4b",
+  "runtime_discovered": false,
+  "schema_version": "0.3.0",
+  "target_endpoint_supplied": false,
+  "unverified": [
+    "external Ollama runtime identity",
+    "runtime model list",
+    "qwen3:4b presence",
+    "model details",
+    "artifact digest",
+    "architecture",
+    "parameter count",
+    "layer count",
+    "context length",
+    "tokenizer",
+    "chat template",
+    "all behavioral capabilities"
+  ]
+}

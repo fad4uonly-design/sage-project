@@ -1,0 +1,29 @@
+{
+  "parameters": "temperature 0\nnum_ctx 65536",
+  "license": "Fixture license text",
+  "template": "{{- range .Messages }}{{ .Role }}: {{ .Content }}\\n{{ end }}assistant: ",
+  "capabilities": ["completion", "tools", "thinking"],
+  "modified_at": "2026-08-01T12:00:00Z",
+  "details": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "generic_transformer",
+    "families": ["generic_transformer"],
+    "parameter_size": "4.02B",
+    "quantization_level": "Q4_K_M"
+  },
+  "model_info": {
+    "general.architecture": "generic_transformer",
+    "general.file_type": 15,
+    "general.quantization_version": 2,
+    "generic_transformer.block_count": 36,
+    "generic_transformer.context_length": 65536,
+    "generic_transformer.embedding_length": 2560,
+    "tokenizer.ggml.bos_token_id": 1,
+    "tokenizer.ggml.eos_token_id": 2,
+    "tokenizer.ggml.model": "gpt2"
+  },
+  "future_field": {
+    "must_not_break_parser": true
+  }
+}

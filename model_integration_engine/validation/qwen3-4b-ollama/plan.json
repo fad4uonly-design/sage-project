@@ -1,0 +1,92 @@
+{
+  "plan_version": "0.1.0",
+  "status": "NOT_EXECUTED",
+  "fixture_only": true,
+  "requested_identity": {
+    "display_name": "Qwen3 4B Thinking 2507",
+    "runtime_kind": "ollama",
+    "runtime_model_reference": "qwen3:4b",
+    "identity_status": "UNVERIFIED",
+    "required_identity_evidence": [
+      "runtime_version_response",
+      "local_model_list_digest",
+      "local_model_content_digest",
+      "model_show_response",
+      "architecture_and_revision_metadata_if_present"
+    ]
+  },
+  "permissions": {
+    "network": [
+      {
+        "scope": "configured_ollama_endpoint_only",
+        "methods": ["GET /api/version", "GET /api/tags", "POST /api/show", "POST /api/chat"],
+        "forbidden_operations": ["pull", "push", "create", "copy", "delete"]
+      }
+    ],
+    "filesystem": ["engine_workspace_only"],
+    "target_system": []
+  },
+  "stages": [
+    {
+      "id": "discover-runtime",
+      "plugin_capability": "discovery.runtime.ollama-api",
+      "operations": ["GET /api/version", "GET /api/tags"],
+      "side_effect_class": "READ_ONLY"
+    },
+    {
+      "id": "inspect-deployment",
+      "plugin_capability": "inspection.runtime-model-details",
+      "operations": ["POST /api/show"],
+      "side_effect_class": "READ_ONLY"
+    },
+    {
+      "id": "detect-hypotheses",
+      "plugin_capability": "capability.evidence-rules",
+      "operations": ["derive_candidate_claims"],
+      "side_effect_class": "ENGINE_WORKSPACE_ONLY"
+    },
+    {
+      "id": "resolve-adapter",
+      "plugin_capability": "adapter.normalized-chat.ollama-api",
+      "operations": ["search", "configure", "contract_check"],
+      "side_effect_class": "ENGINE_WORKSPACE_ONLY"
+    },
+    {
+      "id": "sandbox-evaluate",
+      "plugin_capability": "sandbox.isolated-job",
+      "suite_refs": [
+        "basic-inference@0.1.0",
+        "instruction-following@0.1.0",
+        "streaming-contract@0.1.0",
+        "structured-output@0.1.0",
+        "fake-tool-calling@0.1.0",
+        "thinking-channel-contract@0.1.0",
+        "reasoning-outcomes@0.1.0",
+        "bounded-context-ladder@0.1.0",
+        "failure-and-recovery@0.1.0"
+      ],
+      "side_effect_class": "SANDBOX_ONLY"
+    },
+    {
+      "id": "build-proposal",
+      "plugin_capability": "package.integration-package-0.1.0",
+      "terminal_states": ["PROPOSED", "AWAITING_APPROVAL", "FAILED"],
+      "side_effect_class": "ENGINE_WORKSPACE_ONLY"
+    }
+  ],
+  "hard_stops": [
+    "No SAGE access or modification",
+    "No model download or mutation",
+    "No generated code outside sandbox",
+    "No capability registration",
+    "No inference-to-validated promotion without test evidence",
+    "No identity reconciliation from tag alone"
+  ],
+  "unverified_assumptions": [
+    "The configured Ollama endpoint is available.",
+    "The local qwen3:4b tag exists.",
+    "The local digest is the intended Thinking 2507 artifact.",
+    "The sandbox can enforce its mandatory controls.",
+    "Hardware is sufficient for bounded tests."
+  ]
+}

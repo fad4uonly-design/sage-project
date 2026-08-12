@@ -1,0 +1,100 @@
+{
+  "schema_version": "0.1.0",
+  "registry_version": "1",
+  "registry_id": "registry-example",
+  "updated_at": "2026-08-10T10:00:00Z",
+  "policy_version": "registry-policy-0.1.0",
+  "previous_registry_digest": null,
+  "entries": [
+    {
+      "registration_id": "registration-example-001",
+      "status": "ACTIVE",
+      "registered_at": "2026-08-10T10:00:00Z",
+      "registered_by": "human-reviewer:example",
+      "composition": {
+        "model": {
+          "kind": "MODEL",
+          "subject_id": "model:example-4b",
+          "version": null,
+          "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        "artifact": {
+          "kind": "ARTIFACT",
+          "subject_id": "artifact:example-4b",
+          "version": "3",
+          "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        "runtime": {
+          "kind": "RUNTIME",
+          "subject_id": "runtime:local-example",
+          "version": "1.2.3",
+          "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        "deployment": {
+          "kind": "DEPLOYMENT",
+          "subject_id": "deployment:local-example/example:4b",
+          "version": null,
+          "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+        },
+        "adapter": {
+          "kind": "ADAPTER",
+          "subject_id": "adapter:generic-chat-http",
+          "version": "1.0.0",
+          "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+        },
+        "configuration_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "environment_constraints": {
+          "locality": "LOCAL",
+          "runtime_version": "1.2.3"
+        }
+      },
+      "integration_package": {
+        "package_id": "pkg-example-approved",
+        "package_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "schema_version": "0.1.0",
+        "approval_event_ref": "approval-event-example",
+        "post_application_regression_id": "post-regression-example",
+        "post_application_regression_outcome": "PASS"
+      },
+      "capabilities": [
+        {
+          "claim_id": "claim-text",
+          "capability_key": "generation.text",
+          "capability_class": "INTEGRATION_CAPABILITY",
+          "subject_id": "deployment:local-example/example:4b",
+          "support": "SUPPORTED",
+          "validation": "VALIDATED",
+          "evidence_levels": [
+            "VALIDATED_BY_TEST"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "ev-post-text",
+              "evidence_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "test_run_id": "post-regression-example",
+              "suite_id": "minimal-inference",
+              "suite_version": "0.1.0",
+              "outcome": "PASS"
+            }
+          ],
+          "parameters": {
+            "profile": "basic-chat-v1"
+          },
+          "limitations": [
+            "Validated only under the registered composition."
+          ],
+          "validated_at": "2026-08-10T09:59:00Z"
+        }
+      ],
+      "health": {
+        "status": "HEALTHY",
+        "checked_at": "2026-08-10T09:59:30Z",
+        "check_id": "health-example",
+        "evidence_id": "ev-health-example"
+      },
+      "rollback_ref": "rollback-001",
+      "disabled_at": null,
+      "disable_reason": null
+    }
+  ]
+}

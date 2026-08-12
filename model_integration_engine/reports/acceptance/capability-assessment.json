@@ -1,0 +1,592 @@
+{
+  "all": [
+    {
+      "assessed_at": "2026-08-10T11:22:00.790308Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "context.long",
+      "claim_id": "claim:3a41a534d00cfa9ca4ea228b1bec31df",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:e331d12f3e5f8cfbf0629dc698153f26"
+      ],
+      "evidence_levels": [
+        "DETECTED_FROM_METADATA"
+      ],
+      "limitations": [
+        "Declared context metadata only; usable context is not validated."
+      ],
+      "parameters": {
+        "declared_context_length": 262144,
+        "threshold": 32768
+      },
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "SUPPORTED",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790221Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "generation.embeddings",
+      "claim_id": "claim:6f178f630342699686ce157a91703ee1",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:26c4cce318148941bad3a47e6263baf3"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "No affirmative declaration or behavioral validation was found."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790162Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "generation.text",
+      "claim_id": "claim:6992e288feeb0743f5dee998a09f992c",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:07362bf6b8eab1692d47aae453a3fc04"
+      ],
+      "evidence_levels": [
+        "DETECTED_FROM_METADATA"
+      ],
+      "limitations": [
+        "Runtime/model-detail declaration only; behavior is not validated."
+      ],
+      "parameters": {
+        "runtime_declaration": "completion"
+      },
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "SUPPORTED",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790248Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "instruction.following",
+      "claim_id": "claim:2de029eaa55056918a395737eefe9756",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:574dbffe8799db854818623345834b21"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Requires behavioral validation."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790201Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "modality.vision.input",
+      "claim_id": "claim:99429ff8940cf6d3cf44edc1a035b722",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:8ec585db0b3cb7859265cc20a677cb24"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "No affirmative declaration or behavioral validation was found."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790282Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "output.schema_constrained",
+      "claim_id": "claim:e9ae3a1b66045feebac91c5358251692",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:e2d9e651b3c2f404c429c410e00b49d7"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Requires schema-conformance probe."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790227Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "output.thinking_channel",
+      "claim_id": "claim:6183a6820067cd06eccf1010e186d915",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:07362bf6b8eab1692d47aae453a3fc04"
+      ],
+      "evidence_levels": [
+        "DETECTED_FROM_METADATA"
+      ],
+      "limitations": [
+        "Runtime/model-detail declaration only; behavior is not validated."
+      ],
+      "parameters": {
+        "runtime_declaration": "thinking"
+      },
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "SUPPORTED",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790299Z",
+      "capability_class": "RUNTIME_CAPABILITY",
+      "capability_key": "protocol.streaming",
+      "claim_id": "claim:f8b8f1bee353662bded797179edfd817",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:358ef4e492a80a02f42b9400454fc6a2"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Protocol streaming has not been validated on this runtime."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:359edfac050fb558df23ee6548b7421d187bd59e1d3b38f08193c98e59bfd349",
+        "kind": "RUNTIME",
+        "subject_id": "runtime:ollama:e3b5e3b26bba5f1efc1c1a65af0c701f",
+        "version": "0.32.6"
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790264Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "reasoning.general",
+      "claim_id": "claim:e0273c2d6ba4f8dd0ec32eb4c7df9b76",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:49b8261bb51b43e4d17372accadda78d"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Reasoning outcomes have not been tested."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790176Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "tools.function_calling",
+      "claim_id": "claim:4651648ee77787d15ebfa537b35c611f",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:07362bf6b8eab1692d47aae453a3fc04"
+      ],
+      "evidence_levels": [
+        "DETECTED_FROM_METADATA"
+      ],
+      "limitations": [
+        "Runtime/model-detail declaration only; behavior is not validated."
+      ],
+      "parameters": {
+        "runtime_declaration": "tools"
+      },
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "SUPPORTED",
+      "validation": "UNVALIDATED"
+    }
+  ],
+  "behaviorally_validated": [],
+  "classification": "CAPABILITY EVIDENCE CLASSIFICATION",
+  "inferred_capabilities": [
+    {
+      "assessed_at": "2026-08-10T11:22:00.790221Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "generation.embeddings",
+      "claim_id": "claim:6f178f630342699686ce157a91703ee1",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:26c4cce318148941bad3a47e6263baf3"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "No affirmative declaration or behavioral validation was found."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790248Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "instruction.following",
+      "claim_id": "claim:2de029eaa55056918a395737eefe9756",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:574dbffe8799db854818623345834b21"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Requires behavioral validation."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790201Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "modality.vision.input",
+      "claim_id": "claim:99429ff8940cf6d3cf44edc1a035b722",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:8ec585db0b3cb7859265cc20a677cb24"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "No affirmative declaration or behavioral validation was found."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790282Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "output.schema_constrained",
+      "claim_id": "claim:e9ae3a1b66045feebac91c5358251692",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:e2d9e651b3c2f404c429c410e00b49d7"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Requires schema-conformance probe."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790299Z",
+      "capability_class": "RUNTIME_CAPABILITY",
+      "capability_key": "protocol.streaming",
+      "claim_id": "claim:f8b8f1bee353662bded797179edfd817",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:358ef4e492a80a02f42b9400454fc6a2"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Protocol streaming has not been validated on this runtime."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:359edfac050fb558df23ee6548b7421d187bd59e1d3b38f08193c98e59bfd349",
+        "kind": "RUNTIME",
+        "subject_id": "runtime:ollama:e3b5e3b26bba5f1efc1c1a65af0c701f",
+        "version": "0.32.6"
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790264Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "reasoning.general",
+      "claim_id": "claim:e0273c2d6ba4f8dd0ec32eb4c7df9b76",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:49b8261bb51b43e4d17372accadda78d"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Reasoning outcomes have not been tested."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    }
+  ],
+  "partial_capabilities": [],
+  "unknown_or_conflicting_capabilities": [
+    {
+      "assessed_at": "2026-08-10T11:22:00.790221Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "generation.embeddings",
+      "claim_id": "claim:6f178f630342699686ce157a91703ee1",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:26c4cce318148941bad3a47e6263baf3"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "No affirmative declaration or behavioral validation was found."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790248Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "instruction.following",
+      "claim_id": "claim:2de029eaa55056918a395737eefe9756",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:574dbffe8799db854818623345834b21"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Requires behavioral validation."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790201Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "modality.vision.input",
+      "claim_id": "claim:99429ff8940cf6d3cf44edc1a035b722",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:8ec585db0b3cb7859265cc20a677cb24"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "No affirmative declaration or behavioral validation was found."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790282Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "output.schema_constrained",
+      "claim_id": "claim:e9ae3a1b66045feebac91c5358251692",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:e2d9e651b3c2f404c429c410e00b49d7"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Requires schema-conformance probe."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790299Z",
+      "capability_class": "RUNTIME_CAPABILITY",
+      "capability_key": "protocol.streaming",
+      "claim_id": "claim:f8b8f1bee353662bded797179edfd817",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:358ef4e492a80a02f42b9400454fc6a2"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Protocol streaming has not been validated on this runtime."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:359edfac050fb558df23ee6548b7421d187bd59e1d3b38f08193c98e59bfd349",
+        "kind": "RUNTIME",
+        "subject_id": "runtime:ollama:e3b5e3b26bba5f1efc1c1a65af0c701f",
+        "version": "0.32.6"
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    },
+    {
+      "assessed_at": "2026-08-10T11:22:00.790264Z",
+      "capability_class": "MODEL_CAPABILITY",
+      "capability_key": "reasoning.general",
+      "claim_id": "claim:e0273c2d6ba4f8dd0ec32eb4c7df9b76",
+      "contradictions": [],
+      "evidence_ids": [
+        "evidence:49b8261bb51b43e4d17372accadda78d"
+      ],
+      "evidence_levels": [
+        "INFERRED"
+      ],
+      "limitations": [
+        "Reasoning outcomes have not been tested."
+      ],
+      "parameters": {},
+      "policy_version": "capability-hypotheses-0.2.0",
+      "subject": {
+        "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+        "kind": "DEPLOYMENT",
+        "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+        "version": null
+      },
+      "support": "UNKNOWN",
+      "validation": "UNVALIDATED"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "models": [
+    {
+      "name": "qwen3:4b",
+      "model": "qwen3:4b",
+      "modified_at": "2026-07-01T00:00:00Z",
+      "size": 2500000000,
+      "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "details": {
+        "format": "gguf",
+        "family": "qwen3",
+        "families": ["qwen3"],
+        "parameter_size": "4.02B",
+        "quantization_level": "Q4_K_M"
+      }
+    }
+  ]
+}

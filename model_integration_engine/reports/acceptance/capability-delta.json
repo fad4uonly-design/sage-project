@@ -1,0 +1,25 @@
+{
+  "added": [],
+  "baseline_snapshot_digest": null,
+  "improved": [],
+  "policy_version": "delta-policy-0.3.0",
+  "read_only": true,
+  "reasons": [
+    "No read-only registry snapshot was supplied; capability delta is unknown."
+  ],
+  "redundant": [],
+  "regressed": [],
+  "status": "UNKNOWN_NO_REGISTRY_SNAPSHOT",
+  "unknown": [
+    "claim:2de029eaa55056918a395737eefe9756",
+    "claim:3a41a534d00cfa9ca4ea228b1bec31df",
+    "claim:4651648ee77787d15ebfa537b35c611f",
+    "claim:6183a6820067cd06eccf1010e186d915",
+    "claim:6992e288feeb0743f5dee998a09f992c",
+    "claim:6f178f630342699686ce157a91703ee1",
+    "claim:99429ff8940cf6d3cf44edc1a035b722",
+    "claim:e0273c2d6ba4f8dd0ec32eb4c7df9b76",
+    "claim:e9ae3a1b66045feebac91c5358251692",
+    "claim:f8b8f1bee353662bded797179edfd817"
+  ]
+}

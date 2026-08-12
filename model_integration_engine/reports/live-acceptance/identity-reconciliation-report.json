@@ -1,0 +1,73 @@
+{
+  "adapter_identity": {
+    "adapter_id": "mie.adapter.ollama-chat",
+    "artifact_digest": "sha256:328f9415bd338ec162d1352816a003cacf3fdc1dcacd5b3afb8c5e51c155386b",
+    "deployment_binding": null,
+    "reason": "Generic adapter exists, but no live deployment/configuration binding was created.",
+    "status": "KNOWN_ENGINE_COMPONENT_UNBOUND",
+    "version": "0.3.0"
+  },
+  "artifact_identity": {
+    "digest": null,
+    "reason": "No runtime digest or safely accessible GGUF artifact was observed.",
+    "status": "UNKNOWN"
+  },
+  "classification": "ENVIRONMENT_UNAVAILABLE",
+  "configuration_identity": {
+    "digest": null,
+    "reason": "No deployment/template/runtime configuration was observed.",
+    "status": "UNKNOWN"
+  },
+  "contains_live_deployment_identity": false,
+  "deployment_identity": {
+    "reason": "Runtime + model reference + content digest could not be reconciled.",
+    "status": "UNKNOWN"
+  },
+  "environment_identity": {
+    "attributes": {
+      "engine_version": "0.3.0a0",
+      "local_diagnostic_endpoint": "UNREACHABLE",
+      "local_ollama_executable": "UNAVAILABLE",
+      "machine": "x86_64",
+      "platform": "Linux-6.1.158+-x86_64-with-glibc2.41",
+      "python_version": "3.13.14",
+      "target_endpoint_configuration": "NOT_SUPPLIED"
+    },
+    "digest": "sha256:cd1d8c17880df7c7c3da450d3069424e134d0cdc7b58e89f30e433e77b385ce2",
+    "environment_id": "environment:acceptance-arena:cd1d8c17880df7c7c3da450d3069424e",
+    "not_deployment_environment": true,
+    "status": "OBSERVED_ACCEPTANCE_ENVIRONMENT_ONLY"
+  },
+  "external_validation_reference_not_evidence": {
+    "approximate_parameters": "4B",
+    "architecture": "Qwen3",
+    "declared_context_length": 262144,
+    "gguf_exists": true,
+    "layer_count": 36,
+    "model_reference": "qwen3:4b"
+  },
+  "fixture_identity_reused": false,
+  "identity_reconciliation_status": "NOT_RUN_ENVIRONMENT_UNAVAILABLE",
+  "model_identity": {
+    "reason": "No model list or model-detail response was received.",
+    "status": "UNKNOWN"
+  },
+  "requested_runtime_reference": {
+    "durable_identity": false,
+    "status": "SUPPLIED_VALIDATION_ARGUMENT_NOT_OBSERVED",
+    "value": "qwen3:4b"
+  },
+  "runtime_identity": {
+    "reason": "No external endpoint was supplied and no runtime response was received.",
+    "status": "UNKNOWN"
+  },
+  "schema_version": "0.3.0",
+  "unverified_fields": [
+    "runtime identity",
+    "model identity",
+    "artifact identity/digest",
+    "deployment identity",
+    "configuration identity",
+    "live environment identity"
+  ]
+}

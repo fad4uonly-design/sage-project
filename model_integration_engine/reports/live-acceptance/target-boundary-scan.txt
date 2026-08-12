@@ -1,0 +1,14 @@
+Workspace root: /home/user/model-integration-engine
+Workspace top-level directories:
+.pytest_cache
+docs
+reports
+schemas
+src
+tests
+validation
+SAGE-named paths under workspace:
+NONE
+SAGE imports in production source:
+NONE
+Result: no SAGE project path was present or accessed by this validation.

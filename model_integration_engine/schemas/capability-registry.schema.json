@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sage.local/schemas/mie/capability-registry/0.1.0",
+  "title": "Validated model capability registry",
+  "description": "Versioned registry of approved deployable compositions and test-validated capabilities.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_version", "registry_id", "updated_at", "policy_version", "previous_registry_digest", "entries"],
+  "properties": {
+    "schema_version": { "const": "0.1.0" },
+    "registry_version": { "type": "string", "minLength": 1 },
+    "registry_id": { "type": "string", "minLength": 1 },
+    "updated_at": { "$ref": "#/$defs/timestamp" },
+    "policy_version": { "type": "string", "minLength": 1 },
+    "previous_registry_digest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "entries": { "type": "array", "items": { "$ref": "#/$defs/entry" } }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "subject_id", "version", "digest"],
+      "properties": {
+        "kind": { "enum": ["MODEL", "ARTIFACT", "RUNTIME", "DEPLOYMENT", "ADAPTER", "INTEGRATION"] },
+        "subject_id": { "$ref": "#/$defs/nonEmptyString" },
+        "version": { "type": ["string", "null"] },
+        "digest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] }
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "evidence_digest", "test_run_id", "suite_id", "suite_version", "outcome"],
+      "properties": {
+        "evidence_id": { "$ref": "#/$defs/nonEmptyString" },
+        "evidence_digest": { "$ref": "#/$defs/digest" },
+        "test_run_id": { "$ref": "#/$defs/nonEmptyString" },
+        "suite_id": { "$ref": "#/$defs/nonEmptyString" },
+        "suite_version": { "$ref": "#/$defs/nonEmptyString" },
+        "outcome": { "const": "PASS" }
+      }
+    },
+    "validatedCapability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "capability_key", "capability_class", "subject_id", "support", "validation", "evidence_levels", "evidence", "parameters", "limitations", "validated_at"],
+      "properties": {
+        "claim_id": { "$ref": "#/$defs/nonEmptyString" },
+        "capability_key": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]+$" },
+        "capability_class": { "enum": ["MODEL_CAPABILITY", "RUNTIME_CAPABILITY", "TOOL_CAPABILITY", "SKILL_CAPABILITY", "KNOWLEDGE_CAPABILITY", "INTEGRATION_CAPABILITY"] },
+        "subject_id": { "$ref": "#/$defs/nonEmptyString" },
+        "support": { "enum": ["SUPPORTED", "PARTIAL"] },
+        "validation": { "const": "VALIDATED" },
+        "evidence_levels": {
+          "type": "array",
+          "items": { "enum": ["DETECTED_FROM_METADATA", "DETECTED_FROM_RUNTIME", "VALIDATED_BY_TEST", "INFERRED", "NOT_SUPPORTED"] },
+          "contains": { "const": "VALIDATED_BY_TEST" },
+          "minContains": 1,
+          "uniqueItems": true
+        },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidenceRef" }, "minItems": 1 },
+        "parameters": { "type": "object", "additionalProperties": true },
+        "limitations": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" } },
+        "validated_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "composition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "artifact", "runtime", "deployment", "adapter", "configuration_digest", "environment_constraints"],
+      "properties": {
+        "model": { "$ref": "#/$defs/subject" },
+        "artifact": { "$ref": "#/$defs/subject" },
+        "runtime": { "$ref": "#/$defs/subject" },
+        "deployment": { "$ref": "#/$defs/subject" },
+        "adapter": { "$ref": "#/$defs/subject" },
+        "configuration_digest": { "$ref": "#/$defs/digest" },
+        "environment_constraints": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "packageRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_id", "package_digest", "schema_version", "approval_event_ref", "post_application_regression_id", "post_application_regression_outcome"],
+      "properties": {
+        "package_id": { "$ref": "#/$defs/nonEmptyString" },
+        "package_digest": { "$ref": "#/$defs/digest" },
+        "schema_version": { "enum": ["0.1.0", "0.3.0"] },
+        "approval_event_ref": { "$ref": "#/$defs/nonEmptyString" },
+        "post_application_regression_id": { "$ref": "#/$defs/nonEmptyString" },
+        "post_application_regression_outcome": { "const": "PASS" }
+      }
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checked_at", "check_id", "evidence_id"],
+      "properties": {
+        "status": { "enum": ["HEALTHY", "DEGRADED", "UNAVAILABLE", "UNKNOWN"] },
+        "checked_at": { "$ref": "#/$defs/timestamp" },
+        "check_id": { "$ref": "#/$defs/nonEmptyString" },
+        "evidence_id": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registration_id", "status", "registered_at", "registered_by", "composition", "integration_package", "capabilities", "health", "rollback_ref", "disabled_at", "disable_reason"],
+      "properties": {
+        "registration_id": { "$ref": "#/$defs/nonEmptyString" },
+        "status": { "enum": ["ACTIVE", "DISABLED", "REVOKED"] },
+        "registered_at": { "$ref": "#/$defs/timestamp" },
+        "registered_by": { "$ref": "#/$defs/nonEmptyString" },
+        "composition": { "$ref": "#/$defs/composition" },
+        "integration_package": { "$ref": "#/$defs/packageRef" },
+        "capabilities": { "type": "array", "items": { "$ref": "#/$defs/validatedCapability" }, "minItems": 1 },
+        "health": { "$ref": "#/$defs/health" },
+        "rollback_ref": { "$ref": "#/$defs/nonEmptyString" },
+        "disabled_at": { "anyOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+        "disable_reason": { "type": ["string", "null"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "enum": ["DISABLED", "REVOKED"] } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "disabled_at": { "$ref": "#/$defs/timestamp" },
+              "disable_reason": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

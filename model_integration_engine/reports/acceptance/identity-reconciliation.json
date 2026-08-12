@@ -1,0 +1,129 @@
+{
+  "alias_collision": false,
+  "classification": "RUNTIME/MODEL COMPOSITION IDENTITY",
+  "composition": {
+    "digest": "sha256:e4be9fef595c02e6d7378adeb2ae30484fa8d9f5b78facbe9fb8f48e4c93a24a",
+    "kind": "INTEGRATION",
+    "subject_id": "composition:c1d7725dceb92df8826b2a6a13ce5622",
+    "version": null
+  },
+  "deployment": {
+    "digest": "sha256:9d1ad26d81df24c3b89aac4efd337d8afccef6b5ef74058bb10174d67a3998c6",
+    "kind": "DEPLOYMENT",
+    "subject_id": "deployment:reconciled:4eb2a63fe4c17bf457a12a0c2cb86c3a",
+    "version": null
+  },
+  "direct_gguf_digest": null,
+  "evidence": [
+    {
+      "collected_at": "2026-08-10T11:22:01.004322+00:00",
+      "collector_id": "mie.identity.reconciler",
+      "collector_version": "0.3.0",
+      "derived_from": [
+        "evidence:56749e738fa57f225004db36ddd38c80",
+        "evidence:8689f9e25e5bee775adb80ef762c9d15",
+        "evidence:3acdaa7d9673c7e99ef502e7f3a2d190",
+        "evidence:8b1e0859e3876e82de5142fbe969bfbd",
+        "evidence:2cbe375e3426cb40efde4db27bda7e65",
+        "evidence:13eb11041508f973661af7254b15e89b",
+        "evidence:d53fd340a9a7b05d8cee5ffdbbdbc569",
+        "evidence:a033f2ecec2360eff526a585d707b64b",
+        "evidence:7f199f4a2e6c18e5dce5ec207b3c64db",
+        "evidence:cacbda2c8aa48f0a04036ae63f4c7de9",
+        "evidence:7a7b4004226b9eebdf8a38a081ae098d",
+        "evidence:8fe2684f8a152d74339628ec7216079a",
+        "evidence:333a96a3eccf2f761692564150a642eb",
+        "evidence:170d3a84bb063209003c3fff1a501ffa",
+        "evidence:2c283f810599fba4428cd3fdb9a14268",
+        "evidence:fceba34566f3633e670789aec30f75d1",
+        "evidence:f0805d05a61a6606ed20d3cfeaec0ce9",
+        "evidence:9f45b557280afba90cb407736e10ac9f",
+        "evidence:e6afdc64f1c1a24a0c98fc0859302553",
+        "evidence:ff91e7c0a8d22bf3b535ab2fea5a32b0",
+        "evidence:aad8d81e3ef042b55faaebfd05dddb9c",
+        "evidence:622750e9b314ff6afe33b442004841ef",
+        "evidence:9a8c2e71d809bd11b471c35d53eca8fa",
+        "evidence:7992c6a41cd37583b0fa141f4c9ec09d",
+        "evidence:80c7b6bea2f05af62df8cf38278f1bb2",
+        "evidence:0cdd64f13f2d72c1dbf5ecdbe8cc0120",
+        "evidence:c7ede46fb1cdecf1b7c7ab50bff70f82",
+        "evidence:e63db2485609b5d42e42aaaee63a86d0",
+        "evidence:c63b77b36b9400f812a5db1eafaf73d8",
+        "evidence:e331d12f3e5f8cfbf0629dc698153f26",
+        "evidence:c668cf7a3dc45e8ec7d937dacf127995",
+        "evidence:437b411c7927d9f4a9fb136946a4d5d0",
+        "evidence:98a827b1b0083b12d6a21cbdd1fe4907",
+        "evidence:d01b48f8e5cb36f6b124be8389875358",
+        "evidence:7280f7405e539c2a7fab334d3bc06579",
+        "evidence:35bf7d08b5f70c48fa1b530808d5317f",
+        "evidence:7e8935a04da778e1992d1c0174591e58",
+        "evidence:a9fc9d5dc150da2f3e39cce993d7228e",
+        "evidence:124dbc17f2f966cd72fbcc69338d3bb0",
+        "evidence:4d393832fcdbb85d3c84639025d9ca11",
+        "evidence:5e37987d6cb2cb2b00b1577e9b606b35",
+        "evidence:20fc57bc8165cafad5fe9802c88abd0c",
+        "evidence:98a8c20585b74a8d4602e4373102bb74",
+        "evidence:07362bf6b8eab1692d47aae453a3fc04",
+        "evidence:197ac90c7d363440fa99cd15b883a433",
+        "evidence:84fb61a70b85c93fa03cb60e6113f8b2",
+        "evidence:7086043a404dfebe1e7fbb982de76b62"
+      ],
+      "environment_id": null,
+      "evidence_id": "evidence:84135525f633274baef87b8f067a0f2f",
+      "kind": "DERIVATION",
+      "level": "INFERRED",
+      "observation_key": "identity.reconciliation",
+      "observed_value": {
+        "alias_collision": false,
+        "components": {
+          "adapter_digest": "sha256:328f9415bd338ec162d1352816a003cacf3fdc1dcacd5b3afb8c5e51c155386b",
+          "adapter_id": "mie.adapter.ollama-chat",
+          "artifact_digest": "sha256:359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+          "configuration_digest": "sha256:b6b2b8467b057bea67922c4e8a21eb5266dc0eb608547f46b6d621e67f278e8d",
+          "deployment_digest": "sha256:9d1ad26d81df24c3b89aac4efd337d8afccef6b5ef74058bb10174d67a3998c6",
+          "environment_digest": "sha256:e73782bdb047c665621c892f6b0bcde77bea9d92743521a89f56aa28d6f3840b",
+          "metadata_identity": {
+            "general.architecture": "qwen3",
+            "general.basename": "Qwen3",
+            "general.finetune": "Thinking",
+            "general.version": "2507"
+          },
+          "runtime_digest": "sha256:359edfac050fb558df23ee6548b7421d187bd59e1d3b38f08193c98e59bfd349",
+          "runtime_id": "runtime:ollama:e3b5e3b26bba5f1efc1c1a65af0c701f",
+          "runtime_kind": "ollama",
+          "runtime_model_reference": "qwen3:4b"
+        },
+        "identity_material_digest": "sha256:bb45d95e74f3e8b9b760d1a427843e66e7c6db3e18a695e007a7ea6221188db9",
+        "status": "CONTENT_RECONCILED"
+      },
+      "outcome": "NOT_APPLICABLE",
+      "redacted": false,
+      "source": {
+        "digest": "sha256:99842d834ee6b4724f1dc4fa1c57b97213a3f62de034a58ef9ae2308493943db",
+        "locator": "reconcile",
+        "uri": "urn:mie:identity-policy:identity-policy-0.3.0"
+      },
+      "subject": {
+        "digest": "sha256:e4be9fef595c02e6d7378adeb2ae30484fa8d9f5b78facbe9fb8f48e4c93a24a",
+        "kind": "INTEGRATION",
+        "subject_id": "composition:c1d7725dceb92df8826b2a6a13ce5622",
+        "version": null
+      }
+    }
+  ],
+  "identity_status": "CONTENT_RECONCILED",
+  "logical_model": {
+    "digest": "sha256:359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+    "kind": "MODEL",
+    "subject_id": "model:reconciled:c542f540229af39c958750403971da1b",
+    "version": "2507"
+  },
+  "runtime_artifact": {
+    "digest": "sha256:359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+    "kind": "ARTIFACT",
+    "subject_id": "artifact:ollama:6efbd642f2588d7a3b2794ba71b0ba41",
+    "version": null
+  },
+  "runtime_model_digest": "sha256:359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+  "runtime_to_direct_artifact_relation": "NOT_AVAILABLE"
+}

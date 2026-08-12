@@ -1,0 +1,14 @@
+{
+  "approval_requested": false,
+  "artifact_evidence_count": 0,
+  "behavioral_test_evidence_count": 0,
+  "classification": "IMPLEMENTED_NOT_EXECUTED_LIVE",
+  "live_runtime_evidence_count": 0,
+  "package_digest": null,
+  "package_produced": false,
+  "reason": "Arena localhost was not used as a substitute for the user's Windows Ollama endpoint.",
+  "registry_modified": false,
+  "sage_accessed": false,
+  "state": "AWAITING_USER_WINDOWS_EXECUTION",
+  "user_input_promoted_to_behavioral_validation": false
+}

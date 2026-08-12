@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sage.local/schemas/mie/proposed-integration-package/0.3.0",
+  "title": "Immutable proposed model integration package envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "package_id", "created_at", "lifecycle_state",
+    "base_package", "base_package_digest", "reconciled_identity", "evidence_extensions",
+    "environment_identity", "adapter_artifact", "artifact_manifest",
+    "security_assessment", "regression_plan", "target_snapshot",
+    "change_set", "rollback_plan", "permission_set", "policy_set",
+    "approval_binding_material", "immutability"
+  ],
+  "properties": {
+    "schema_version": {"const": "0.3.0"},
+    "package_id": {"$ref": "#/$defs/nonEmpty"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "lifecycle_state": {"const": "DRAFT_PENDING_APPROVAL"},
+    "base_package": {"type": "object"},
+    "base_package_digest": {"$ref": "#/$defs/digest"},
+    "reconciled_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["logical_model_id", "artifact_digest", "deployment_id", "composition_id", "composition_digest", "status", "alias_collision", "evidence_ids"],
+      "properties": {
+        "logical_model_id": {"$ref": "#/$defs/nonEmpty"},
+        "artifact_digest": {"anyOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]},
+        "deployment_id": {"$ref": "#/$defs/nonEmpty"},
+        "composition_id": {"$ref": "#/$defs/nonEmpty"},
+        "composition_digest": {"$ref": "#/$defs/digest"},
+        "status": {"$ref": "#/$defs/nonEmpty"},
+        "alias_collision": {"type": "boolean"},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "uniqueItems": true}
+      }
+    },
+    "evidence_extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["evidence_id", "kind", "level", "subject", "observation_key", "source", "derived_from"],
+        "additionalProperties": true
+      }
+    },
+    "environment_identity": {"$ref": "#/$defs/identityObject"},
+    "adapter_artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["adapter_id", "artifact_digest", "configuration_digest", "trust", "resolution", "sandbox_required"],
+      "properties": {
+        "adapter_id": {"$ref": "#/$defs/nonEmpty"},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "configuration_digest": {"$ref": "#/$defs/digest"},
+        "trust": {"enum": ["TRUSTED_EXISTING", "REVIEW_REQUIRED", "UNTRUSTED_GENERATED"]},
+        "resolution": {"enum": ["REUSE", "CONFIGURE", "GENERATE_PROPOSAL", "UNRESOLVED"]},
+        "sandbox_required": {"type": "boolean"}
+      }
+    },
+    "artifact_manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_digest", "artifacts"],
+      "properties": {
+        "manifest_digest": {"anyOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]},
+        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifactRef"}}
+      }
+    },
+    "security_assessment": {
+      "type": "object", "additionalProperties": true,
+      "required": ["assessment_id", "verdict", "policy_version", "findings"],
+      "properties": {
+        "assessment_id": {"$ref": "#/$defs/nonEmpty"},
+        "verdict": {"enum": ["PASS", "CONDITIONAL", "BLOCKED"]},
+        "policy_version": {"$ref": "#/$defs/nonEmpty"},
+        "findings": {"type": "array"}
+      }
+    },
+    "regression_plan": {"$ref": "#/$defs/digestObject"},
+    "target_snapshot": {"$ref": "#/$defs/digestObject"},
+    "change_set": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "digest", "changes"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmpty"},
+        "digest": {"$ref": "#/$defs/digest"},
+        "changes": {"type": "array", "items": {"type": "object"}},
+        "context_paths": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "uniqueItems": true}
+      }
+    },
+    "rollback_plan": {"$ref": "#/$defs/digestObject"},
+    "permission_set": {
+      "type": "object", "additionalProperties": false,
+      "required": ["digest", "permissions"],
+      "properties": {
+        "digest": {"$ref": "#/$defs/digest"},
+        "permissions": {"type": "array", "items": {"$ref": "#/$defs/nonEmpty"}, "uniqueItems": true}
+      }
+    },
+    "policy_set": {
+      "type": "object", "additionalProperties": false,
+      "required": ["digest", "versions"],
+      "properties": {
+        "digest": {"$ref": "#/$defs/digest"},
+        "versions": {"type": "object", "additionalProperties": {"$ref": "#/$defs/nonEmpty"}}
+      }
+    },
+    "approval_binding_material": {
+      "type": "object", "additionalProperties": false,
+      "required": ["change_set_digest", "target_snapshot_digest", "permission_set_digest", "policy_digest", "rollback_plan_digest"],
+      "properties": {
+        "change_set_digest": {"$ref": "#/$defs/digest"},
+        "target_snapshot_digest": {"$ref": "#/$defs/digest"},
+        "permission_set_digest": {"$ref": "#/$defs/digest"},
+        "policy_digest": {"$ref": "#/$defs/digest"},
+        "rollback_plan_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "immutability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["canonicalization", "mutation_policy"],
+      "properties": {
+        "canonicalization": {"const": "mie-canonical-json-phase3-0.3.0"},
+        "mutation_policy": {"const": "CONTENT_ADDRESSED_NEW_PACKAGE_REQUIRED"}
+      }
+    }
+  },
+  "$defs": {
+    "nonEmpty": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "identityObject": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "digest", "attributes"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmpty"},
+        "digest": {"$ref": "#/$defs/digest"},
+        "attributes": {"type": "object"}
+      }
+    },
+    "digestObject": {
+      "type": "object", "additionalProperties": true,
+      "required": ["id", "digest"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmpty"},
+        "digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "artifactRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "digest", "media_type", "size_bytes", "provenance"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/nonEmpty"},
+        "digest": {"$ref": "#/$defs/digest"},
+        "media_type": {"$ref": "#/$defs/nonEmpty"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "provenance": {"type": "object"}
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "models": [
+    {
+      "name": "example-model:4b",
+      "model": "example-model:4b",
+      "modified_at": "2026-08-01T12:00:00Z",
+      "size": 2500000000,
+      "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "details": {
+        "format": "gguf",
+        "family": "generic_transformer",
+        "families": ["generic_transformer"],
+        "parameter_size": "4.02B",
+        "quantization_level": "Q4_K_M"
+      },
+      "fixture_extension": {
+        "preserved": true
+      }
+    }
+  ]
+}

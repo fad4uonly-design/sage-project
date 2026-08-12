@@ -1,0 +1,98 @@
+{
+  "assessed_at": "2026-08-10T11:22:00.790550Z",
+  "assessment_id": "compatibility:e98d8cf25342c21ae07b03b69f53df30",
+  "blockers": [],
+  "classification": "COMPATIBILITY ASSESSMENT",
+  "policy_version": "compatibility-policy-0.2.0",
+  "required_permissions": [
+    "network:http://localhost:11434"
+  ],
+  "requirements": [
+    {
+      "adapter_obligations": [],
+      "description": "Target requires generation.text",
+      "evidence_ids": [
+        "evidence:07362bf6b8eab1692d47aae453a3fc04"
+      ],
+      "mandatory": true,
+      "remediation": [
+        "Run the required safe validation probe."
+      ],
+      "requirement_id": "text",
+      "risks": [],
+      "status": "UNKNOWN"
+    },
+    {
+      "adapter_obligations": [],
+      "description": "Target requires instruction.following",
+      "evidence_ids": [
+        "evidence:574dbffe8799db854818623345834b21"
+      ],
+      "mandatory": true,
+      "remediation": [
+        "Run the required safe validation probe."
+      ],
+      "requirement_id": "instruction",
+      "risks": [],
+      "status": "UNKNOWN"
+    },
+    {
+      "adapter_obligations": [],
+      "description": "Target requires output.schema_constrained",
+      "evidence_ids": [
+        "evidence:e2d9e651b3c2f404c429c410e00b49d7"
+      ],
+      "mandatory": false,
+      "remediation": [
+        "Run the required safe validation probe."
+      ],
+      "requirement_id": "structured",
+      "risks": [],
+      "status": "UNKNOWN"
+    },
+    {
+      "adapter_obligations": [],
+      "description": "Target requires protocol.streaming",
+      "evidence_ids": [
+        "evidence:358ef4e492a80a02f42b9400454fc6a2"
+      ],
+      "mandatory": false,
+      "remediation": [
+        "Run the required safe validation probe."
+      ],
+      "requirement_id": "stream",
+      "risks": [],
+      "status": "UNKNOWN"
+    },
+    {
+      "adapter_obligations": [],
+      "description": "Target requires tools.function_calling",
+      "evidence_ids": [
+        "evidence:07362bf6b8eab1692d47aae453a3fc04"
+      ],
+      "mandatory": false,
+      "remediation": [
+        "Run the required safe validation probe."
+      ],
+      "requirement_id": "tools",
+      "risks": [],
+      "status": "UNKNOWN"
+    }
+  ],
+  "status": "UNKNOWN",
+  "subject": {
+    "digest": "sha256:9ceefb228d0597fe5310620e035163ee6ebe6f506251fea074ced87d84907cfe",
+    "kind": "DEPLOYMENT",
+    "subject_id": "deployment:ollama:b62738cd7c584859e81430bc7f7e2d1f",
+    "version": null
+  },
+  "target_profile": {
+    "digest": "sha256:989471fa2507f0fb4282af8a1d265838c1215a70c0f015eae33273c4c5537877",
+    "target_id": "target:synthetic-normalized-model-interface",
+    "version": "0.2.0"
+  },
+  "unknowns": [
+    "text",
+    "instruction"
+  ]
+}

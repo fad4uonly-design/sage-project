@@ -1,0 +1,20 @@
+{
+  "parameters": "temperature 0.6\nnum_ctx 40960",
+  "license": "Fixture only",
+  "template": "{{ .System }}{{ range .Messages }}{{ .Role }}{{ .Content }}{{ end }}",
+  "capabilities": ["completion", "tools", "thinking"],
+  "details": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "qwen3",
+    "families": ["qwen3"],
+    "parameter_size": "4.02B",
+    "quantization_level": "Q4_K_M"
+  },
+  "model_info": {
+    "general.architecture": "qwen3",
+    "qwen3.context_length": 40960,
+    "qwen3.block_count": 36,
+    "tokenizer.ggml.model": "gpt2"
+  }
+}
