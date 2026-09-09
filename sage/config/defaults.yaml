@@ -34,6 +34,15 @@ models:
   temperature: 0.7
   max_tokens: 2048
 
+# Vision (SmolVLM) + speech (Whisper) — off until explicitly configured.
+perception:
+  vision_provider: none  # none | local
+  vision_base_url: http://127.0.0.1:11434/v1
+  vision_model_name: smolvlm
+  speech_provider: none  # none | local
+  speech_base_url: http://127.0.0.1:8080
+  speech_model_name: whisper
+
 agents:
   enabled: true
   max_concurrent_tasks: 4

@@ -22,7 +22,7 @@ class ModelsModule(BaseModule):
     async def _on_initialize(self) -> None:
         settings = self.container.resolve(Settings)
         self._router = DefaultModelRouter(settings)
-        self.container.register_instance(ModelRouter, self._router)  # type: ignore[type-abstract]
+        self.container.register_instance(ModelRouter, self._router)
         self.container.register_instance(DefaultModelRouter, self._router)
 
     async def _on_health(self) -> HealthStatus | None:
