@@ -6,6 +6,7 @@ Bind to 0.0.0.0 for preview environments. CORS open for local dashboard.
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import Any
 
@@ -17,15 +18,18 @@ from fastapi.staticfiles import StaticFiles
 from sage import __tagline__, __version__
 from sage.api.deps import get_engine, set_engine
 from sage.api.schemas import (
+    OK,
     ApprovalDecide,
     AskRequest,
     AskResponse,
     AutomationRun,
     GoalCreate,
     MemoryStore,
-    OK,
     ProjectCreate,
+    SoupComparisonRequest,
     StatusResponse,
+    VariantApplyRequest,
+    VariantProposalCreate,
     WorkflowStart,
 )
 from sage.core.engine import SageEngine
@@ -107,7 +111,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.context.engine import CognitiveContextEngine
 
         eng = get_engine()
-        cce = eng.container.resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+        cce = eng.container.resolve(CognitiveContextEngine)
         if refresh:
             await cce.generate_suggestions()
         ctx = await cce.fuse()
@@ -118,7 +122,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.context.engine import CognitiveContextEngine
 
         eng = get_engine()
-        cce = eng.container.resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+        cce = eng.container.resolve(CognitiveContextEngine)
         items = await cce.suggestions(limit=limit)
         return [s.model_dump() for s in items]
 
@@ -127,7 +131,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.context.engine import CognitiveContextEngine
 
         eng = get_engine()
-        cce = eng.container.resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+        cce = eng.container.resolve(CognitiveContextEngine)
         ok = await cce.dismiss_suggestion(suggestion_id)
         return OK(ok=ok)
 
@@ -137,7 +141,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.projects.manager import ProjectManager
 
         eng = get_engine()
-        pm = eng.container.resolve(ProjectManager)  # type: ignore[type-abstract]
+        pm = eng.container.resolve(ProjectManager)
         return [p.model_dump() for p in await pm.list(limit=100)]
 
     @app.post(f"{API_V1}/projects")
@@ -146,7 +150,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.projects.manager import ProjectManager
 
         eng = get_engine()
-        pm = eng.container.resolve(ProjectManager)  # type: ignore[type-abstract]
+        pm = eng.container.resolve(ProjectManager)
         p = await pm.create(
             body.name,
             description=body.description,
@@ -154,7 +158,7 @@ def create_app(engine: SageEngine) -> FastAPI:
             domain=body.domain,
         )
         if body.activate:
-            cce = eng.container.try_resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+            cce = eng.container.try_resolve(CognitiveContextEngine)
             if cce:
                 await cce.set_active_project(p.id)
         return p.model_dump()
@@ -164,7 +168,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.goals.engine import GoalEngine
 
         eng = get_engine()
-        ge = eng.container.resolve(GoalEngine)  # type: ignore[type-abstract]
+        ge = eng.container.resolve(GoalEngine)
         return [g.model_dump() for g in await ge.list(limit=100)]
 
     @app.post(f"{API_V1}/goals")
@@ -172,7 +176,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.goals.engine import GoalEngine
 
         eng = get_engine()
-        ge = eng.container.resolve(GoalEngine)  # type: ignore[type-abstract]
+        ge = eng.container.resolve(GoalEngine)
         g = await ge.create(
             body.title,
             horizon=body.horizon,
@@ -189,7 +193,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.memory.models import MemoryItem, MemoryType
 
         eng = get_engine()
-        mem = eng.container.resolve(MemorySystem)  # type: ignore[type-abstract]
+        mem = eng.container.resolve(MemorySystem)
         mid = await mem.store(
             MemoryItem(
                 type=MemoryType.LONG_TERM,
@@ -205,7 +209,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.memory.interfaces import MemorySystem
 
         eng = get_engine()
-        mem = eng.container.resolve(MemorySystem)  # type: ignore[type-abstract]
+        mem = eng.container.resolve(MemorySystem)
         items = await mem.recall(q, limit=limit)
         return [i.model_dump() for i in items]
 
@@ -215,7 +219,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.knowledge.graph.interfaces import KnowledgeGraph
 
         eng = get_engine()
-        kg = eng.container.resolve(KnowledgeGraph)  # type: ignore[type-abstract]
+        kg = eng.container.resolve(KnowledgeGraph)
         return await kg.stats()
 
     @app.get(f"{API_V1}/knowledge/search")
@@ -223,7 +227,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.knowledge.graph.interfaces import KnowledgeGraph
 
         eng = get_engine()
-        kg = eng.container.resolve(KnowledgeGraph)  # type: ignore[type-abstract]
+        kg = eng.container.resolve(KnowledgeGraph)
         ents = await kg.search_entities(q, limit=limit)
         return [e.model_dump() for e in ents]
 
@@ -233,7 +237,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.workflow.engine import WorkflowEngine
 
         eng = get_engine()
-        wf = eng.container.resolve(WorkflowEngine)  # type: ignore[type-abstract]
+        wf = eng.container.resolve(WorkflowEngine)
         defs = await wf.list_definitions()
         return [
             {
@@ -251,7 +255,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.workflow.engine import WorkflowEngine
 
         eng = get_engine()
-        wf = eng.container.resolve(WorkflowEngine)  # type: ignore[type-abstract]
+        wf = eng.container.resolve(WorkflowEngine)
         ctx = dict(body.context)
         if body.task:
             ctx["task"] = body.task
@@ -263,7 +267,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.automation.manager import AutomationManager
 
         eng = get_engine()
-        mgr = eng.container.resolve(AutomationManager)  # type: ignore[type-abstract]
+        mgr = eng.container.resolve(AutomationManager)
         return [j.model_dump() for j in await mgr.list_jobs()]
 
     @app.post(f"{API_V1}/automations/run")
@@ -271,7 +275,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.automation.manager import AutomationManager
 
         eng = get_engine()
-        mgr = eng.container.resolve(AutomationManager)  # type: ignore[type-abstract]
+        mgr = eng.container.resolve(AutomationManager)
         return await mgr.run_job(body.name, context=body.context)
 
     @app.get(f"{API_V1}/audit")
@@ -279,7 +283,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.audit.logger import ExecutionAudit
 
         eng = get_engine()
-        audit = eng.container.resolve(ExecutionAudit)  # type: ignore[type-abstract]
+        audit = eng.container.resolve(ExecutionAudit)
         return [r.model_dump() for r in await audit.list_recent(limit=limit, kind=kind)]
 
     @app.get(f"{API_V1}/approvals/pending")
@@ -287,7 +291,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.approval.engine import ApprovalEngine
 
         eng = get_engine()
-        appr = eng.container.resolve(ApprovalEngine)  # type: ignore[type-abstract]
+        appr = eng.container.resolve(ApprovalEngine)
         return [r.model_dump() for r in await appr.list_pending()]
 
     @app.post(f"{API_V1}/approvals/{{request_id}}")
@@ -295,7 +299,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.approval.engine import ApprovalEngine
 
         eng = get_engine()
-        appr = eng.container.resolve(ApprovalEngine)  # type: ignore[type-abstract]
+        appr = eng.container.resolve(ApprovalEngine)
         try:
             req = await appr.decide(
                 request_id, approve=body.approve, decided_by=body.decided_by
@@ -310,7 +314,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.discovery.engine import DiscoveryEngine
 
         eng = get_engine()
-        disc = eng.container.resolve(DiscoveryEngine)  # type: ignore[type-abstract]
+        disc = eng.container.resolve(DiscoveryEngine)
         insights = await disc.discover(limit=limit)
         return [i.model_dump() for i in insights]
 
@@ -319,7 +323,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.discovery.engine import DiscoveryEngine
 
         eng = get_engine()
-        disc = eng.container.resolve(DiscoveryEngine)  # type: ignore[type-abstract]
+        disc = eng.container.resolve(DiscoveryEngine)
         return [i.model_dump() for i in await disc.list_recent(limit=limit)]
 
     @app.post(f"{API_V1}/reflect")
@@ -327,7 +331,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.reflection.engine import ReflectionEngine
 
         eng = get_engine()
-        re_ = eng.container.resolve(ReflectionEngine)  # type: ignore[type-abstract]
+        re_ = eng.container.resolve(ReflectionEngine)
         r = await re_.reflect()
         return r.model_dump()
 
@@ -336,7 +340,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.agents.interfaces import AgentOrchestrator
 
         eng = get_engine()
-        orch = eng.container.resolve(AgentOrchestrator)  # type: ignore[type-abstract]
+        orch = eng.container.resolve(AgentOrchestrator)
         return orch.list_agents()
 
     @app.get(f"{API_V1}/skills")
@@ -344,7 +348,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.skills.interfaces import SkillLibrary
 
         eng = get_engine()
-        lib = eng.container.resolve(SkillLibrary)  # type: ignore[type-abstract]
+        lib = eng.container.resolve(SkillLibrary)
         return [m.model_dump() for m in lib.list_skills()]
 
     @app.get(f"{API_V1}/tools")
@@ -352,8 +356,140 @@ def create_app(engine: SageEngine) -> FastAPI:
         from sage.tools.interfaces import ToolManager
 
         eng = get_engine()
-        tm = eng.container.resolve(ToolManager)  # type: ignore[type-abstract]
+        tm = eng.container.resolve(ToolManager)
         return [t.model_dump() for t in tm.list_tools()]
+
+    # --- Evolver (Self-Improvement) ---
+    @app.get(f"{API_V1}/evolver/variants")
+    async def list_variants(status: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        from sage.evolver.interfaces import Evolver
+
+        eng = get_engine()
+        evolver = eng.container.resolve(Evolver)
+        variants = await evolver.list_variants(status=status, limit=limit)
+        return [v.model_dump() for v in variants]
+
+    @app.post(f"{API_V1}/evolver/variants")
+    async def propose_variant(body: VariantProposalCreate) -> dict[str, Any]:
+        from sage.evolver.interfaces import Evolver
+        from sage.evolver.models import MutationRecord
+
+        eng = get_engine()
+        evolver = eng.container.resolve(Evolver)
+        mutation = MutationRecord(
+            description=body.mutation_description or "API proposal",
+            target=body.mutation_target,
+        )
+        variant = await evolver.proposer.propose_variant(
+            name=body.name,
+            payload=body.payload,
+            mutation=mutation,
+            parent_id=body.parent_id,
+        )
+        return variant.model_dump()
+
+    @app.get(f"{API_V1}/evolver/variants/{{variant_id}}")
+    async def get_variant(variant_id: str) -> dict[str, Any]:
+        from sage.evolver.interfaces import Evolver
+
+        eng = get_engine()
+        evolver = eng.container.resolve(Evolver)
+        variant = await evolver.get_variant(variant_id)
+        if variant is None:
+            raise HTTPException(404, f"Variant {variant_id} not found")
+        return variant.model_dump()
+
+    @app.get(f"{API_V1}/evolver/variants/{{variant_id}}/lineage")
+    async def get_variant_lineage(variant_id: str) -> list[dict[str, Any]]:
+        from sage.evolver.interfaces import Evolver
+
+        eng = get_engine()
+        evolver = eng.container.resolve(Evolver)
+        lineage = await evolver.get_lineage(variant_id)
+        return [v.model_dump() for v in lineage]
+
+    @app.post(f"{API_V1}/evolver/variants/{{variant_id}}/apply")
+    async def apply_variant(variant_id: str, body: VariantApplyRequest) -> dict[str, Any]:
+        from sage.evolver.interfaces import Evolver
+        from sage.evolver.models import PromotionEvidence
+
+        eng = get_engine()
+        evolver = eng.container.resolve(Evolver)
+        evidence = PromotionEvidence(
+            run_id=body.run_id,
+            mean_score=body.mean_score,
+            baseline_mean_score=body.baseline_mean_score,
+            cases_evaluated=body.cases_evaluated,
+            cases_won=body.cases_won,
+        )
+        variant = await evolver.applier.apply_variant(
+            variant_id,
+            approved=body.approved,
+            evidence=evidence,
+            approver=body.approver,
+            reason=body.reason,
+        )
+        return variant.model_dump()
+
+    @app.post(f"{API_V1}/evolver/variants/{{variant_id}}/retire")
+    async def retire_variant(variant_id: str) -> dict[str, Any]:
+        from sage.evolver.interfaces import Evolver
+
+        eng = get_engine()
+        evolver = eng.container.resolve(Evolver)
+        variant = await evolver.retire_variant(variant_id)
+        if variant is None:
+            raise HTTPException(404, f"Variant {variant_id} not found")
+        return variant.model_dump()
+
+    # --- SOUP (Self-Optimization via Unified Probing) ---
+    @app.post(f"{API_V1}/soup/compare")
+    async def soup_compare(body: SoupComparisonRequest) -> dict[str, Any]:
+        from sage.soup.interfaces import SoupEngine
+        from sage.soup.models import EvalCase
+
+        eng = get_engine()
+        soup = eng.container.resolve(SoupEngine)
+
+        # Convert eval_set dicts to EvalCase models
+        eval_set = [EvalCase(**case) for case in body.eval_set] if body.eval_set else None
+
+        report = await soup.run_comparison(
+            name=body.name,
+            variant_ids=body.variant_ids,
+            eval_set=eval_set,
+            eval_set_name=body.eval_set_name,
+        )
+        return report.model_dump()
+
+    @app.get(f"{API_V1}/soup/runs/{{run_id}}")
+    async def get_soup_run(run_id: str) -> dict[str, Any]:
+        from sage.soup.interfaces import SoupEngine
+
+        eng = get_engine()
+        soup = eng.container.resolve(SoupEngine)
+        run = await soup.get_run(run_id)
+        if run is None:
+            raise HTTPException(404, f"SOUP run {run_id} not found")
+        return run.model_dump()
+
+    @app.get(f"{API_V1}/soup/runs/{{run_id}}/trials")
+    async def get_soup_trials(run_id: str) -> list[dict[str, Any]]:
+        from sage.soup.interfaces import SoupEngine
+
+        eng = get_engine()
+        soup = eng.container.resolve(SoupEngine)
+        trials = await soup.get_trials(run_id)
+        return [t.model_dump() for t in trials]
+
+    @app.get(f"{API_V1}/soup/runs/{{run_id}}/trace")
+    async def get_soup_trace(run_id: str) -> dict[str, Any]:
+        from sage.soup.interfaces import SoupEngine
+
+        eng = get_engine()
+        soup = eng.container.resolve(SoupEngine)
+        trace = await soup.get_decision_trace(run_id)
+        return trace.model_dump()
 
     # --- WebSocket chat ---
     @app.websocket(f"{API_V1}/ws/chat")
@@ -362,7 +498,7 @@ def create_app(engine: SageEngine) -> FastAPI:
         eng = get_engine()
         from sage.conversation.interfaces import ConversationEngine
 
-        conv = eng.container.resolve(ConversationEngine)  # type: ignore[type-abstract]
+        conv = eng.container.resolve(ConversationEngine)
         session = await conv.start_session(user_id="ws")
         await ws.send_json({"type": "ready", "session_id": session.id, "version": __version__})
         try:
@@ -386,14 +522,10 @@ def create_app(engine: SageEngine) -> FastAPI:
             pass
         except Exception as exc:
             log.exception("api.ws_error")
-            try:
+            with contextlib.suppress(Exception):
                 await ws.send_json({"type": "error", "error": str(exc)})
-            except Exception:
-                pass
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 await conv.end_session(session.id)
-            except Exception:
-                pass
 
     return app

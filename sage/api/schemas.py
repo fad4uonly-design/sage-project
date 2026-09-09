@@ -63,6 +63,32 @@ class MemoryStore(BaseModel):
     importance: float = 0.7
 
 
+class VariantProposalCreate(BaseModel):
+    name: str
+    payload: str
+    parent_id: str | None = None
+    mutation_description: str | None = None
+    mutation_target: str = "system_prompt"
+
+
+class VariantApplyRequest(BaseModel):
+    approved: bool = True
+    approver: str = "api"
+    reason: str | None = None
+    run_id: str
+    mean_score: float
+    baseline_mean_score: float
+    cases_evaluated: int = 0
+    cases_won: int = 0
+
+
+class SoupComparisonRequest(BaseModel):
+    name: str
+    variant_ids: list[str]
+    eval_set: list[dict[str, Any]] = Field(default_factory=list)
+    eval_set_name: str = "builtin"
+
+
 class OK(BaseModel):
     ok: bool = True
     detail: Any = None
