@@ -31,7 +31,7 @@ env/
 .coverage.*
 htmlcov/
 .mypy_cache/
-.ruff_cache/
+.ruff_cache
 .tox/
 .nox/
 
@@ -42,7 +42,7 @@ htmlcov/
 *.pem
 secrets/
 
-# SAGE runtime data (local user data — never commit)
+# SAGE runtime data (local user data - never commit)
 data/memory/*
 data/knowledge/*
 data/logs/*
@@ -67,3 +67,35 @@ site/
 
 # Local plugins (user-installed)
 plugins/local/
+
+# Node / Next.js (web dashboard)
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Manual backup copies (kept on disk, out of git)
+*.backup
+*.backup-*
+*.backup[0-9]
+
+# Model Integration Engine run artifacts
+model_integration_engine/acceptance-*/
+model_integration_engine/output/
+model_integration_engine/debug-docker-copy/
+
+# Local runtime / test data (may contain keys, logs, DBs)
+04_Data/
+data/*.sqlite.*
+sage.yaml
+
+# Scratch / session artifacts (never commit)
+.claude-scratch/
+sage_tree_dump.txt
+
+# Ad-hoc debug probes (local-model contract experiments)
+scripts/debug/
+
+# Scratch scripts
+model_integration_engine/mie_memory_pressure.py
