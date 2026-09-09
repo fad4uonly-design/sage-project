@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+import pytest
 import pytest_asyncio
-
 from sage.config.settings import Settings
 from sage.core.engine import SageEngine
 
@@ -31,3 +31,11 @@ async def engine(tmp_settings: Settings) -> AsyncIterator[SageEngine]:
         yield eng
     finally:
         await eng.shutdown()
+
+
+@pytest.fixture
+def tmp_db(tmp_path: Path) -> Path:
+    """Dedicated SQLite database path on a real disk file, for audit-heavy
+    provider/boot tests that depend on :mod:`sage.db`.
+    """
+    return tmp_path / "provider_test.db"

@@ -19,6 +19,7 @@ MIGRATIONS: list[tuple[int, str, str]] = [
     (4, "automation_v040", (_DIR / "migrations_v4.sql").read_text(encoding="utf-8")),
     (5, "context_v050", (_DIR / "migrations_v5.sql").read_text(encoding="utf-8")),
     (6, "discovery_ux_v060", (_DIR / "migrations_v6.sql").read_text(encoding="utf-8")),
+    (7, "self_improvement_v070", (_DIR / "migrations_v7.sql").read_text(encoding="utf-8")),
 ]
 
 

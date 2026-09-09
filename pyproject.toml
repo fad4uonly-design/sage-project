@@ -44,9 +44,12 @@ dependencies = [
     "fastapi>=0.111",
     "uvicorn[standard]>=0.30",
     "websockets>=12.0",
+    "duckduckgo-search>=6.3.2",
 ]
 
 [project.optional-dependencies]
+model_download = ["huggingface_hub>=0.24"]
+
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
@@ -110,6 +113,11 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 packages = ["sage"]
 
+# Optional, heavyweight LLM SDKs are only installed with the `llm` extra.
+[[tool.mypy.overrides]]
+module = ["openai", "anthropic", "huggingface_hub"]
+ignore_missing_imports = true
+
 [tool.ruff]
 target-version = "py313"
 line-length = 100
@@ -118,6 +126,14 @@ src = ["sage", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "A", "C4", "SIM"]
 ignore = ["E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Typer's documented pattern is to call typer.Option/Argument in argument defaults.
+extend-immutable-calls = ["typer.Argument", "typer.Option"]
+
+[tool.ruff.lint.per-file-ignores]
+# `sage.logging` intentionally mirrors the stdlib `logging` name as a subpackage.
+"sage/logging/__init__.py" = ["A005"]
 
 [tool.coverage.run]
 source = ["sage"]

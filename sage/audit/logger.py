@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
@@ -113,7 +114,7 @@ class AuditLogger(BaseRepository):
             ),
         )
         # Mirror to structured audit log file
-        try:
+        with contextlib.suppress(Exception):
             file_audit(
                 "execution",
                 kind=kind,
@@ -123,8 +124,6 @@ class AuditLogger(BaseRepository):
                 tool_name=tool_name,
                 workflow_run_id=workflow_run_id,
             )
-        except Exception:
-            pass
         if self._events:
             await self._events.publish(
                 Event(
