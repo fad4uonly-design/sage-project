@@ -11,6 +11,7 @@ import re
 import time
 from typing import Any
 
+from sage.core.container import Container
 from sage.logging import get_logger
 from sage.orchestrator.intent import IntentAnalyzer
 from sage.orchestrator.models import (
@@ -28,7 +29,7 @@ log = get_logger(__name__)
 
 class DefaultOrchestrator:
     def __init__(self, container: Any) -> None:
-        self._container = container
+        self._container: Container = container
         self._analyzer = IntentAnalyzer()
 
     async def analyze_intent(
@@ -502,7 +503,7 @@ class DefaultOrchestrator:
         """Run best matching shared skill for chat-like requests."""
         from sage.skills.interfaces import SkillLibrary
 
-        lib = self._container.try_resolve(SkillLibrary)  # type: ignore[type-abstract]
+        lib = self._container.try_resolve(SkillLibrary)
         if not lib:
             return None
         skill_ctx = {
@@ -515,7 +516,7 @@ class DefaultOrchestrator:
         # Provide decision engine hook for decision skills
         from sage.decision.engine import DecisionEngine
 
-        de = self._container.try_resolve(DecisionEngine)  # type: ignore[type-abstract]
+        de = self._container.try_resolve(DecisionEngine)
         if de:
 
             async def _decide_fn(req: Any) -> Any:
@@ -533,7 +534,7 @@ class DefaultOrchestrator:
     async def _merge_unified_context(self, ctx: dict[str, Any], message: str) -> None:
         from sage.context.engine import CognitiveContextEngine
 
-        cce = self._container.try_resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+        cce = self._container.try_resolve(CognitiveContextEngine)
         if not cce:
             return
         try:
@@ -591,7 +592,7 @@ class DefaultOrchestrator:
         from sage.context.engine import CognitiveContextEngine
         from sage.orchestrator.models import Intent, IntentKind, OrchestratorResult
 
-        cce = self._container.try_resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+        cce = self._container.try_resolve(CognitiveContextEngine)
         lines = ["### Cognitive Context", ""]
         if cce:
             try:
@@ -660,9 +661,9 @@ class DefaultOrchestrator:
             if skill_text:
                 return skill_text
 
+        from sage.config.settings import Settings
         from sage.conversation.personality import build_system_prompt
         from sage.models.interfaces import CompletionRequest, Message, ModelRouter
-        from sage.config.settings import Settings
 
         router = self._container.try_resolve(ModelRouter)
         if router is None:

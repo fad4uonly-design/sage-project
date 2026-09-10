@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from enum import Enum
+from abc import ABC
+from enum import StrEnum
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from sage.core.health import HealthStatus
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from sage.core.container import Container
 
 
-class ModuleState(str, Enum):
+class ModuleState(StrEnum):
     CREATED = "created"
     INITIALIZED = "initialized"
     STARTED = "started"
@@ -52,7 +52,8 @@ class BaseModule(ABC):
     """
     Convenience base implementing state transitions.
 
-    Subclasses override the `_on_*` hooks.
+    Subclasses override the `_on_*` hooks. The hooks default to no-ops so a
+    module only implements the lifecycle events it cares about.
     """
 
     name: str = "base"
