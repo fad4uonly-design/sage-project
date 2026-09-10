@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
@@ -10,7 +10,7 @@ from sage.utils.ids import new_id
 from sage.utils.time import utcnow_iso
 
 
-class Permission(str, Enum):
+class Permission(StrEnum):
     """Canonical capability tokens plugins/tools may request."""
 
     FILESYSTEM_READ = "filesystem.read"
@@ -47,7 +47,7 @@ DANGEROUS_PERMISSIONS: frozenset[Permission] = frozenset(
 )
 
 
-class PrincipalType(str, Enum):
+class PrincipalType(StrEnum):
     PLUGIN = "plugin"
     TOOL = "tool"
     AGENT = "agent"
@@ -67,7 +67,7 @@ class PermissionGrant(BaseModel):
     updated_at: str = Field(default_factory=utcnow_iso)
 
 
-class PermissionDenied(Exception):
+class PermissionDeniedError(Exception):
     """Raised when a principal lacks a required permission."""
 
     def __init__(self, principal: str, permission: Permission | str, detail: str = "") -> None:
