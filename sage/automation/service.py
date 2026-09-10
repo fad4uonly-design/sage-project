@@ -29,9 +29,9 @@ class AutomationModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.try_resolve(EventBus)
         self._mgr = DefaultAutomationManager(db, self.container, events)
-        self.container.register_instance(AutomationManager, self._mgr)  # type: ignore[type-abstract]
+        self.container.register_instance(AutomationManager, self._mgr)
         self.container.register_instance(DefaultAutomationManager, self._mgr)
 
         # Built-in jobs

@@ -386,7 +386,7 @@ class CapabilitiesModule(BaseModule):
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
         self._reg = SQLiteCapabilityRegistry(db)
-        self.container.register_instance(CapabilityRegistry, self._reg)  # type: ignore[type-abstract]
+        self.container.register_instance(CapabilityRegistry, self._reg)
         self.container.register_instance(SQLiteCapabilityRegistry, self._reg)
         for desc in _BUILTIN:
             await self._reg.register(desc)

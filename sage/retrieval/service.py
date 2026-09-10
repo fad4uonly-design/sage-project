@@ -20,7 +20,7 @@ class RetrievalModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         self._retriever = LayeredRetriever(self.container)
-        self.container.register_instance(Retriever, self._retriever)  # type: ignore[type-abstract]
+        self.container.register_instance(Retriever, self._retriever)
         self.container.register_instance(LayeredRetriever, self._retriever)
 
     async def _on_health(self) -> HealthStatus | None:

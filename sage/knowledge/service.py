@@ -329,13 +329,13 @@ class KnowledgeModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.resolve(EventBus)
         settings = self.container.resolve(Settings)
         self._graph = SQLiteKnowledgeGraph(db, events)
         self._mgr = SQLiteKnowledgeManager(db, events, settings, graph=self._graph)
-        self.container.register_instance(KnowledgeGraph, self._graph)  # type: ignore[type-abstract]
+        self.container.register_instance(KnowledgeGraph, self._graph)
         self.container.register_instance(SQLiteKnowledgeGraph, self._graph)
-        self.container.register_instance(KnowledgeManager, self._mgr)  # type: ignore[type-abstract]
+        self.container.register_instance(KnowledgeManager, self._mgr)
         self.container.register_instance(SQLiteKnowledgeManager, self._mgr)
 
         # Seed a small core ontology

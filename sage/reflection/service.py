@@ -25,7 +25,7 @@ class ReflectionModule(BaseModule):
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
         self._engine = DefaultReflectionEngine(db, self.container)
-        self.container.register_instance(ReflectionEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(ReflectionEngine, self._engine)
         self.container.register_instance(DefaultReflectionEngine, self._engine)
 
     async def _on_start(self) -> None:

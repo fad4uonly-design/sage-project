@@ -26,9 +26,9 @@ class ToolsModule(BaseModule):
         from sage.permissions.interfaces import PermissionManager
 
         settings = self.container.resolve(Settings)
-        pm = self.container.try_resolve(PermissionManager)  # type: ignore[type-abstract]
-        approval = self.container.try_resolve(ApprovalEngine)  # type: ignore[type-abstract]
-        audit = self.container.try_resolve(ExecutionAudit)  # type: ignore[type-abstract]
+        pm = self.container.try_resolve(PermissionManager)
+        approval = self.container.try_resolve(ApprovalEngine)
+        audit = self.container.try_resolve(ExecutionAudit)
 
         self._manager = DefaultToolManager(
             pm,
@@ -44,7 +44,7 @@ class ToolsModule(BaseModule):
                 pass
             self._manager.register(tool)
 
-        self.container.register_instance(ToolManager, self._manager)  # type: ignore[type-abstract]
+        self.container.register_instance(ToolManager, self._manager)
         self.container.register_instance(DefaultToolManager, self._manager)
 
     async def _on_health(self) -> HealthStatus | None:

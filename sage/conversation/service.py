@@ -23,10 +23,10 @@ class ConversationModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.resolve(EventBus)
         settings = self.container.resolve(Settings)
         self._engine = DefaultConversationEngine(db, events, settings, self.container)
-        self.container.register_instance(ConversationEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(ConversationEngine, self._engine)
         self.container.register_instance(DefaultConversationEngine, self._engine)
 
     async def _on_health(self) -> HealthStatus | None:

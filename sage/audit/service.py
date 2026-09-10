@@ -21,9 +21,9 @@ class AuditModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.try_resolve(EventBus)
         self._logger = AuditLogger(db, events)
-        self.container.register_instance(ExecutionAudit, self._logger)  # type: ignore[type-abstract]
+        self.container.register_instance(ExecutionAudit, self._logger)
         self.container.register_instance(AuditLogger, self._logger)
 
     async def _on_health(self) -> HealthStatus | None:

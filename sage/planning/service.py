@@ -14,7 +14,6 @@ from sage.logging import get_logger
 from sage.planning.interfaces import PlanningEngine
 from sage.planning.models import (
     Goal,
-    GoalStatus,
     Plan,
     PlanProgress,
     PlanStatus,
@@ -22,7 +21,6 @@ from sage.planning.models import (
     Task,
     TaskStatus,
 )
-from sage.utils.time import utcnow_iso
 
 log = get_logger(__name__)
 
@@ -206,7 +204,7 @@ class PlanningModule(BaseModule):
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
         self._engine = DefaultPlanningEngine(db)
-        self.container.register_instance(PlanningEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(PlanningEngine, self._engine)
         self.container.register_instance(DefaultPlanningEngine, self._engine)
 
     async def _on_health(self) -> HealthStatus | None:

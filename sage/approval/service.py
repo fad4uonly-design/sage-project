@@ -23,10 +23,10 @@ class ApprovalModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.try_resolve(EventBus)
         settings = self.container.resolve(Settings)
         self._engine = DefaultApprovalEngine(db, events)
-        self.container.register_instance(ApprovalEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(ApprovalEngine, self._engine)
         self.container.register_instance(DefaultApprovalEngine, self._engine)
 
         # Safe defaults for core tools

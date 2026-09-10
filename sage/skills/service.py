@@ -24,10 +24,10 @@ class SkillsModule(BaseModule):
         self._lib: DefaultSkillLibrary | None = None
 
     async def _on_initialize(self) -> None:
-        pm = self.container.try_resolve(PermissionManager)  # type: ignore[type-abstract]
+        pm = self.container.try_resolve(PermissionManager)
         self._lib = DefaultSkillLibrary(permission_manager=pm)
         n = register_builtin_skills(self._lib)
-        self.container.register_instance(SkillLibrary, self._lib)  # type: ignore[type-abstract]
+        self.container.register_instance(SkillLibrary, self._lib)
         self.container.register_instance(DefaultSkillLibrary, self._lib)
         log.info("skills.ready", count=n)
 

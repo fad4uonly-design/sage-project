@@ -46,7 +46,7 @@ class DiscoveryModule(BaseModule):
         except Exception:
             log.exception("discovery.table_init_failed")
         self._engine = DefaultDiscoveryEngine(db, self.container)
-        self.container.register_instance(DiscoveryEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(DiscoveryEngine, self._engine)
         self.container.register_instance(DefaultDiscoveryEngine, self._engine)
 
     async def _on_start(self) -> None:

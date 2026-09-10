@@ -29,7 +29,7 @@ class WorkflowModule(BaseModule):
         self._engine = DefaultWorkflowEngine(store, self.container)
         for wf in all_builtin_workflows():
             await self._engine.register(wf)
-        self.container.register_instance(WorkflowEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(WorkflowEngine, self._engine)
         self.container.register_instance(DefaultWorkflowEngine, self._engine)
         log.info("workflow.ready", definitions=len(await self._engine.list_definitions()))
 

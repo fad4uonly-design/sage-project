@@ -21,7 +21,7 @@ class GoalsModule(BaseModule):
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
         self._engine = SQLiteGoalEngine(db)
-        self.container.register_instance(GoalEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(GoalEngine, self._engine)
         self.container.register_instance(SQLiteGoalEngine, self._engine)
 
     async def _on_health(self) -> HealthStatus | None:

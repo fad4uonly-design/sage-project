@@ -354,10 +354,10 @@ class LearningModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.resolve(EventBus)  # type: ignore[type-abstract]
-        memory = self.container.try_resolve(MemorySystem)  # type: ignore[type-abstract]
+        events = self.container.resolve(EventBus)
+        memory = self.container.try_resolve(MemorySystem)
         self._engine = DefaultLearningEngine(db, events, memory, container=self.container)
-        self.container.register_instance(LearningEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(LearningEngine, self._engine)
         self.container.register_instance(DefaultLearningEngine, self._engine)
 
         async def on_turn(event: Event) -> None:
@@ -392,7 +392,7 @@ class LearningModule(BaseModule):
         ]
 
     async def _on_shutdown(self) -> None:
-        events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.try_resolve(EventBus)
         if events:
             for sub in self._subs:
                 events.unsubscribe(sub)

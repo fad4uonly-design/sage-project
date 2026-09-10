@@ -21,7 +21,7 @@ class ProjectsModule(BaseModule):
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
         self._mgr = SQLiteProjectManager(db)
-        self.container.register_instance(ProjectManager, self._mgr)  # type: ignore[type-abstract]
+        self.container.register_instance(ProjectManager, self._mgr)
         self.container.register_instance(SQLiteProjectManager, self._mgr)
 
     async def _on_health(self) -> HealthStatus | None:

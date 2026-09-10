@@ -15,7 +15,6 @@ from sage.events.bus import EventBus
 from sage.events.events import Event
 from sage.files.interfaces import FileManager, FileRecord
 from sage.logging import get_logger
-from sage.utils.time import utcnow_iso
 
 log = get_logger(__name__)
 
@@ -127,9 +126,9 @@ class FileModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.try_resolve(EventBus)
         self._mgr = DefaultFileManager(db, events)
-        self.container.register_instance(FileManager, self._mgr)  # type: ignore[type-abstract]
+        self.container.register_instance(FileManager, self._mgr)
         self.container.register_instance(DefaultFileManager, self._mgr)
 
     async def _on_health(self) -> HealthStatus | None:

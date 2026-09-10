@@ -21,9 +21,9 @@ class ReasoningModule(BaseModule):
         self._engine: DefaultReasoningEngine | None = None
 
     async def _on_initialize(self) -> None:
-        models = self.container.try_resolve(ModelRouter)  # type: ignore[type-abstract]
+        models = self.container.try_resolve(ModelRouter)
         self._engine = DefaultReasoningEngine(models, container=self.container)
-        self.container.register_instance(ReasoningEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(ReasoningEngine, self._engine)
         self.container.register_instance(DefaultReasoningEngine, self._engine)
         self.container.register_instance(StrategyRegistry, self._engine.registry)
 

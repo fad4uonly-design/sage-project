@@ -25,7 +25,7 @@ class ContextModule(BaseModule):
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
         self._engine = DefaultCognitiveContextEngine(db, self.container)
-        self.container.register_instance(CognitiveContextEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(CognitiveContextEngine, self._engine)
         self.container.register_instance(DefaultCognitiveContextEngine, self._engine)
 
     async def _on_start(self) -> None:
