@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -11,7 +11,7 @@ from sage.utils.ids import new_id
 from sage.utils.time import utcnow_iso
 
 
-class StepType(str, Enum):
+class StepType(StrEnum):
     SKILL = "skill"
     TOOL = "tool"
     AGENT = "agent"
@@ -25,7 +25,7 @@ class StepType(str, Enum):
     NOTIFY = "notify"
 
 
-class WorkflowStatus(str, Enum):
+class WorkflowStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     WAITING_APPROVAL = "waiting_approval"

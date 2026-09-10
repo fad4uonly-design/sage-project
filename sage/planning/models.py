@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -11,14 +11,14 @@ from sage.utils.ids import new_id
 from sage.utils.time import utcnow_iso
 
 
-class GoalStatus(str, Enum):
+class GoalStatus(StrEnum):
     ACTIVE = "active"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
     PAUSED = "paused"
 
 
-class PlanStatus(str, Enum):
+class PlanStatus(StrEnum):
     DRAFT = "draft"
     ACTIVE = "active"
     COMPLETED = "completed"
@@ -26,7 +26,7 @@ class PlanStatus(str, Enum):
     BLOCKED = "blocked"
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     DONE = "done"

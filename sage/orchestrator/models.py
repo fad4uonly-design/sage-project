@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -11,7 +11,7 @@ from sage.utils.ids import new_id
 from sage.utils.time import utcnow_iso
 
 
-class IntentKind(str, Enum):
+class IntentKind(StrEnum):
     CHAT = "chat"
     REMEMBER = "remember"
     RECALL = "recall"
@@ -35,7 +35,7 @@ class Intent(BaseModel):
     hints: list[str] = Field(default_factory=list)
 
 
-class PipelineStep(str, Enum):
+class PipelineStep(StrEnum):
     ANALYZE_INTENT = "analyze_intent"
     RECALL_MEMORY = "recall_memory"
     SEARCH_KNOWLEDGE = "search_knowledge"
