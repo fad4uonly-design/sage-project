@@ -117,9 +117,11 @@ class SageEngine:
         from sage.config.service import ConfigModule
         from sage.context.service import ContextModule
         from sage.conversation.service import ConversationModule
+        from sage.core.code_gate import CodeGateModule
         from sage.db.service import DatabaseModule
         from sage.decision.service import DecisionModule
         from sage.discovery.service import DiscoveryModule
+        from sage.evolver.service import EvolverModule
         from sage.files.service import FileModule
         from sage.goals.service import GoalsModule
         from sage.knowledge.service import KnowledgeModule
@@ -137,6 +139,7 @@ class SageEngine:
         from sage.retrieval.service import RetrievalModule
         from sage.secrets.service import SecretsModule
         from sage.skills.service import SkillsModule
+        from sage.soup.service import SoupModule
         from sage.tools.service import ToolsModule
         from sage.workflow.service import WorkflowModule
 
@@ -158,6 +161,10 @@ class SageEngine:
         # Automation control plane (FROZEN v1)
         b.register_module("audit", lambda c: AuditModule(c), critical=False)
         b.register_module("approval", lambda c: ApprovalModule(c), critical=False)
+        # Self-improvement subsystems
+        b.register_module("evolver", lambda c: EvolverModule(c), critical=False)
+        b.register_module("soup", lambda c: SoupModule(c), critical=False)
+        b.register_module("code_gate", lambda c: CodeGateModule(c), critical=False)
         b.register_module("tools", lambda c: ToolsModule(c), critical=False)
         b.register_module("skills", lambda c: SkillsModule(c), critical=False)
         b.register_module("workflow", lambda c: WorkflowModule(c), critical=False)
