@@ -57,10 +57,7 @@ class PluginManager:
     async def _load_plugin_dir(self, directory: Path, manifest_path: Path) -> Plugin | None:
         raw = manifest_path.read_text(encoding="utf-8")
         data: dict[str, Any]
-        if manifest_path.suffix == ".json":
-            data = json.loads(raw)
-        else:
-            data = yaml.safe_load(raw) or {}
+        data = json.loads(raw) if manifest_path.suffix == ".json" else yaml.safe_load(raw) or {}
         manifest = PluginManifest.model_validate(data)
         if not manifest.enabled:
             log.info("plugins.skipped_disabled", id=manifest.id)
@@ -85,7 +82,7 @@ class PluginManager:
         sys.modules[mod_name] = module
         spec.loader.exec_module(module)
         cls = getattr(module, class_name)
-        plugin: Plugin = cls() if not isinstance(cls, type) else cls()  # type: ignore[assignment]
+        plugin: Plugin = cls() if not isinstance(cls, type) else cls()
         if not hasattr(plugin, "manifest"):
             raise TypeError(f"Plugin {manifest.id} missing manifest property")
 
