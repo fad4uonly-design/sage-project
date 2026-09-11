@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
+import sys
+
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -11,7 +14,14 @@ from sage import __tagline__, __version__
 from sage.conversation.interfaces import ConversationEngine
 from sage.core.engine import SageEngine
 
-console = Console()
+if hasattr(sys.stdout, "reconfigure"):
+    with contextlib.suppress(Exception):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    with contextlib.suppress(Exception):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+console = Console(legacy_windows=False)
 
 
 def _print_banner() -> None:
