@@ -208,7 +208,7 @@ class SageEngine:
             from sage.logging import audit
             from sage.memory.interfaces import MemorySystem
 
-            mem = self.container.try_resolve(MemorySystem)  # type: ignore[type-abstract]
+            mem = self.container.try_resolve(MemorySystem)
             if mem:
                 report = await mem.consolidate()
                 audit("daily_maintenance", consolidation=report.model_dump())
@@ -225,7 +225,7 @@ class SageEngine:
 
     @property
     def events(self) -> EventBus:
-        return self.container.resolve(EventBus)  # type: ignore[type-abstract]
+        return self.container.resolve(EventBus)
 
     @property
     def registry(self) -> ModuleRegistry:
@@ -238,7 +238,7 @@ class SageEngine:
     async def health(self) -> SystemHealth:
         from sage.monitor.interfaces import HealthMonitor
 
-        mon = self.container.try_resolve(HealthMonitor)  # type: ignore[type-abstract]
+        mon = self.container.try_resolve(HealthMonitor)
         if mon is not None:
             return await mon.probe()
         return await self.bootstrapper.collect_health()
@@ -258,7 +258,7 @@ class SageEngine:
         """One-shot convenience via Conversation Engine → Orchestrator."""
         from sage.conversation.interfaces import ConversationEngine
 
-        conv = self.container.resolve(ConversationEngine)  # type: ignore[type-abstract]
+        conv = self.container.resolve(ConversationEngine)
         uid = user_id or self.settings.conversation.default_user_id
         session = await conv.start_session(user_id=uid)
         try:
