@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from sage.agents.builtin import (
     DocumentAgent,
     GeneralAssistantAgent,
@@ -14,7 +16,7 @@ from sage.agents.domain import (
     ProgrammingAgent,
     create_business_advisors,
 )
-from sage.agents.interfaces import AgentOrchestrator
+from sage.agents.interfaces import Agent, AgentOrchestrator
 from sage.agents.orchestrator import DefaultAgentOrchestrator
 from sage.agents.workflows.library import WorkflowLibrary
 from sage.config.settings import Settings
@@ -61,7 +63,7 @@ class AgentModule(BaseModule):
             log.info("agents.bi_suite_loaded", count=len(bi_advisors))
 
             for agent in (*core_agents, *domain_agents, *bi_advisors):
-                self._orch.register(agent)
+                self._orch.register(cast(Agent, agent))
                 if hasattr(agent, "workflows"):
                     for wf in agent.workflows.list_workflows():
                         shared_lib.register(wf)
