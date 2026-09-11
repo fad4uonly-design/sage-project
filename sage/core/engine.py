@@ -9,7 +9,7 @@ Usage:
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from sage import __version__
@@ -27,7 +27,7 @@ from sage.utils.ids import new_id
 log = get_logger(__name__)
 
 
-class EngineState(str, Enum):
+class EngineState(StrEnum):
     CREATED = "created"
     STARTING = "starting"
     RUNNING = "running"
