@@ -22,8 +22,8 @@ from typing import Any
 from sage.agents.interfaces import AgentResult, AgentTask
 from sage.agents.profile import AgentCapabilityProfile
 from sage.agents.workflows.library import WorkflowLibrary, WorkflowResult
+from sage.core.container import Container
 from sage.logging import get_logger
-from sage.utils.ids import new_id
 
 log = get_logger(__name__)
 
@@ -41,7 +41,7 @@ class DomainAgent:
     profile: AgentCapabilityProfile
 
     def __init__(self, container: Any, agent_id: str | None = None) -> None:
-        self._container = container
+        self._container: Container = container
         self._id = agent_id or f"agent_{self.profile.principal}"
         self.workflows = WorkflowLibrary()
         self.register_workflows()
@@ -485,7 +485,7 @@ class DomainAgent:
         if not needed:
             return ""
 
-        from sage.agents.interfaces import AgentOrchestrator, AgentTask as AT
+        from sage.agents.interfaces import AgentOrchestrator, AgentTask
 
         orch = self._container.try_resolve(AgentOrchestrator)
         if not orch:
@@ -494,7 +494,7 @@ class DomainAgent:
         sections: list[str] = ["---", "### Specialist collaboration"]
         for domain in needed[:2]:
             sub = await orch.dispatch(
-                AT(
+                AgentTask(
                     description=task.description,
                     domain=domain,
                     metadata={
