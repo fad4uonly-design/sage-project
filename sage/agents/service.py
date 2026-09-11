@@ -38,7 +38,7 @@ class AgentModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         settings = self.container.resolve(Settings)
-        events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.try_resolve(EventBus)
         self._orch = DefaultAgentOrchestrator(events, container=self.container)
 
         shared_lib = WorkflowLibrary()
@@ -66,7 +66,7 @@ class AgentModule(BaseModule):
                     for wf in agent.workflows.list_workflows():
                         shared_lib.register(wf)
 
-        self.container.register_instance(AgentOrchestrator, self._orch)  # type: ignore[type-abstract]
+        self.container.register_instance(AgentOrchestrator, self._orch)
         self.container.register_instance(DefaultAgentOrchestrator, self._orch)
 
     async def _on_health(self) -> HealthStatus | None:

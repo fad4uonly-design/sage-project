@@ -111,7 +111,7 @@ class PluginManager:
         from sage.permissions.interfaces import PermissionManager
         from sage.permissions.models import PrincipalType
 
-        pm = self._container.try_resolve(PermissionManager)  # type: ignore[type-abstract]
+        pm = self._container.try_resolve(PermissionManager)
         if pm is None:
             log.warning("plugins.permissions_unavailable", plugin=manifest.id)
             return

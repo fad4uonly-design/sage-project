@@ -202,7 +202,7 @@ class DomainAgent:
         # Skill library hooks (agents orchestrate shared skills)
         from sage.skills.interfaces import SkillLibrary
 
-        skills = self._container.try_resolve(SkillLibrary)  # type: ignore[type-abstract]
+        skills = self._container.try_resolve(SkillLibrary)
         if skills:
             ctx["skills"] = skills
             # Bound helpers so skills can call planner / decision without importing agents
@@ -229,7 +229,7 @@ class DomainAgent:
         """Invoke a shared skill by id."""
         from sage.skills.interfaces import SkillLibrary
 
-        lib = self._container.try_resolve(SkillLibrary)  # type: ignore[type-abstract]
+        lib = self._container.try_resolve(SkillLibrary)
         if not lib:
             return None
         ctx = dict(context or {})
@@ -252,7 +252,7 @@ class DomainAgent:
         """Match and run the best shared skill for a task string."""
         from sage.skills.interfaces import SkillLibrary
 
-        lib = self._container.try_resolve(SkillLibrary)  # type: ignore[type-abstract]
+        lib = self._container.try_resolve(SkillLibrary)
         if not lib:
             return None
         ctx = dict(context or {})

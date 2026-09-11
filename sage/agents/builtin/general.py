@@ -22,7 +22,7 @@ class GeneralAssistantAgent(BaseAgent):
     async def execute(self, task: AgentTask) -> AgentResult:
         from sage.models.interfaces import CompletionRequest, Message, ModelRouter
 
-        router = self._container.try_resolve(ModelRouter)  # type: ignore[type-abstract]
+        router = self._container.try_resolve(ModelRouter)
         if router is None:
             return AgentResult(
                 task_id=task.id,
@@ -64,8 +64,8 @@ class ResearchAgent(BaseAgent):
         from sage.memory.interfaces import MemorySystem
 
         parts: list[str] = [f"Research brief for: {task.description}"]
-        km = self._container.try_resolve(KnowledgeManager)  # type: ignore[type-abstract]
-        mem = self._container.try_resolve(MemorySystem)  # type: ignore[type-abstract]
+        km = self._container.try_resolve(KnowledgeManager)
+        mem = self._container.try_resolve(MemorySystem)
 
         if km:
             hits = await km.search(task.description, limit=5)
@@ -101,7 +101,7 @@ class PlanningAgent(BaseAgent):
     async def execute(self, task: AgentTask) -> AgentResult:
         from sage.planning.interfaces import PlanningEngine
 
-        engine = self._container.try_resolve(PlanningEngine)  # type: ignore[type-abstract]
+        engine = self._container.try_resolve(PlanningEngine)
         if engine is None:
             return AgentResult(
                 task_id=task.id,
@@ -135,7 +135,7 @@ class DocumentAgent(BaseAgent):
     async def execute(self, task: AgentTask) -> AgentResult:
         from sage.knowledge.interfaces import KnowledgeManager
 
-        km = self._container.try_resolve(KnowledgeManager)  # type: ignore[type-abstract]
+        km = self._container.try_resolve(KnowledgeManager)
         path = (task.metadata or {}).get("path")
         if km and path:
             doc = await km.ingest(path)

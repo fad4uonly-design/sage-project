@@ -8,8 +8,8 @@ from rich.panel import Panel
 from rich.table import Table
 
 from sage import __tagline__, __version__
-from sage.core.engine import SageEngine
 from sage.conversation.interfaces import ConversationEngine
+from sage.core.engine import SageEngine
 
 console = Console()
 
@@ -29,7 +29,7 @@ def _print_banner() -> None:
 async def run_interactive_shell(engine: SageEngine) -> None:
     """REPL loop backed by the Conversation Engine."""
     _print_banner()
-    conv = engine.container.resolve(ConversationEngine)  # type: ignore[type-abstract]
+    conv = engine.container.resolve(ConversationEngine)
     session = await conv.start_session(user_id=engine.settings.conversation.default_user_id)
     console.print(f"[green]Session[/green] {session.id}\n")
 
@@ -115,7 +115,7 @@ async def _handle_slash(engine: SageEngine, command: str) -> bool:
     if head == "/memories":
         from sage.memory.interfaces import MemorySystem
 
-        mem = engine.container.resolve(MemorySystem)  # type: ignore[type-abstract]
+        mem = engine.container.resolve(MemorySystem)
         items = await mem.recall(arg.strip(), limit=15)
         if not items:
             console.print("[dim]No memories found.[/dim]")
@@ -130,7 +130,7 @@ async def _handle_slash(engine: SageEngine, command: str) -> bool:
     if head == "/agents":
         from sage.agents.interfaces import AgentOrchestrator
 
-        orch = engine.container.resolve(AgentOrchestrator)  # type: ignore[type-abstract]
+        orch = engine.container.resolve(AgentOrchestrator)
         for a in orch.list_agents():
             caps = ", ".join(a["capabilities"])
             console.print(f"[cyan]{a['id']}[/cyan] domain={a['domain']} caps=[{caps}]")
@@ -139,7 +139,7 @@ async def _handle_slash(engine: SageEngine, command: str) -> bool:
     if head == "/tools":
         from sage.tools.interfaces import ToolManager
 
-        tm = engine.container.resolve(ToolManager)  # type: ignore[type-abstract]
+        tm = engine.container.resolve(ToolManager)
         for t in tm.list_tools():
             console.print(f"[cyan]{t.name}[/cyan] — {t.description}")
         return False
