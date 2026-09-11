@@ -82,7 +82,7 @@ class PluginManager:
         sys.modules[mod_name] = module
         spec.loader.exec_module(module)
         cls = getattr(module, class_name)
-        plugin: Plugin = cls() if not isinstance(cls, type) else cls()
+        plugin: Plugin = cls()
         if not hasattr(plugin, "manifest"):
             raise TypeError(f"Plugin {manifest.id} missing manifest property")
 
