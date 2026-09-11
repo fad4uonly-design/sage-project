@@ -317,13 +317,13 @@ class MemoryModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.resolve(EventBus)
         settings = self.container.resolve(Settings)
         store = MemoryStore(db)
         cognitive = CognitiveMemorySupport(db)
         await cognitive.ensure_content_hash_column()
         self._system = SQLiteMemorySystem(store, cognitive, events, settings)
-        self.container.register_instance(MemorySystem, self._system)  # type: ignore[type-abstract]
+        self.container.register_instance(MemorySystem, self._system)
         self.container.register_instance(SQLiteMemorySystem, self._system)
 
     async def _on_start(self) -> None:
