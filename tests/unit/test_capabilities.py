@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.capabilities.interfaces import CapabilityRegistry
 from sage.capabilities.models import CapabilityDescriptor
 from sage.core.engine import SageEngine

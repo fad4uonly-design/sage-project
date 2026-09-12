@@ -3,7 +3,6 @@ from __future__ import annotations
 import struct
 
 import pytest
-
 from model_integration_engine.domain import EvidenceLevel
 from model_integration_engine.inspectors.gguf import (
     GGUFInspectionError,

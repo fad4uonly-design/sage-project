@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from model_integration_engine.application.probes import MinimalProbePlanner
 from model_integration_engine.domain import SubjectKind, SubjectRef
 from model_integration_engine.evidence import sha256_digest

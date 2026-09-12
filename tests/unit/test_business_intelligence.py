@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.agents.domain.business import (
     BusinessAgent,
     MarketingAdvisor,
@@ -17,7 +16,6 @@ from sage.knowledge.graph.interfaces import KnowledgeGraph
 from sage.knowledge.graph.models import EntityType, RelationType
 from sage.orchestrator.interfaces import Orchestrator
 from sage.orchestrator.models import IntentKind
-
 
 BI_DOMAINS = {
     "business",

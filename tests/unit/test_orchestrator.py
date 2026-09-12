@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.core.engine import SageEngine
 from sage.orchestrator.interfaces import Orchestrator
 from sage.orchestrator.models import IntentKind

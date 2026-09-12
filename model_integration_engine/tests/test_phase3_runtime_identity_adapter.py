@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 
 import pytest
-
 from model_integration_engine.adapters.engine import (
     AdapterCatalog,
     AdapterRequirement,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.approval.engine import ApprovalEngine
 from sage.approval.models import ApprovalLevel, ApprovalStatus
 from sage.audit.logger import ExecutionAudit

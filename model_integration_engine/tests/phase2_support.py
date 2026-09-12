@@ -159,12 +159,14 @@ class FixtureTransport:
         timeout_seconds: float,
     ) -> AsyncIterator[Mapping[str, JSONValue]]:
         self.calls.append((method, url, copy.deepcopy(body)))
+
         if self.unavailable:
             raise OllamaUnavailableError(
                 "RUNTIME_UNREACHABLE",
                 "fixture endpoint unavailable",
                 retryable=True,
             )
+
         if self.malformed_chat:
             yield {"message": "not-an-object", "done": True}
             return
@@ -234,6 +236,7 @@ class FixtureTransport:
             "prompt_eval_count": response.get("prompt_eval_count"),
             "eval_count": response.get("eval_count"),
         }
+
 
 
 class DeterministicProbeBackend:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.context.engine import CognitiveContextEngine
 from sage.core.engine import SageEngine
 from sage.goals.engine import GoalEngine, GoalHorizon

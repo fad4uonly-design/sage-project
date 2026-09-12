@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.core.engine import SageEngine
 from sage.decision.engine import DecisionEngine
 from sage.decision.models import Criterion, DecisionOption, DecisionRequest

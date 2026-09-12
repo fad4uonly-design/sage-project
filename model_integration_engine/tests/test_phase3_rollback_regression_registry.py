@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 
 import pytest
-
 from model_integration_engine.application.changes import (
     ChangeSetV3,
     FileChange,
@@ -28,15 +26,15 @@ from model_integration_engine.registry.capability_registry import (
     RegistryEligibilityError,
     ValidatedCapabilityRegistry,
 )
-from model_integration_engine.sandbox.artifacts import SecureArtifactResolver
-from model_integration_engine.sandbox.contracts import (
-    ArtifactDeclaration,
-    CollectedArtifactCandidate,
-)
 from model_integration_engine.regression.framework import (
     RegressionFramework,
     RegressionPlanV3,
     RegressionState,
+)
+from model_integration_engine.sandbox.artifacts import SecureArtifactResolver
+from model_integration_engine.sandbox.contracts import (
+    ArtifactDeclaration,
+    CollectedArtifactCandidate,
 )
 
 from tests.phase2_support import (
@@ -244,9 +242,10 @@ def registry_entry(result, validated=True):
     )
     evidence_digest = sha256_digest({"evidence_id": evidence_id})
     artifact = base["artifacts"][0]
-    subject = lambda kind, sid, version, digest: {
-        "kind": kind, "subject_id": sid, "version": version, "digest": digest
-    }
+    def subject(kind, sid, version, digest):
+        return {
+            "kind": kind, "subject_id": sid, "version": version, "digest": digest
+        }
     return {
         "registration_id": "registration:part3-example",
         "status": "ACTIVE",

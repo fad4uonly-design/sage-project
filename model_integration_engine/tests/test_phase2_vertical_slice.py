@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
-
 from model_integration_engine.application.vertical_slice import (
     Phase2VerticalSliceEngine,
     VerticalSliceConfig,

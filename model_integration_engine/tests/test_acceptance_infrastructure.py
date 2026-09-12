@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from model_integration_engine.application.acceptance import (
     AcceptanceConfig,
     GenericAcceptanceRunner,
@@ -30,7 +29,6 @@ from model_integration_engine.user_evidence import UserInputEvidenceCollector
 
 from tests.phase2_support import FixtureTransport, fixed_clock
 from tests.phase3_support import write_gguf
-
 
 ENDPOINT = "http://fixture-ollama.invalid:11434"
 

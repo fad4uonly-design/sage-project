@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-
 from sage.api.app import create_app
 from sage.core.engine import SageEngine
 from sage.discovery.engine import DiscoveryEngine

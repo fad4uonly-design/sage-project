@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator, FormatChecker
-
 from model_integration_engine.application.lifecycle import (
     Part3LifecycleConfig,
     Part3LifecycleEngine,

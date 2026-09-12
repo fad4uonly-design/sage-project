@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.core.engine import SageEngine
 from sage.memory.interfaces import MemorySystem
 from sage.memory.models import MemoryItem, MemoryType

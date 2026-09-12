@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.core.engine import SageEngine
 from sage.secrets.crypto import SecretBox
 from sage.secrets.interfaces import SecretsManager

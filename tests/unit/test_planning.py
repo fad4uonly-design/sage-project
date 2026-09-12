@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.core.engine import SageEngine
 from sage.planning.interfaces import PlanningEngine
 

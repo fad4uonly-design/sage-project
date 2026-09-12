@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.core.engine import SageEngine
 from sage.reasoning.interfaces import ReasoningEngine
 from sage.reasoning.models import ReasoningContext, StrategyKind
