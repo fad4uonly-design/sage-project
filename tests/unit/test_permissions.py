@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.core.engine import SageEngine
 from sage.permissions.interfaces import PermissionManager
-from sage.permissions.models import Permission, PermissionDenied, PrincipalType
+from sage.permissions.models import Permission, PermissionDeniedError, PrincipalType
 
 
 @pytest.mark.asyncio
@@ -31,7 +30,7 @@ async def test_dangerous_pending(engine: SageEngine) -> None:
     assert by_perm[Permission.SHELL].granted is False
     assert by_perm[Permission.MEMORY_READ].granted is True
 
-    with pytest.raises(PermissionDenied):
+    with pytest.raises(PermissionDeniedError):
         await pm.require("plugin.risky", Permission.SHELL)
 
 
