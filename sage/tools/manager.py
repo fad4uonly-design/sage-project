@@ -8,6 +8,7 @@ from typing import Any
 
 from sage.logging import get_logger
 from sage.tools.interfaces import Tool, ToolInfo, ToolResult
+from sage.tools.verification import ToolOutputVerifier
 
 log = get_logger(__name__)
 
@@ -21,6 +22,7 @@ class DefaultToolManager:
         approval_engine: Any | None = None,
         audit: Any | None = None,
         auto_approve_in_test: bool = False,
+        verifier: ToolOutputVerifier | None = None,
     ) -> None:
         self._tools: dict[str, Tool] = {}
         self._permissions = permission_manager
@@ -28,6 +30,7 @@ class DefaultToolManager:
         self._approval = approval_engine
         self._audit = audit
         self._auto_approve_in_test = auto_approve_in_test
+        self._verifier = verifier
 
     def register(self, tool: Tool) -> None:
         self._tools[tool.name] = tool
@@ -104,6 +107,30 @@ class DefaultToolManager:
         except Exception as exc:
             log.exception("tools.invoke_failed", name=name)
             result = ToolResult(success=False, error=str(exc))
+
+        # Tool-R0 verification gate: validate output before returning
+        if self._verifier is not None:
+            try:
+                verification = await self._verifier.verify(name, result)
+                result.metadata["verification"] = {
+                    "verified": verification.verified,
+                    "confidence": verification.confidence,
+                    "issue_count": len(verification.issues),
+                }
+                if verification.issues:
+                    result.metadata["verification_issues"] = [
+                        {
+                            "severity": issue.severity,
+                            "category": issue.category,
+                            "message": issue.message,
+                            "field": issue.field,
+                        }
+                        for issue in verification.issues
+                    ]
+            except Exception as exc:
+                log.exception("tools.verification_failed", name=name)
+                # Verification failure doesn't block the tool result
+                result.metadata["verification_error"] = str(exc)
 
         duration = (time.perf_counter() - t0) * 1000
         if self._audit is not None:
