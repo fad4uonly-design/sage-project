@@ -355,7 +355,7 @@ class SafeProbeHarness:
             tools=tools,
             response_schema=response_schema,
             generation={"temperature": 0},
-            maximum_output_tokens=64,
+            maximum_output_tokens=2048,
             retain_raw_output=False,
         )
 
