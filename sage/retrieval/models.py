@@ -27,10 +27,21 @@ class EvidenceItem(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class Citation(BaseModel):
+    """RAGforge citation: one evidence item surfaced with its confidence."""
+
+    index: int
+    layer: RetrievalLayer
+    content: str
+    confidence: float
+    source_ref: str | None = None
+
+
 class RetrievalResult(BaseModel):
     query: str
     items: list[EvidenceItem] = Field(default_factory=list)
     ranked: list[EvidenceItem] = Field(default_factory=list)
+    citations: list[Citation] = Field(default_factory=list)
     memories: list[str] = Field(default_factory=list)
     graph_facts: list[str] = Field(default_factory=list)
     documents: list[str] = Field(default_factory=list)

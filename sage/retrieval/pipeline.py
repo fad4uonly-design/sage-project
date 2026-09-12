@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from sage.logging import get_logger
+from sage.retrieval.citations import build_citations
 from sage.retrieval.models import EvidenceItem, RetrievalLayer, RetrievalResult
 
 log = get_logger(__name__)
@@ -62,6 +63,7 @@ class LayeredRetriever:
             query=query,
             items=items,
             ranked=ranked,
+            citations=build_citations(ranked),
             memories=memories,
             graph_facts=graph_facts,
             documents=documents,
