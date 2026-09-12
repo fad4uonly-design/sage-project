@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from datetime import timedelta
+from collections.abc import Callable, Sequence
+from datetime import datetime, timedelta
 from typing import Any
 
 from sage.config.settings import Settings
@@ -21,9 +21,11 @@ from sage.memory.cognitive import (
     extract_terms,
     score_importance,
 )
+from sage.memory.index import SqliteVectorIndex, VectorIndex
 from sage.memory.interfaces import MemorySystem
 from sage.memory.models import ConsolidationReport, MemoryItem, MemoryType
 from sage.memory.store import MemoryStore
+from sage.models.interfaces import EmbeddingModel, ModelRouter
 from sage.utils.time import utcnow, utcnow_iso
 
 log = get_logger(__name__)
@@ -44,11 +46,18 @@ class SQLiteMemorySystem:
         cognitive: CognitiveMemorySupport,
         events: EventBus,
         settings: Settings,
+        *,
+        index: VectorIndex | None = None,
+        router_resolver: Callable[[], ModelRouter | None] | None = None,
     ) -> None:
         self._store = store
         self._cog = cognitive
         self._events = events
         self._settings = settings
+        self._index = index
+        self._router_resolver = router_resolver
+        self._embedding: EmbeddingModel | None = None
+        self._backfill_done = False
 
     async def store(self, item: MemoryItem) -> str:
         return await self.store_cognitive(item)
@@ -116,6 +125,7 @@ class SQLiteMemorySystem:
             metadata=item.metadata,
             reason="create",
         )
+        await self._index_upsert(item.id, item.content)
 
         # Relationship detection
         related = await self._cog.find_related_by_terms(terms, exclude_id=item.id, limit=5)
@@ -161,7 +171,7 @@ class SQLiteMemorySystem:
         type_vals = [t.value for t in types] if types else None
 
         if query.strip():
-            items = await self._store.search(query, limit=lim, types=type_vals)
+            items = await self._blended_recall(query, lim, type_vals)
         else:
             items = await self._store.list_recent(limit=lim)
 
@@ -172,6 +182,122 @@ class SQLiteMemorySystem:
                 {"last_accessed_at": now, "access_count": item.access_count + 1},
             )
         return items
+
+    # -- vector index plumbing (TurboVec slot) ---------------------------
+
+    def _resolve_index(self) -> VectorIndex | None:
+        """Return the index with an embedding attached, if one is available."""
+        if self._index is None:
+            return None
+        if self._embedding is None and self._router_resolver is not None:
+            router = self._router_resolver()
+            if router is None:
+                return None
+            self._embedding = router.get_embedding_model()
+            self._index.attach(self._embedding)
+            log.info("memory.index_attached", tag=self._index.tag)
+        if self._embedding is None:
+            return None
+        return self._index
+
+    async def _index_upsert(self, memory_id: str, content: str) -> None:
+        index = self._resolve_index()
+        if index is None:
+            return
+        try:
+            await index.upsert(memory_id, content)
+        except Exception:
+            log.exception("memory.index_upsert_failed")
+
+    async def _index_remove(self, memory_id: str) -> None:
+        index = self._resolve_index()
+        if index is None:
+            return
+        try:
+            await index.remove(memory_id)
+        except Exception:
+            log.exception("memory.index_remove_failed")
+
+    async def sync_index(self, *, force: bool = False) -> int:
+        """Best-effort backfill/rebuild of the vector index from active memories."""
+        index = self._resolve_index()
+        if index is None:
+            return 0
+        if self._backfill_done and not force:
+            return 0
+        self._backfill_done = True
+        try:
+            active = await self._store.list_all_active(limit=1000)
+            if not active:
+                return 0
+            if not force and await index.count() >= len(active):
+                return 0
+            return await index.rebuild([(item.id, item.content) for item in active])
+        except Exception:
+            log.exception("memory.index_sync_failed")
+            return 0
+
+    async def _blended_recall(
+        self,
+        query: str,
+        limit: int,
+        type_vals: list[str] | None,
+    ) -> list[MemoryItem]:
+        """Keyword recall union vector recall, scored sim/importance/recency."""
+        await self.sync_index()
+
+        tokens = {t.lower() for t in query.split() if len(t) > 2}
+
+        def lexical_overlap(item: MemoryItem) -> float:
+            if not tokens:
+                return 0.0
+            hay = set(item.content.lower().split())
+            hay.update((item.summary or "").lower().split())
+            hay.update(t.lower() for t in item.tags)
+            return len(tokens & hay) / len(tokens)
+
+        candidates: dict[str, tuple[float, MemoryItem]] = {}
+        for item in await self._store.search(query, limit=limit * 2, types=type_vals):
+            candidates[item.id] = (lexical_overlap(item), item)
+
+        index = self._resolve_index()
+        if index is not None:
+            try:
+                hits = await index.search(query, limit=limit * 2)
+            except Exception:
+                log.exception("memory.index_search_failed")
+                hits = []
+            for memory_id, sim in hits:
+                existing = candidates.get(memory_id)
+                if existing is not None:
+                    score, item = existing
+                    candidates[memory_id] = (max(score, sim), item)
+                    continue
+                fetched = await self._store.get(memory_id)
+                if fetched is None or (type_vals and fetched.type.value not in type_vals):
+                    continue
+                candidates[memory_id] = (sim, fetched)
+
+        if not candidates:
+            return []
+
+        def recency(item: MemoryItem) -> float:
+            try:
+                stamp = (item.updated_at or item.created_at).replace("Z", "+00:00")
+                age_days = max(
+                    0.0,
+                    (utcnow() - datetime.fromisoformat(stamp)).total_seconds() / 86400.0,
+                )
+            except (ValueError, TypeError):
+                return 0.5
+            return float(0.5 ** (age_days / 30.0))
+
+        def final_score(entry: tuple[float, MemoryItem]) -> float:
+            sim, item = entry
+            return 0.45 * sim + 0.35 * item.importance + 0.20 * recency(item)
+
+        ranked = sorted(candidates.values(), key=final_score, reverse=True)
+        return [item for _, item in ranked[:limit]]
 
     async def get(self, memory_id: str) -> MemoryItem | None:
         return await self._store.get(memory_id)
@@ -205,6 +331,7 @@ class SQLiteMemorySystem:
                 metadata=item.metadata,
                 reason="update",
             )
+            await self._index_upsert(memory_id, item.content)
 
         await self._events.publish(
             Event(
@@ -225,6 +352,7 @@ class SQLiteMemorySystem:
                     source="memory",
                 )
             )
+            await self._index_remove(memory_id)
         return ok
 
     async def consolidate(self) -> ConsolidationReport:
@@ -259,6 +387,7 @@ class SQLiteMemorySystem:
             fp = item.content_hash or content_fingerprint(item.content)
             if fp in seen_hashes and seen_hashes[fp] != item.id:
                 await self._cog.merge_duplicate(seen_hashes[fp], item.id)
+                await self._index_remove(item.id)
                 merged += 1
             else:
                 seen_hashes[fp] = item.id
@@ -322,13 +451,24 @@ class MemoryModule(BaseModule):
         store = MemoryStore(db)
         cognitive = CognitiveMemorySupport(db)
         await cognitive.ensure_content_hash_column()
-        self._system = SQLiteMemorySystem(store, cognitive, events, settings)
+        index = SqliteVectorIndex(db)
+        await index.ensure_table()
+        self._system = SQLiteMemorySystem(
+            store,
+            cognitive,
+            events,
+            settings,
+            index=index,
+            router_resolver=lambda: self.container.try_resolve(ModelRouter),
+        )
         self.container.register_instance(MemorySystem, self._system)
         self.container.register_instance(SQLiteMemorySystem, self._system)
 
     async def _on_start(self) -> None:
         settings = self.container.resolve(Settings)
         scheduler = self.container.try_resolve(Scheduler)
+        if self._system is not None:
+            await self._system.sync_index()
         if scheduler and self._system:
             interval = settings.memory.consolidation_interval_minutes * 60
             system = self._system
