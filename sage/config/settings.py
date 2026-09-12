@@ -30,10 +30,40 @@ class KnowledgeSettings(BaseModel):
 class ModelsSettings(BaseModel):
     default_provider: str = "stub"
     default_model_name: str = "stub-v1"
+
     temperature: float = 0.7
     max_tokens: int = 2048
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+
+    local_base_url: str = "http://127.0.0.1:11434/v1"
+    local_model_name: str = "local-model"
+    local_timeout: float = 120.0
+
+    # Embedding source (TurboVec slot): "stub" | "hashing" | "local"
+    embedding_provider: str = "stub"
+    embedding_model_name: str = "nomic-embed-text"
+    embedding_dim: int = 256
+
+    # Serving runtime (RuntimePlugin registry): "auto" picks the first
+    # available registered runtime; "none" keeps config-driven behavior.
+    serving_runtime: str = "auto"
+
+
+class PerceptionSettings(BaseModel):
+    """Vision + speech endpoints (Phase 4 — off until explicitly configured)."""
+
+    # Vision (SmolVLM slot): "none" | "local"
+    vision_provider: str = "none"
+    vision_base_url: str = "http://127.0.0.1:11434/v1"
+    vision_model_name: str = "smolvlm"
+    vision_timeout: float = 120.0
+
+    # Speech (Whisper Tiny slot): "none" | "local"
+    speech_provider: str = "none"
+    speech_base_url: str = "http://127.0.0.1:8080"
+    speech_model_name: str = "whisper"
+    speech_timeout: float = 120.0
 
 
 class AgentsSettings(BaseModel):
@@ -96,6 +126,7 @@ class Settings(BaseSettings):
     memory: MemorySettings = Field(default_factory=MemorySettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
     models: ModelsSettings = Field(default_factory=ModelsSettings)
+    perception: PerceptionSettings = Field(default_factory=PerceptionSettings)
     agents: AgentsSettings = Field(default_factory=AgentsSettings)
     plugins: PluginsSettings = Field(default_factory=PluginsSettings)
     tools: ToolsSettings = Field(default_factory=ToolsSettings)
