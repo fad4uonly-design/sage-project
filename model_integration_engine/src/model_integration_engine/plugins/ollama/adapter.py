@@ -155,7 +155,77 @@ class GenericOllamaAdapter:
     async def infer(
         self, request: InferenceRequest, context: OperationContext
     ) -> InferenceResponse:
-        raw = await self.client.chat(self._request_body(request))
+        events: list[Mapping[str, Any]] = []
+
+        async for raw in self.client.chat_stream(self._request_body(request)):
+            if not isinstance(raw, Mapping):
+                raise OllamaAdapterProtocolError(
+                    "Ollama chat stream event must be an object"
+                )
+            events.append(raw)
+
+        if not events:
+            raise OllamaAdapterProtocolError(
+                "Ollama chat stream returned no events"
+            )
+
+        content_parts: list[str] = []
+        thinking_parts: list[str] = []
+        tool_calls: list[Mapping[str, Any]] = []
+        terminal = events[-1]
+
+        for raw in events:
+            message = raw.get("message")
+            if message is not None and not isinstance(message, Mapping):
+                raise OllamaAdapterProtocolError(
+                    "Ollama chat stream event message must be an object"
+                )
+
+            message_map = message if isinstance(message, Mapping) else {}
+
+            content = message_map.get("content", "")
+            thinking = message_map.get("thinking", "")
+
+            if not isinstance(content, str) or not isinstance(thinking, str):
+                raise OllamaAdapterProtocolError(
+                    "Ollama chat stream content/thinking values must be strings"
+                )
+
+            content_parts.append(content)
+            thinking_parts.append(thinking)
+
+            raw_tool_calls = message_map.get("tool_calls")
+            if raw_tool_calls is not None:
+                if not isinstance(raw_tool_calls, list):
+                    raise OllamaAdapterProtocolError(
+                        "message.tool_calls must be an array"
+                    )
+                tool_calls.extend(
+                    item for item in raw_tool_calls
+                    if isinstance(item, Mapping)
+                )
+
+        terminal_message = terminal.get("message")
+        terminal_map = (
+            terminal_message
+            if isinstance(terminal_message, Mapping)
+            else {}
+        )
+
+        raw = dict(terminal)
+        raw["message"] = {
+            "role": (
+                terminal_map.get("role")
+                if isinstance(terminal_map.get("role"), str)
+                else "assistant"
+            ),
+            "content": "".join(content_parts),
+            "thinking": "".join(thinking_parts),
+        }
+
+        if tool_calls:
+            raw["message"]["tool_calls"] = tool_calls
+
         return self._parse_response(request.operation_id, raw)
 
     def _parse_response(

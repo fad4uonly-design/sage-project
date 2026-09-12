@@ -165,14 +165,74 @@ class FixtureTransport:
                 "fixture endpoint unavailable",
                 retryable=True,
             )
+        if self.malformed_chat:
+            yield {"message": "not-an-object", "done": True}
+            return
+
+        messages = body.get("messages")
+        prompt = ""
+        if isinstance(messages, list):
+            for message in messages:
+                if isinstance(message, dict) and message.get("role") == "user":
+                    content = message.get("content")
+                    if isinstance(content, str):
+                        prompt = content
+
+        if "MIE_STREAM_OK_62" in prompt or prompt == "stream":
+            yield {
+                "message": {"role": "assistant", "content": "MIE_STREAM_"},
+                "done": False,
+            }
+            yield {
+                "message": {"role": "assistant", "content": "OK_62"},
+                "done": True,
+                "done_reason": "stop",
+            }
+            return
+
+        response = self._chat_response(body)
+        message = response.get("message", {})
+
+        if not isinstance(message, Mapping):
+            yield response
+            return
+
+        content = message.get("content", "")
+
+        if isinstance(content, str) and content:
+            midpoint = max(1, len(content) // 2)
+
+            first = dict(message)
+            first["content"] = content[:midpoint]
+            first.pop("tool_calls", None)
+
+            yield {
+                "message": first,
+                "done": False,
+            }
+
+            second = dict(message)
+            second["content"] = content[midpoint:]
+
+            yield {
+                "message": second,
+                "done": True,
+                "done_reason": response.get("done_reason"),
+                "total_duration": response.get("total_duration"),
+                "load_duration": response.get("load_duration"),
+                "prompt_eval_count": response.get("prompt_eval_count"),
+                "eval_count": response.get("eval_count"),
+            }
+            return
+
         yield {
-            "message": {"role": "assistant", "content": "MIE_STREAM_"},
-            "done": False,
-        }
-        yield {
-            "message": {"role": "assistant", "content": "OK_62"},
+            "message": message,
             "done": True,
-            "done_reason": "stop",
+            "done_reason": response.get("done_reason"),
+            "total_duration": response.get("total_duration"),
+            "load_duration": response.get("load_duration"),
+            "prompt_eval_count": response.get("prompt_eval_count"),
+            "eval_count": response.get("eval_count"),
         }
 
 

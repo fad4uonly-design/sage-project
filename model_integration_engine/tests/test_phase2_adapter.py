@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-
 from model_integration_engine.contracts import (
     InferenceRequest,
     Message,
@@ -102,3 +101,75 @@ def test_malformed_adapter_response_is_explicit() -> None:
 
     with pytest.raises(OllamaAdapterProtocolError):
         asyncio.run(adapter.infer(request, operation_context()))
+
+class _EmptyStreamTransport(FixtureTransport):
+    """Streams no events at all (empty NDJSON)."""
+
+    async def stream_ndjson(self, method, url, body, *, timeout_seconds):
+        if False:
+            yield {}
+
+
+class _ThinkingStreamTransport(FixtureTransport):
+    """Streams interleaved content + thinking chunks (imitates a thinking model)."""
+
+    async def stream_ndjson(self, method, url, body, *, timeout_seconds):
+        yield {
+            "message": {"role": "assistant", "content": "Hel", "thinking": "Th"},
+            "done": False,
+        }
+        yield {
+            "message": {"role": "assistant", "content": "lo", "thinking": "ink"},
+            "done": True,
+            "done_reason": "stop",
+        }
+
+
+def _request(operation_id: str, prompt: str) -> InferenceRequest:
+    return InferenceRequest(
+        operation_id=operation_id,
+        deployment=DEPLOYMENT,
+        messages=(Message(role="user", parts=(MessagePart("text", prompt),)),),
+    )
+
+
+def test_infer_reassembles_streamed_content_chunks() -> None:
+    transport = FixtureTransport()
+    adapter = adapter_for(transport)
+    response = asyncio.run(adapter.infer(_request("reassemble", "hello"), operation_context()))
+
+    # The fixture splits "fixture response" at the midpoint into two stream events.
+    body = transport.calls[-1][2]
+    assert body["stream"] is True
+    assert response.output_parts == (
+        MessagePart(kind="text", value="fixture response"),
+    )
+    assert response.finish_reason == "stop"
+
+
+def test_infer_joins_marker_stream_segments() -> None:
+    adapter = adapter_for(FixtureTransport())
+    response = asyncio.run(adapter.infer(_request("marker", "stream"), operation_context()))
+    assert "".join(part.value for part in response.output_parts) == "MIE_STREAM_OK_62"
+
+
+def test_infer_empty_stream_raises_protocol_error() -> None:
+    adapter = adapter_for(_EmptyStreamTransport())
+    with pytest.raises(OllamaAdapterProtocolError):
+        asyncio.run(adapter.infer(_request("empty-stream", "hello"), operation_context()))
+
+
+def test_infer_forwards_streamed_tool_calls() -> None:
+    adapter = adapter_for(FixtureTransport())
+    response = asyncio.run(adapter.infer(_request("tool-call", "mie_echo"), operation_context()))
+    assert len(response.tool_calls) == 1
+    assert response.tool_calls[0].name == "mie_echo"
+    assert response.tool_calls[0].call_id == "fixture-call-1"
+
+
+def test_infer_accumulates_thinking_across_chunks() -> None:
+    adapter = adapter_for(_ThinkingStreamTransport())
+    response = asyncio.run(adapter.infer(_request("thinking", "hello"), operation_context()))
+    parts = {part.kind: part.value for part in response.output_parts}
+    assert parts["text"] == "Hello"
+    assert parts["thinking"] == "Think"
