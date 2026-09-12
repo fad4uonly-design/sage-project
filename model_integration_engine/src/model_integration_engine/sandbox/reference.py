@@ -8,6 +8,7 @@ actually enforce.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
 import shutil
@@ -105,10 +106,8 @@ class ReferenceSubprocessSandbox:
                 shutil.copyfile(source, destination)
             if mount.read_only:
                 for path in [destination, *destination.rglob("*")] if destination.is_dir() else [destination]:
-                    try:
+                    with contextlib.suppress(OSError):
                         path.chmod(0o500 if path.is_dir() else 0o400)
-                    except OSError:
-                        pass
 
         environment = {
             "PATH": os.environ.get("PATH", ""),

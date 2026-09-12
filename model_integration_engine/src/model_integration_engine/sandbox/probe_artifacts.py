@@ -6,7 +6,7 @@ import json
 from collections.abc import Mapping
 
 from ..application.probes import ProbeKind, ProbePlan, RawProbeResult
-from ..domain import JSONValue, SubjectKind, SubjectRef, TestOutcome
+from ..domain import JSONValue, TestOutcome
 from .artifacts import ArtifactResolutionError, ResolvedArtifact, SecureArtifactResolver
 
 

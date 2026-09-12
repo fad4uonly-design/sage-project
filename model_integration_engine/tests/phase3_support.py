@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import struct
 from pathlib import Path
 
@@ -90,9 +89,7 @@ def _metadata_value(value) -> bytes:
     if isinstance(value, float):
         return struct.pack("<I", 6) + struct.pack("<f", value)
     if isinstance(value, list):
-        if not value:
-            element_type = 8
-        elif isinstance(value[0], str):
+        if not value or isinstance(value[0], str):
             element_type = 8
         elif isinstance(value[0], int):
             element_type = 4

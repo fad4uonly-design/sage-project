@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import ast
 import operator
+from collections.abc import Callable
 from typing import Any
 
 from sage.tools.base import BaseTool
 from sage.tools.interfaces import ToolResult
 from sage.utils.time import utcnow_iso
 
-_SAFE_OPS = {
+_SAFE_OPS: dict[type[ast.AST], Callable[..., Any]] = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,

@@ -7,13 +7,15 @@ they intentionally contain no runtime, model-family, or target integration code.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Mapping, TypeAlias
+from typing import Any, TypeAlias
 
-JSONScalar: TypeAlias = str | int | float | bool | None
-JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
+# `type X = ...` (PEP 695) requires Python 3.12+; keep TypeAlias for 3.11 support.
+JSONScalar: TypeAlias = str | int | float | bool | None  # noqa: UP040
+JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]  # noqa: UP040
 
 
 class SubjectKind(StrEnum):

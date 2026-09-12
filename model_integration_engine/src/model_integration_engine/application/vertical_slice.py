@@ -10,7 +10,6 @@ import platform
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
 from ..capabilities.delta import (
@@ -33,7 +32,7 @@ from ..domain import (
     ValidationState,
     WorkflowStage,
 )
-from ..evidence import deterministic_id, sha256_digest, utc_now
+from ..evidence import sha256_digest, utc_now
 from ..inspectors.gguf import GGUFArray, GGUFMetadataValue
 from ..inspectors.template import GenericChatTemplateInspector
 from ..inspectors.tokenizer import GenericTokenizerInspector

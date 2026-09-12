@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from decimal import Decimal, InvalidOperation
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from ...contracts import InspectionRequest, OperationContext
@@ -191,7 +191,7 @@ class OllamaModelInspector:
 
         capabilities_raw = raw_response.get("capabilities")
         declared_capabilities = (
-            tuple(sorted(set(item for item in capabilities_raw if isinstance(item, str))))
+            tuple(sorted({item for item in capabilities_raw if isinstance(item, str)}))
             if isinstance(capabilities_raw, list)
             else ()
         )

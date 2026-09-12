@@ -1,5 +1,7 @@
 """Built-in tools."""
 
+from typing import Any
+
 from sage.tools.builtin.core_tools import CalculatorTool, EchoTool, TimeTool
 from sage.tools.builtin.data_tools import (
     CsvSummaryTool,
@@ -25,7 +27,7 @@ __all__ = [
 ]
 
 
-def all_builtin_tools() -> list:
+def all_builtin_tools() -> list[Any]:
     return [
         EchoTool(),
         TimeTool(),

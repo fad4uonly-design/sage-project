@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from typing import Any
 
@@ -134,7 +135,7 @@ class DefaultToolManager:
 
         duration = (time.perf_counter() - t0) * 1000
         if self._audit is not None:
-            try:
+            with contextlib.suppress(Exception):
                 await self._audit.record(
                     kind="tool",
                     tool_name=name,
@@ -144,6 +145,4 @@ class DefaultToolManager:
                     duration_ms=duration,
                     detail={"error": result.error} if result.error else {},
                 )
-            except Exception:
-                pass
         return result

@@ -27,7 +27,7 @@ from ...domain import (
     WorkflowStage,
 )
 from ...evidence import EvidenceFactory, deterministic_id, sha256_digest, utc_now
-from ...phase2_models import DiscoveryResult, DiscoveredModelRecord, RuntimeRecord
+from ...phase2_models import DiscoveredModelRecord, DiscoveryResult, RuntimeRecord
 from .client import OllamaClient, OllamaClientError, OllamaProtocolError
 
 
@@ -282,7 +282,7 @@ class OllamaDiscoveryProvider:
         family_labels = tuple(sorted(set(([family] if family else []) + families)))
         parameter_size = _optional_string(details_map.get("parameter_size"))
         quantization = _optional_string(details_map.get("quantization_level"))
-        aliases = tuple(sorted(set(item for item in (name, model_alias) if item)))
+        aliases = tuple(sorted({item for item in (name, model_alias) if item}))
 
         summary_evidence = factory.create(
             kind=EvidenceKind.RUNTIME_OBSERVATION,

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from ..evidence import deterministic_id, sha256_digest
+from ..evidence import sha256_digest
 from .contracts import ArtifactDeclaration, CollectedArtifactCandidate
 
 

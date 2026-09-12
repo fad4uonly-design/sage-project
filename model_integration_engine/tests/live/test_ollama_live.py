@@ -15,7 +15,6 @@ import asyncio
 import os
 
 import pytest
-
 from model_integration_engine.plugins.ollama.client import (
     OllamaClient,
     StdlibJsonTransport,

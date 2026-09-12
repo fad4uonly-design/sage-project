@@ -6,12 +6,10 @@ SAGE knowledge and is never called by the default Part 3 workflow.
 
 from __future__ import annotations
 
-import json
 import os
-import shutil
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Callable
 
 from ..approval.binding import (
     ApprovalBindingService,
@@ -37,9 +35,10 @@ class FileChange:
         path = PurePosixPath(self.relative_path)
         if path.is_absolute() or ".." in path.parts:
             raise ValueError("change path must be relative and traversal-free")
-        if self.operation in {"ADD", "UPDATE"}:
-            if self.after_content is None or sha256_digest(self.after_content) != self.after_digest:
-                raise ValueError("after content/digest mismatch")
+        if self.operation in {"ADD", "UPDATE"} and (
+            self.after_content is None or sha256_digest(self.after_content) != self.after_digest
+        ):
+            raise ValueError("after content/digest mismatch")
 
 
 @dataclass(frozen=True, slots=True)

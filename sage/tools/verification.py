@@ -180,8 +180,7 @@ class ToolOutputVerifier:
         issues: list[VerificationIssue] = []
 
         # String outputs shouldn't be suspiciously short for certain tools
-        if isinstance(output, str):
-            if len(output.strip()) < 3 and tool_name not in {"ping", "health", "status"}:
+        if isinstance(output, str) and len(output.strip()) < 3 and tool_name not in {"ping", "health", "status"}:
                 issues.append(
                     VerificationIssue(
                         severity="warning",
@@ -191,11 +190,10 @@ class ToolOutputVerifier:
                 )
 
         # List outputs shouldn't be unexpectedly empty for retrieval-like tools
-        if isinstance(output, list) and len(output) == 0:
-            if any(
-                keyword in tool_name.lower()
-                for keyword in ["search", "list", "find", "retrieve"]
-            ):
+        if isinstance(output, list) and len(output) == 0 and any(
+            keyword in tool_name.lower()
+            for keyword in ["search", "list", "find", "retrieve"]
+        ):
                 issues.append(
                     VerificationIssue(
                         severity="warning",

@@ -17,7 +17,7 @@ from ...contracts import (
     Usage,
 )
 from ...domain import JSONValue, PluginDescriptor, SubjectKind, SubjectRef, TrustState
-from ...evidence import deterministic_id, sha256_digest
+from ...evidence import sha256_digest
 from .client import OllamaClient
 
 
