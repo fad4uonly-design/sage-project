@@ -11,6 +11,8 @@ from typing import Any
 from jsonschema import Draft202012Validator, FormatChecker
 
 from .application.acceptance import AcceptanceConfig, GenericAcceptanceRunner
+from .application.probe_backend import DockerProbeExecutionBackend
+from .sandbox.docker import DockerSandboxBackend
 
 
 def _load_object(path: Path, label: str) -> dict[str, Any]:
@@ -84,7 +86,20 @@ def main(argv: list[str] | None = None) -> int:
         user_evidence_document=user_evidence,
         timeout_seconds=args.timeout_seconds,
     )
-    result = asyncio.run(GenericAcceptanceRunner().run(config))
+    sandbox = DockerSandboxBackend(
+        allowlist_network="mie-allowlist-internal",
+        gateway_endpoint="http://mie-gateway-test:18080",
+        approved_upstream_endpoint="http://host.docker.internal:11434",
+        collection_root=config.output_directory / "probe-collections",
+    )
+    probe_backend = DockerProbeExecutionBackend(
+        sandbox=sandbox,
+        worker_source=str(Path(__file__).resolve().parents[2] / "src"),
+        artifact_store_root=config.output_directory / "probe-artifacts",
+    )
+    result = asyncio.run(
+        GenericAcceptanceRunner(probe_backend=probe_backend).run(config)
+    )
     print(f"state={result.state}")
     print(f"approval_requested={str(result.approval_requested).lower()}")
     print(f"output_directory={result.output_directory}")

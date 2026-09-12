@@ -26,7 +26,7 @@ from ..inspectors.tokenizer import GenericTokenizerInspector, TokenizerInspectio
 from ..packaging.draft import DraftIntegrationPackageBuilder
 from ..plugins.ollama.client import JsonTransport, StdlibJsonTransport
 from .lifecycle import Part3LifecycleConfig, Part3LifecycleEngine, Part3LifecycleResult
-from .probes import BlockedProbeExecutionBackend
+from .probes import BlockedProbeExecutionBackend, ProbeExecutionBackend
 from .vertical_slice import (
     Phase2VerticalSliceEngine,
     VerticalSliceConfig,
@@ -84,6 +84,7 @@ class GenericAcceptanceRunner:
 
     transport: JsonTransport | None = None
     clock: callable = utc_now
+    probe_backend: ProbeExecutionBackend | None = None
 
     async def run(self, config: AcceptanceConfig) -> AcceptanceResult:
         output = config.output_directory.resolve()
@@ -103,18 +104,18 @@ class GenericAcceptanceRunner:
         environment = environment_info(
             environment_id=environment_id,
             locality=_endpoint_locality(config.endpoint),
-            sandbox_backend_id="mie.probes.blocked-production-unavailable",
+            sandbox_backend_id=(self.probe_backend.backend_id if self.probe_backend is not None else "mie.probes.blocked-production-unavailable"),
             attributes={
                 "acceptance_mode": environment_material["acceptance_mode"],
-                "production_sandbox_available": False,
-                "behavioral_probe_policy": "BLOCKED_PRODUCTION_SANDBOX_UNAVAILABLE",
+                "production_sandbox_available": self.probe_backend is not None,
+                "behavioral_probe_policy": ("DOCKER_PRODUCTION_SANDBOX" if self.probe_backend is not None else "BLOCKED_PRODUCTION_SANDBOX_UNAVAILABLE"),
             },
         )
         transport = self.transport or StdlibJsonTransport()
-        blocked_backend = BlockedProbeExecutionBackend(clock=self.clock)
+        probe_backend = self.probe_backend or BlockedProbeExecutionBackend(clock=self.clock)
         phase2 = Phase2VerticalSliceEngine(
             transport=transport,
-            probe_backend=blocked_backend,
+            probe_backend=probe_backend,
             package_builder=DraftIntegrationPackageBuilder(),
             clock=self.clock,
             engine_version="0.3.0a0",
