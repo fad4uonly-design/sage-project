@@ -99,3 +99,5 @@ scripts/debug/
 
 # Scratch scripts
 model_integration_engine/mie_memory_pressure.py
+
+graphify-out/
