@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from sage.core.engine import SageEngine
 from sage.learning.interfaces import LearningEngine
 from sage.learning.models import Observation, ObservationKind
@@ -34,7 +33,7 @@ async def test_pattern_detection(engine: SageEngine) -> None:
 
 @pytest.mark.asyncio
 async def test_find_patterns_api(engine: SageEngine) -> None:
-    learn = engine.container.resolve(LearningEngine)  # type: ignore[type-abstract]
+    engine.container.resolve(LearningEngine)
     eng = engine.container.resolve(DefaultLearningEngine)
     await eng.observe(
         Observation(
