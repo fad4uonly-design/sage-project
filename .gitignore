@@ -101,3 +101,6 @@ scripts/debug/
 model_integration_engine/mie_memory_pressure.py
 
 graphify-out/
+
+# Empty/generated research test output
+research_system/test_output.txt
