@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sage-research-system"
+version = "0.1.0"
+description = "SAGE Research System — Model Lab. Research Specimen 001: Pythia-70M (architecture inspection milestone)."
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["interpretability", "mechanistic-interpretability", "research", "model-lab"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+# Core research layer has ZERO runtime dependencies by design (MIE/ARENA boundary).
+# The PyTorch/Hugging Face adapter is an optional extra.
+dependencies = []
+
+[project.optional-dependencies]
+pytorch = [
+    "torch>=2.0",
+    "transformers>=4.35",
+    "safetensors>=0.3",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=1.0",
+]
+
+[project.scripts]
+sage-research = "sage_research.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sage_research = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra -m 'not integration'"
+markers = [
+    "integration: tests that load a real model artifact (e.g. EleutherAI/pythia-70m) and may require network access",
+]
