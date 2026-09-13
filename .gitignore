@@ -41,6 +41,8 @@ htmlcov/
 !.env.example
 *.pem
 secrets/
+# SAGE source package (sage/secrets/ is code, not secret material)
+!sage/secrets/
 
 # SAGE runtime data (local user data - never commit)
 data/memory/*
