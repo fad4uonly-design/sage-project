@@ -462,7 +462,7 @@ class GGUFInspector:
             )
             return item
 
-        version_ev = fact("gguf.version", observed.version, "/header/version")
+        fact("gguf.version", observed.version, "/header/version")
         tensor_ev = fact(
             "gguf.tensor_structure",
             {

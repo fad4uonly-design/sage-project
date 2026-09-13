@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 from ..domain import (
     EvidenceKind,
@@ -13,7 +13,7 @@ from ..domain import (
     JSONValue,
     SubjectRef,
 )
-from ..evidence import EvidenceFactory, sha256_digest, utc_now
+from ..evidence import EvidenceFactory, utc_now
 from .gguf import GGUFArray, GGUFMetadataValue
 
 

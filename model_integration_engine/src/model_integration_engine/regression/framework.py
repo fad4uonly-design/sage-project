@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 from ..domain import JSONValue
 from ..evidence import deterministic_id, sha256_digest
@@ -151,8 +151,8 @@ class RegressionFramework:
                     category="configuration",
                     outcome="FAIL",
                     mandatory=True,
-                    before=list(sorted(before.configuration)),
-                    after=list(sorted(after.configuration)),
+                    before=sorted(before.configuration),
+                    after=sorted(after.configuration),
                     reason="Unexpected configuration changes: " + ", ".join(sorted(unexpected_changes)),
                 )
             )

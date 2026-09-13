@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Mapping
 
 from ..domain import JSONValue, TrustState
 from ..evidence import deterministic_id, sha256_digest

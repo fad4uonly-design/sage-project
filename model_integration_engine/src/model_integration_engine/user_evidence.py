@@ -22,7 +22,6 @@ from .domain import (
 )
 from .evidence import EvidenceFactory, sha256_digest, utc_now
 
-
 _ALLOWED_LEVELS = {
     EvidenceLevel.DETECTED_FROM_METADATA,
     EvidenceLevel.DETECTED_FROM_RUNTIME,

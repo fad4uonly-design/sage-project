@@ -146,7 +146,7 @@ class ProbeExecutionBackend(Protocol):
     async def execute(
         self,
         plan: ProbePlan,
-        harness: "SafeProbeHarness",
+        harness: SafeProbeHarness,
         adapter: RuntimeAdapter,
         context: OperationContext,
     ) -> BackendProbeBatch: ...
@@ -169,7 +169,7 @@ class BlockedProbeExecutionBackend:
     async def execute(
         self,
         plan: ProbePlan,
-        harness: "SafeProbeHarness",
+        harness: SafeProbeHarness,
         adapter: RuntimeAdapter,
         context: OperationContext,
     ) -> BackendProbeBatch:
@@ -887,3 +887,5 @@ def _apply_probe_results(
             assessed_at=assessed_at,
         )
     return tuple(sorted(by_key.values(), key=lambda claim: claim.capability_key))
+
+

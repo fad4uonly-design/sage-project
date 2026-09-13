@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 from ..domain import JSONValue, TrustState
 from ..evidence import sha256_digest

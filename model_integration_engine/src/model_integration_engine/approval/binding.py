@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Mapping
 
 from ..evidence import sha256_digest, utc_now
 from ..packaging.proposed import ImmutablePackageStore, SubmittedPackage
