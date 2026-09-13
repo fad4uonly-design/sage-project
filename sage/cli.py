@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
@@ -12,13 +14,21 @@ from rich.table import Table
 
 from sage import __tagline__, __version__
 
+# Ensure UTF-8 output encoding on Windows consoles
+if hasattr(sys.stdout, "reconfigure"):
+    with contextlib.suppress(Exception):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    with contextlib.suppress(Exception):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 app = typer.Typer(
     name="sage",
     help=f"SAGE — Smart Autonomous General Engine\n{__tagline__}",
     add_completion=False,
     no_args_is_help=True,
 )
-console = Console()
+console = Console(legacy_windows=False)
 
 
 def _run(coro: Any) -> Any:
