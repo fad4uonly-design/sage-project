@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from enum import Enum
+import builtins
+from enum import StrEnum
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
@@ -16,13 +17,13 @@ from sage.utils.time import utcnow_iso
 log = get_logger(__name__)
 
 
-class GoalHorizon(str, Enum):
+class GoalHorizon(StrEnum):
     LONG = "long"
     MEDIUM = "medium"
     DAILY = "daily"
 
 
-class GoalStatus(str, Enum):
+class GoalStatus(StrEnum):
     ACTIVE = "active"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
@@ -63,11 +64,11 @@ class GoalEngine(Protocol):
         horizon: GoalHorizon | str | None = None,
         project_id: str | None = None,
         limit: int = 50,
-    ) -> list[RichGoal]: ...
+    ) -> builtins.list[RichGoal]: ...
 
     async def complete(self, goal_id: str, *, progress: float = 1.0) -> RichGoal: ...
 
-    async def children(self, parent_id: str) -> list[RichGoal]: ...
+    async def children(self, parent_id: str) -> builtins.list[RichGoal]: ...
 
     async def tree(self, root_id: str) -> dict[str, Any]: ...
 
@@ -174,9 +175,9 @@ class SQLiteGoalEngine(BaseRepository):
         horizon: GoalHorizon | str | None = None,
         project_id: str | None = None,
         limit: int = 50,
-    ) -> list[RichGoal]:
-        clauses: list[str] = []
-        params: list[Any] = []
+    ) -> builtins.list[RichGoal]:
+        clauses: builtins.list[str] = []
+        params: builtins.list[Any] = []
         if status is not None:
             clauses.append("status = ?")
             params.append(status.value if isinstance(status, GoalStatus) else status)
@@ -206,7 +207,7 @@ class SQLiteGoalEngine(BaseRepository):
             completed_at=now,
         )
 
-    async def children(self, parent_id: str) -> list[RichGoal]:
+    async def children(self, parent_id: str) -> builtins.list[RichGoal]:
         rows = await self.db.fetchall(
             """
             SELECT * FROM context_goals WHERE parent_id = ?

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from sage.skills.base import BaseSkill
 from sage.skills.models import SkillCategory, SkillManifest, SkillRequest, SkillResult
 
@@ -25,7 +23,7 @@ class ProjectPlanningSkill(BaseSkill):
         planner = request.context.get("_plan_fn")
         if callable(planner):
             try:
-                plan_text = await planner(task)  # type: ignore[misc]
+                plan_text = await planner(task)
             except Exception:
                 plan_text = ""
         lines = [

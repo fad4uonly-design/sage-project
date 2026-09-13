@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Any, Protocol, runtime_checkable
 
 from sage.skills.models import SkillCategory, SkillManifest, SkillRequest, SkillResult

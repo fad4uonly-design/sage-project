@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from sage.logging import get_logger
-from sage.skills.interfaces import Skill, SkillLibrary
+from sage.skills.interfaces import Skill
 from sage.skills.models import SkillCategory, SkillManifest, SkillRequest, SkillResult
 
 log = get_logger(__name__)
@@ -50,10 +50,14 @@ class DefaultSkillLibrary:
             m = skill.manifest
             if cat and m.category != cat:
                 continue
-            if domain and m.domains and domain not in m.domains and "shared" not in m.domains:
+            if (
+                domain
+                and m.domains
+                and domain not in m.domains
+                and "shared" not in m.domains
+            ):
                 # Universal skills have empty domains list
-                if m.domains:
-                    continue
+                continue
             out.append(m)
         return sorted(out, key=lambda x: (x.category.value, x.name))
 

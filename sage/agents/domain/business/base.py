@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from sage.agents.domain_base import DomainAgent
@@ -23,14 +24,12 @@ class BusinessAdvisor(DomainAgent):
         kg = ctx.get("kg")
         if not kg:
             return
-        try:
+        with contextlib.suppress(Exception):
             await kg.extract_and_merge(
                 task.description,
                 source=self.profile.principal,
                 source_ref=f"bi:{self.profile.domain}",
             )
-        except Exception:
-            pass
 
     def select_strategy(self, task: Any, ctx: dict[str, Any]) -> str | None:
         prefs = self.profile.reasoning_strategies

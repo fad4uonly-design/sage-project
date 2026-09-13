@@ -78,10 +78,7 @@ class DefaultDecisionEngine:
             for c in criteria:
                 raw = opt.scores.get(c.id, 0.0)
                 lo, hi = ranges[c.id]
-                if hi > lo:
-                    n = (raw - lo) / (hi - lo)
-                else:
-                    n = 0.5
+                n = (raw - lo) / (hi - lo) if hi > lo else 0.5
                 if not c.maximize:
                     n = 1.0 - n
                 norm_scores[c.id] = n
@@ -141,7 +138,7 @@ class DefaultDecisionEngine:
 
         explanation = [
             "Min-max normalized scores per criterion",
-            f"Weights: " + ", ".join(f"{c.name}={norm_weights[c.id]:.2f}" for c in criteria),
+            "Weights: " + ", ".join(f"{c.name}={norm_weights[c.id]:.2f}" for c in criteria),
             f"Risk penalty per risk item: {request.risk_penalty}",
             f"Score separation (1st−2nd): {separation:.3f}",
             f"Score matrix completeness: {completeness:.0%}",

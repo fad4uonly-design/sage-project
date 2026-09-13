@@ -23,7 +23,17 @@ class MemorySettings(BaseModel):
 class KnowledgeSettings(BaseModel):
     watch_enabled: bool = False
     supported_extensions: list[str] = Field(
-        default_factory=lambda: [".pdf", ".docx", ".txt", ".md", ".csv", ".xlsx", ".png", ".jpg", ".jpeg"]
+        default_factory=lambda: [
+            ".pdf",
+            ".docx",
+            ".txt",
+            ".md",
+            ".csv",
+            ".xlsx",
+            ".png",
+            ".jpg",
+            ".jpeg",
+        ]
     )
 
 
@@ -33,6 +43,7 @@ class ModelsSettings(BaseModel):
 
     temperature: float = 0.7
     max_tokens: int = 2048
+
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
 
@@ -153,6 +164,7 @@ class Settings(BaseSettings):
         """Return a copy with data_dir-relative paths resolved."""
         data = self.model_copy(deep=True)
         if not data.db_path.is_absolute():
-            # Keep as given; callers may resolve against cwd intentionally
             pass
         return data
+
+

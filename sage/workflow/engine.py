@@ -11,7 +11,6 @@ import time
 from typing import Any, Protocol, runtime_checkable
 
 from sage.logging import get_logger
-from sage.utils.ids import new_id
 from sage.utils.time import utcnow_iso
 from sage.workflow.models import (
     StepRunRecord,
@@ -158,7 +157,7 @@ class DefaultWorkflowEngine:
         self, run: WorkflowRun, definition: WorkflowDefinition
     ) -> WorkflowRun:
         steps = definition.step_map()
-        next_id = run.current_step or definition.entry
+        next_id: str | None = run.current_step or definition.entry
         safety = 0
         max_steps = 200
 
@@ -197,7 +196,7 @@ class DefaultWorkflowEngine:
                     record.output = output
                     last_err = None
                     break
-                except _ApprovalNeeded as appr:
+                except _ApprovalNeededError as appr:
                     record.status = "waiting_approval"
                     record.error = str(appr)
                     run.status = WorkflowStatus.WAITING_APPROVAL
@@ -425,12 +424,9 @@ class DefaultWorkflowEngine:
             if not coros:
                 return []
             results = await asyncio.gather(*coros, return_exceptions=True)
-            out = []
+            out: list[dict[str, str]] = []
             for r in results:
-                if isinstance(r, Exception):
-                    out.append({"error": str(r)})
-                else:
-                    out.append(r)
+                out.append(r if isinstance(r, dict) else {"error": str(r)})
             return out
 
         if step.type == StepType.LOOP:
@@ -523,7 +519,7 @@ class DefaultWorkflowEngine:
         if decision.allowed:
             return
         if decision.status == ApprovalStatus.PENDING and decision.request:
-            raise _ApprovalNeeded(decision.request.id, decision.message)
+            raise _ApprovalNeededError(decision.request.id, decision.message)
         raise RuntimeError(decision.message or "Approval denied")
 
     def _render(self, params: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
@@ -586,7 +582,7 @@ class DefaultWorkflowEngine:
                 log.exception("workflow.audit_failed")
 
 
-class _ApprovalNeeded(Exception):
+class _ApprovalNeededError(Exception):
     def __init__(self, request_id: str, message: str) -> None:
         self.request_id = request_id
         super().__init__(message)

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from sage.db.connection import Database
 from sage.db.repository import BaseRepository
 from sage.utils.time import utcnow_iso
@@ -12,7 +10,6 @@ from sage.workflow.models import (
     WorkflowDefinition,
     WorkflowRun,
     WorkflowStatus,
-    WorkflowStepDef,
 )
 
 

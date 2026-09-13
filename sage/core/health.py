@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class HealthLevel(str, Enum):
+class HealthLevel(StrEnum):
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -26,9 +26,7 @@ class HealthStatus:
 
     @property
     def ok(self) -> bool:
-        return self.level in (HealthLevel.HEALTHY, HealthLevel.DEGRADED) or (
-            self.level == HealthLevel.DEGRADED
-        )
+        return self.level in (HealthLevel.HEALTHY, HealthLevel.DEGRADED)
 
     @property
     def is_healthy(self) -> bool:

@@ -22,11 +22,7 @@ from sage.utils.time import utcnow_iso
 log = get_logger(__name__)
 
 _STOP = frozenset(
-    """
-    a an the and or but if in on at to for of is are was were be been being
-    this that these those it its i me my we our you your they them their
-    with from as by about into over after before between
-    """.split()
+    ["a", "an", "the", "and", "or", "but", "if", "in", "on", "at", "to", "for", "of", "is", "are", "was", "were", "be", "been", "being", "this", "that", "these", "those", "it", "its", "i", "me", "my", "we", "our", "you", "your", "they", "them", "their", "with", "from", "as", "by", "about", "into", "over", "after", "before", "between"]
 )
 
 

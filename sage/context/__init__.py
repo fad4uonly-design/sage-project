@@ -1,6 +1,9 @@
 """Cognitive Context Engine — persistent awareness layer."""
 
-from sage.context.engine import CognitiveContextEngine, ContextSnapshot, UnifiedContext
+from __future__ import annotations
+
+from sage.context.engine import CognitiveContextEngine
+from sage.context.models import ContextSnapshot, UnifiedContext
 from sage.context.service import ContextModule
 
 __all__ = [

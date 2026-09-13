@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, time
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -18,7 +19,7 @@ log = get_logger(__name__)
 JobFunc = Callable[[], Awaitable[None] | None]
 
 
-class JobKind(str, Enum):
+class JobKind(StrEnum):
     INTERVAL = "interval"
     DAILY = "daily"
     WEEKLY = "weekly"
@@ -133,10 +134,8 @@ class Scheduler:
         self._running = False
         if self._task is not None:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
             self._task = None
         log.info("scheduler.stopped")
 
@@ -178,9 +177,12 @@ class Scheduler:
         date_key = now.date().isoformat()
         if job.last_run_date == date_key:
             return False
-        if job.kind == JobKind.WEEKLY and job.weekday is not None:
-            if now.weekday() != job.weekday:
-                return False
+        if (
+            job.kind == JobKind.WEEKLY
+            and job.weekday is not None
+            and now.weekday() != job.weekday
+        ):
+            return False
         target = now.replace(
             hour=job.at_time.hour,
             minute=job.at_time.minute,
@@ -196,7 +198,7 @@ class Scheduler:
         try:
             result = job.func()
             if asyncio.iscoroutine(result) or isinstance(result, Awaitable):
-                await result  # type: ignore[arg-type]
+                await result
             job.last_run = utcnow_iso()
             job.last_run_date = utcnow().date().isoformat()
             job.run_count += 1

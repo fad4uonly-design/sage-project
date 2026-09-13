@@ -8,7 +8,7 @@ This is intentionally small — no third-party DI framework required.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 T = TypeVar("T")
 
@@ -73,7 +73,7 @@ class Container:
         key = self._key(service_type, name)
 
         if key in self._singletons:
-            return self._singletons[key]  # type: ignore[return-value]
+            return cast(T, self._singletons[key])
 
         if key in self._factories:
             if key in self._resolving:
@@ -82,7 +82,7 @@ class Container:
             try:
                 instance = self._factories[key](self)
                 self._singletons[key] = instance
-                return instance  # type: ignore[return-value]
+                return cast(T, instance)
             finally:
                 self._resolving.discard(key)
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -11,14 +11,14 @@ from sage.utils.ids import new_id
 from sage.utils.time import utcnow_iso
 
 
-class ApprovalLevel(str, Enum):
+class ApprovalLevel(StrEnum):
     AUTOMATIC = "automatic"
     ASK_ONCE = "ask_once"
     ALWAYS_ASK = "always_ask"
     DENY = "deny"
 
 
-class ApprovalStatus(str, Enum):
+class ApprovalStatus(StrEnum):
     PENDING = "pending"
     APPROVED = "approved"
     DENIED = "denied"

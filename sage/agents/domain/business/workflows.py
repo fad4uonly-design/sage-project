@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from sage.agents.workflows.library import Workflow, WorkflowResult, WorkflowStep, new_workflow_id
 from sage.decision.models import Criterion, DecisionOption, DecisionRequest
@@ -340,8 +341,8 @@ async def wf_sales_forecast(agent: Any, ctx: dict[str, Any], params: dict[str, A
         "**Sales Forecast (simple funnel)**",
         f"_Reference monthly deals/units:_ {base:,.0f}",
         "",
-        f"| Stage | Rate | Volume |",
-        f"|---|---:|---:|",
+        "| Stage | Rate | Volume |",
+        "|---|---:|---:|",
         f"| Leads | — | {base*10:,.0f} |",
         f"| Qualified (40%) | 40% | {base*4:,.0f} |",
         f"| Proposals (50%) | 50% | {base*2:,.0f} |",
@@ -525,11 +526,11 @@ async def wf_profitability(agent: Any, ctx: dict[str, Any], params: dict[str, An
         "**Profitability Analysis**",
         f"_Reference revenue:_ {rev:,.2f}",
         "",
-        f"| Metric | Estimate |",
-        f"|---|---:|",
+        "| Metric | Estimate |",
+        "|---|---:|",
         f"| Gross margin (assumed 40%) | {rev*0.40:,.2f} |",
-        f"| Contribution after variable | model per SKU |",
-        f"| Operating margin target | 10–15% |",
+        "| Contribution after variable | model per SKU |",
+        "| Operating margin target | 10–15% |",
         "",
         "Actions: raise price on inelastic SKUs, cut low-margin complexity, fix discount leakage.",
     ]
@@ -697,8 +698,8 @@ async def wf_inventory(agent: Any, ctx: dict[str, Any], params: dict[str, Any]) 
         f"_Monthly demand ref:_ {demand:,.0f}",
         "",
         f"- Safety stock (2 weeks): ~{demand/2:,.0f}",
-        f"- Reorder point heuristic: lead-time demand + safety",
-        f"- Review ABC classes monthly; tighten A-item controls",
+        "- Reorder point heuristic: lead-time demand + safety",
+        "- Review ABC classes monthly; tighten A-item controls",
         "- Avoid overstock on C-items; watch expiry / obsolescence",
     ]
     return _result(

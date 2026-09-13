@@ -38,7 +38,7 @@ class SQLiteKnowledgeGraph(BaseRepository):
     async def upsert_entity(self, entity: Entity) -> Entity:
         if not entity.canonical_name:
             entity.canonical_name = canonicalize(entity.name)
-        existing = await self.find_entity(entity.name, entity_type=None)
+        await self.find_entity(entity.name, entity_type=None)
         # Prefer canonical match regardless of type for merge
         row = await self.db.fetchone(
             "SELECT * FROM kg_entities WHERE canonical_name = ? AND deleted_at IS NULL",

@@ -19,7 +19,7 @@ class DecisionModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         self._engine = DefaultDecisionEngine()
-        self.container.register_instance(DecisionEngine, self._engine)  # type: ignore[type-abstract]
+        self.container.register_instance(DecisionEngine, self._engine)
         self.container.register_instance(DefaultDecisionEngine, self._engine)
 
     async def _on_health(self) -> HealthStatus | None:

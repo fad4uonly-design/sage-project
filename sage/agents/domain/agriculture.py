@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from typing import Any
 
@@ -138,13 +139,11 @@ class AgricultureAgent(DomainAgent):
         )
         for crop in crops[:3]:
             name = (_extract_crop(crop) or crop).title()
-            try:
+            with contextlib.suppress(Exception):
                 await kg.extract_and_merge(
                     f"{name} is a crop. {name} requires water. {name} requires soil.",
                     source="agriculture_agent",
                 )
-            except Exception:
-                pass
 
     async def _wf_diagnose(self, ctx: dict[str, Any], params: dict[str, Any]) -> WorkflowResult:
         task = str(params.get("task") or ctx.get("task") or "")

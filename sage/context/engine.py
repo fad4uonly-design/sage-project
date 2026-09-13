@@ -7,6 +7,7 @@ into a unified situational model for the Orchestrator.
 
 from __future__ import annotations
 
+import contextlib
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
@@ -219,10 +220,8 @@ class DefaultCognitiveContextEngine(BaseRepository):
 
             pm = self._container.try_resolve(ProjectManager)
             if pm:
-                try:
+                with contextlib.suppress(Exception):
                     await pm.touch(project_id)
-                except Exception:
-                    pass
 
     async def get_active_project_id(self) -> str | None:
         val = await self._get_state("active_project_id")

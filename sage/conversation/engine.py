@@ -70,7 +70,7 @@ class DefaultConversationEngine(BaseRepository):
         # Preferences for orchestrator context
         await self._load_preferences(ctx)
 
-        orch_context = {
+        orch_context: dict[str, Any] = {
             "session_id": session_id,
             "user_id": ctx.user_id,
             "history": ctx.history_messages(

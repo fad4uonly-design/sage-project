@@ -9,7 +9,7 @@ import platform
 try:
     import resource
 except ImportError:
-    resource = None
+    resource = None  # type: ignore[assignment]
 
 from typing import Any
 
@@ -44,7 +44,7 @@ def _cpu_percent_approx() -> float | None:
         if hasattr(os, "getloadavg"):
             load1, _, _ = os.getloadavg()
             cpus = os.cpu_count() or 1
-            return round(min(100.0, (load1 / cpus) * 100.0), 1)
+            return float(round(min(100.0, (load1 / cpus) * 100.0), 1))
 
     except Exception:
         pass
@@ -57,7 +57,7 @@ def _windows_rss_mb() -> float:
     Windows process working set memory.
     """
     try:
-        class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+        class ProcessMemoryCounters(ctypes.Structure):
             _fields_ = [
                 ("cb", ctypes.c_ulong),
                 ("PageFaultCount", ctypes.c_ulong),
@@ -71,7 +71,7 @@ def _windows_rss_mb() -> float:
                 ("PeakPagefileUsage", ctypes.c_size_t),
             ]
 
-        counters = PROCESS_MEMORY_COUNTERS()
+        counters = ProcessMemoryCounters()
         counters.cb = ctypes.sizeof(counters)
 
         handle = ctypes.windll.kernel32.GetCurrentProcess()
@@ -83,10 +83,7 @@ def _windows_rss_mb() -> float:
         )
 
         if result:
-            return round(
-                counters.WorkingSetSize / (1024 * 1024),
-                2,
-            )
+            return float(round(counters.WorkingSetSize / (1024 * 1024), 2))
 
     except Exception:
         pass
@@ -106,15 +103,15 @@ def _rss_mb() -> float:
             return _windows_rss_mb()
 
         if resource:
-            usage = resource.getrusage(resource.RUSAGE_SELF)
+            usage = resource.getrusage(resource.RUSAGE_SELF)  # type: ignore[attr-defined]
 
             # Linux reports KB
             if system == "Linux":
-                return round(usage.ru_maxrss / 1024.0, 2)
+                return float(round(usage.ru_maxrss / 1024.0, 2))
 
             # macOS reports bytes
             if system == "Darwin":
-                return round(usage.ru_maxrss / (1024 * 1024), 2)
+                return float(round(usage.ru_maxrss / (1024 * 1024), 2))
 
     except Exception as exc:
         log.debug(

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from sage.skills.base import BaseSkill
 from sage.skills.models import SkillCategory, SkillManifest, SkillRequest, SkillResult
 

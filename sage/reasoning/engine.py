@@ -54,9 +54,12 @@ class DefaultReasoningEngine:
         ctx = context or ReasoningContext()
 
         # Auto-enrich from retrieval if empty-ish
-        if use_retrieval and self._container is not None:
-            if not (ctx.memories or ctx.graph_facts or ctx.documents):
-                ctx = await self._enrich_from_retrieval(problem, ctx)
+        if (
+            use_retrieval
+            and self._container is not None
+            and not (ctx.memories or ctx.graph_facts or ctx.documents)
+        ):
+            ctx = await self._enrich_from_retrieval(problem, ctx)
 
         strategies = self._registry.select(
             problem,
@@ -231,9 +234,7 @@ class DefaultReasoningEngine:
             return False
         if lower.startswith("reasoning (stub)"):
             return False
-        if "connect a real model provider" in lower:
-            return False
-        return True
+        return "connect a real model provider" not in lower
 
     async def _model_assist(
         self,

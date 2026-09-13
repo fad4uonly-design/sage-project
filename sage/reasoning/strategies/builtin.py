@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import operator
 import re
+from collections.abc import Callable
 from typing import Any
 
 from sage.reasoning.models import (
@@ -155,7 +156,7 @@ class MathematicalStrategy(_KeywordStrategy):
     keywords = ("calculate", "compute", "percent", "%", "sum", "average", "equation", "how much", "ratio")
     base_score = 0.2
 
-    _OPS = {
+    _OPS: dict[type[ast.AST], Callable[..., Any]] = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,

@@ -16,7 +16,7 @@ from sage.permissions.interfaces import PermissionManager
 from sage.permissions.models import (
     DANGEROUS_PERMISSIONS,
     Permission,
-    PermissionDenied,
+    PermissionDeniedError,
     PermissionGrant,
     PrincipalType,
 )
@@ -134,7 +134,7 @@ class DefaultPermissionManager(BaseRepository):
 
     async def require(self, principal: str, permission: Permission | str) -> None:
         if not await self.check(principal, permission):
-            raise PermissionDenied(principal, _as_permission(permission))
+            raise PermissionDeniedError(principal, _as_permission(permission))
 
     async def list_grants(self, principal: str | None = None) -> list[PermissionGrant]:
         if principal:
@@ -250,9 +250,9 @@ class PermissionsModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         db = self.container.resolve(Database)
-        events = self.container.try_resolve(EventBus)  # type: ignore[type-abstract]
+        events = self.container.try_resolve(EventBus)
         self._mgr = DefaultPermissionManager(db, events)
-        self.container.register_instance(PermissionManager, self._mgr)  # type: ignore[type-abstract]
+        self.container.register_instance(PermissionManager, self._mgr)
         self.container.register_instance(DefaultPermissionManager, self._mgr)
 
         # Core / automation principals trusted for safe ops

@@ -20,7 +20,7 @@ class OrchestratorModule(BaseModule):
 
     async def _on_initialize(self) -> None:
         self._orch = DefaultOrchestrator(self.container)
-        self.container.register_instance(Orchestrator, self._orch)  # type: ignore[type-abstract]
+        self.container.register_instance(Orchestrator, self._orch)
         self.container.register_instance(DefaultOrchestrator, self._orch)
 
     async def _on_health(self) -> HealthStatus | None:

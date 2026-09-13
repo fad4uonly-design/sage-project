@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from sage.skills.models import SkillCategory, SkillManifest, SkillRequest, SkillResult
+from sage.skills.models import SkillManifest, SkillRequest, SkillResult
 
 
 class BaseSkill:

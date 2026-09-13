@@ -15,4 +15,6 @@ class ReasoningEngine(Protocol):
         *,
         context: ReasoningContext | None = None,
         strategy: StrategyKind = StrategyKind.AUTO,
+        use_retrieval: bool = True,
+        combine_top_k: int = 1,
     ) -> ReasoningResult: ...

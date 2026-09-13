@@ -7,8 +7,9 @@ programming errors and truly unexpected conditions.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Generic, TypeVar
+from typing import NoReturn, TypeVar
 
 T = TypeVar("T")
 E = TypeVar("E")
@@ -16,7 +17,7 @@ U = TypeVar("U")
 
 
 @dataclass(frozen=True, slots=True)
-class Ok(Generic[T]):
+class Ok[T]:
     value: T
 
     @property
@@ -35,7 +36,7 @@ class Ok(Generic[T]):
 
 
 @dataclass(frozen=True, slots=True)
-class Err(Generic[E]):
+class Err[E]:
     error: E
 
     @property
@@ -49,7 +50,7 @@ class Err(Generic[E]):
     def map(self, fn: Callable[[T], U]) -> Result[U, E]:
         return Err(self.error)
 
-    def unwrap(self) -> T:
+    def unwrap(self) -> NoReturn:
         raise ValueError(f"Called unwrap on Err: {self.error!r}")
 
 

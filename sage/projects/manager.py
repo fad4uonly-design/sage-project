@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Any, Protocol, runtime_checkable
 
 from sage.db.connection import Database
@@ -24,7 +25,7 @@ class ProjectManager(Protocol):
 
     async def list(
         self, *, status: ProjectStatus | str | None = None, limit: int = 50
-    ) -> list[Project]: ...
+    ) -> builtins.list[Project]: ...
 
     async def touch(self, project_id: str) -> None: ...
 
@@ -40,9 +41,9 @@ class ProjectManager(Protocol):
 
     async def links(
         self, project_id: str, *, link_type: str | None = None
-    ) -> list[ProjectLink]: ...
+    ) -> builtins.list[ProjectLink]: ...
 
-    async def search(self, query: str, *, limit: int = 20) -> list[Project]: ...
+    async def search(self, query: str, *, limit: int = 20) -> builtins.list[Project]: ...
 
 
 class SQLiteProjectManager(BaseRepository):
@@ -137,7 +138,7 @@ class SQLiteProjectManager(BaseRepository):
 
     async def list(
         self, *, status: ProjectStatus | str | None = None, limit: int = 50
-    ) -> list[Project]:
+    ) -> builtins.list[Project]:
         if status is not None:
             st = status.value if isinstance(status, ProjectStatus) else status
             rows = await self.db.fetchall(
@@ -205,7 +206,7 @@ class SQLiteProjectManager(BaseRepository):
 
     async def links(
         self, project_id: str, *, link_type: str | None = None
-    ) -> list[ProjectLink]:
+    ) -> builtins.list[ProjectLink]:
         if link_type:
             rows = await self.db.fetchall(
                 """
@@ -237,7 +238,7 @@ class SQLiteProjectManager(BaseRepository):
             for r in rows
         ]
 
-    async def search(self, query: str, *, limit: int = 20) -> list[Project]:
+    async def search(self, query: str, *, limit: int = 20) -> builtins.list[Project]:
         q = f"%{query.strip()}%"
         rows = await self.db.fetchall(
             """

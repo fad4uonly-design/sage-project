@@ -36,6 +36,7 @@ class KnowledgeGraph(Protocol):
         bidirectional: bool | None = None,
         source_ref: str | None = None,
         properties: dict[str, Any] | None = None,
+        provenance: str | None = None,
     ) -> GraphEdge: ...
 
     async def neighbors(

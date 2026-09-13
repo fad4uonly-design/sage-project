@@ -8,7 +8,7 @@ Suggestions only — never auto-executes changes.
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+import contextlib
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
@@ -417,7 +417,8 @@ class DefaultDiscoveryEngine(BaseRepository):
         return []
 
     async def _persist(self, insight: DiscoveryInsight) -> None:
-        try:
+        with contextlib.suppress(Exception):
+            # Table may not exist on partial migrate — ignore
             await self.db.execute(
                 """
                 INSERT INTO discovery_insights (
@@ -437,9 +438,6 @@ class DefaultDiscoveryEngine(BaseRepository):
                     insight.created_at,
                 ),
             )
-        except Exception:
-            # Table may not exist on partial migrate — ignore
-            pass
 
     async def _maybe_suggest(self, insight: DiscoveryInsight) -> None:
         """Surface high-confidence discoveries as proactive suggestions (advisory)."""

@@ -7,7 +7,7 @@ repeated failures, skill gaps, and knowledge-graph opportunities.
 
 from __future__ import annotations
 
-from collections import Counter
+import contextlib
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
@@ -218,7 +218,7 @@ class DefaultReflectionEngine(BaseRepository):
 
         learn = self._container.try_resolve(LearningEngine)
         if learn:
-            try:
+            with contextlib.suppress(Exception):
                 await learn.observe(
                     Observation(
                         kind=ObservationKind.SUCCESS
@@ -228,8 +228,6 @@ class DefaultReflectionEngine(BaseRepository):
                         metadata={"reflection_id": reflection.id},
                     )
                 )
-            except Exception:
-                pass
 
         log.info(
             "reflection.complete",

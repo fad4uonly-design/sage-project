@@ -5,9 +5,8 @@ from __future__ import annotations
 import asyncio
 import inspect
 from collections import defaultdict
-from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from sage.events.events import Event, EventHandler
 from sage.logging import get_logger
@@ -74,7 +73,7 @@ class InMemoryEventBus:
             if pattern == "*":
                 matched.extend(h for _, h in entries)
             elif pattern.endswith(".*"):
-                prefix = pattern[:-1]  # keep trailing dot sense: "memory."
+                pattern[:-1]  # keep trailing dot sense: "memory."
                 # pattern "memory.*" → prefix "memory."
                 root = pattern[:-2]  # "memory"
                 if event_type == root or event_type.startswith(root + "."):

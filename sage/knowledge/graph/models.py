@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -11,7 +11,7 @@ from sage.utils.ids import new_id
 from sage.utils.time import utcnow_iso
 
 
-class EntityType(str, Enum):
+class EntityType(StrEnum):
     # Core / general
     CONCEPT = "concept"
     PERSON = "person"
@@ -48,7 +48,7 @@ class EntityType(str, Enum):
     OPPORTUNITY = "opportunity"
 
 
-class RelationType(str, Enum):
+class RelationType(StrEnum):
     IS_A = "is_a"
     PART_OF = "part_of"
     REQUIRES = "requires"

@@ -90,8 +90,8 @@ class Bootstrapper:
             self.container.register_instance(SettingsType, self.settings)
 
         self.container.register_instance(Container, self.container)
-        self.container.register_instance(EventBus, self.event_bus)  # type: ignore[type-abstract]
-        self.container.register_instance(InMemoryEventBus, self.event_bus)  # type: ignore[arg-type]
+        self.container.register_instance(EventBus, self.event_bus)
+        self.container.register_instance(InMemoryEventBus, self.event_bus)
         self.container.register_instance(ModuleRegistry, self.registry)
         self.container.register_instance(Scheduler, self.scheduler)
 

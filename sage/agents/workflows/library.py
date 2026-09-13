@@ -14,7 +14,6 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from sage.logging import get_logger
-from sage.utils.ids import new_id
 from sage.utils.time import utcnow_iso
 
 log = get_logger(__name__)
@@ -111,12 +110,11 @@ class WorkflowLibrary:
             )
         params = params or {}
         try:
-            import asyncio
             import inspect
 
             result = wf.handler(context, params)
             if inspect.isawaitable(result):
-                result = await result  # type: ignore[misc]
+                result = await result
             if isinstance(result, WorkflowResult):
                 return result
             if isinstance(result, dict):

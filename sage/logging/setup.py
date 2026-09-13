@@ -6,7 +6,7 @@ import logging
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import structlog
 
@@ -147,12 +147,12 @@ class _ModuleFilter(logging.Filter):
 
 def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
     """Return a bound structlog logger."""
-    return structlog.get_logger(name)  # type: ignore[return-value]
+    return cast(structlog.stdlib.BoundLogger, structlog.get_logger(name))
 
 
 def get_audit_logger() -> structlog.stdlib.BoundLogger:
     """Return the audit channel logger (writes to sage-audit.log when configured)."""
-    return structlog.get_logger(_AUDIT_LOGGER_NAME)  # type: ignore[return-value]
+    return cast(structlog.stdlib.BoundLogger, structlog.get_logger(_AUDIT_LOGGER_NAME))
 
 
 def audit(action: str, **fields: Any) -> None:
