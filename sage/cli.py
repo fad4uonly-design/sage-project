@@ -6,7 +6,7 @@ import asyncio
 import contextlib
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -48,11 +48,11 @@ def version() -> None:
 
 @app.command()
 def start(
-    data_dir: Optional[Path] = typer.Option(
+    data_dir: Path | None = typer.Option(
         None, "--data-dir", help="Override SAGE data directory"
     ),
-    config: Optional[Path] = typer.Option(None, "--config", help="Path to sage.yaml"),
-    log_level: Optional[str] = typer.Option(None, "--log-level", help="DEBUG|INFO|WARNING|ERROR"),
+    config: Path | None = typer.Option(None, "--config", help="Path to sage.yaml"),
+    log_level: str | None = typer.Option(None, "--log-level", help="DEBUG|INFO|WARNING|ERROR"),
 ) -> None:
     """Boot SAGE and open the interactive shell."""
 
@@ -81,10 +81,10 @@ def start(
 
 @app.command("serve")
 def serve_cmd(
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
     host: str = typer.Option("0.0.0.0", "--host"),
     port: int = typer.Option(8742, "--port"),
-    log_level: Optional[str] = typer.Option(None, "--log-level"),
+    log_level: str | None = typer.Option(None, "--log-level"),
 ) -> None:
     """Boot SAGE with the Web Dashboard + REST/WebSocket API."""
 
@@ -119,8 +119,8 @@ def serve_cmd(
 
 @app.command()
 def status(
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
-    config: Optional[Path] = typer.Option(None, "--config"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
+    config: Path | None = typer.Option(None, "--config"),
 ) -> None:
     """Boot briefly, print health, and shut down."""
 
@@ -167,8 +167,8 @@ def status(
 @app.command()
 def ask(
     prompt: str = typer.Argument(..., help="Message to send to SAGE"),
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
-    config: Optional[Path] = typer.Option(None, "--config"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
+    config: Path | None = typer.Option(None, "--config"),
 ) -> None:
     """One-shot question (non-interactive)."""
 
@@ -196,7 +196,7 @@ def ask(
 @app.command("remember")
 def remember_cmd(
     fact: str = typer.Argument(..., help="Fact to store in long-term memory"),
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
 ) -> None:
     """Store a fact in long-term memory."""
 
@@ -212,7 +212,7 @@ def remember_cmd(
 
         engine = await SageEngine.create(overrides=overrides or None)
         try:
-            mem = engine.container.resolve(MemorySystem)  # type: ignore[type-abstract]
+            mem = engine.container.resolve(MemorySystem)
             mid = await mem.store(
                 MemoryItem(
                     type=MemoryType.LONG_TERM,
@@ -229,7 +229,7 @@ def remember_cmd(
     _run(_go())
 
 
-def _overrides(data_dir: Optional[Path]) -> dict[str, Any] | None:
+def _overrides(data_dir: Path | None) -> dict[str, Any] | None:
     if data_dir is None:
         return None
     return {"data_dir": str(data_dir), "db_path": str(Path(data_dir) / "sage.db")}
@@ -239,7 +239,7 @@ def _overrides(data_dir: Optional[Path]) -> dict[str, Any] | None:
 def run_workflow_cmd(
     name: str = typer.Argument(..., help="Workflow definition id or name"),
     task: str = typer.Option("", "--task", help="Task / goal text for the workflow context"),
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
 ) -> None:
     """Run a registered workflow to completion (or until approval is required)."""
 
@@ -249,7 +249,7 @@ def run_workflow_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            wf = engine.container.resolve(WorkflowEngine)  # type: ignore[type-abstract]
+            wf = engine.container.resolve(WorkflowEngine)
             run = await wf.start(name, context={"task": task or name}, principal="cli")
             console.print(f"[cyan]run[/cyan] {run.id}  status={run.status.value}")
             if run.error:
@@ -267,9 +267,9 @@ def run_workflow_cmd(
 
 @app.command("automations")
 def automations_cmd(
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
-    enable: Optional[str] = typer.Option(None, "--enable", help="Enable job by name"),
-    run: Optional[str] = typer.Option(None, "--run", help="Run job by name now"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
+    enable: str | None = typer.Option(None, "--enable", help="Enable job by name"),
+    run: str | None = typer.Option(None, "--run", help="Run job by name now"),
 ) -> None:
     """List, enable, or run automation jobs."""
 
@@ -279,7 +279,7 @@ def automations_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            mgr = engine.container.resolve(AutomationManager)  # type: ignore[type-abstract]
+            mgr = engine.container.resolve(AutomationManager)
             if enable:
                 ok = await mgr.enable(enable, True)
                 console.print(f"{'Enabled' if ok else 'Not found'}: {enable}")
@@ -312,7 +312,7 @@ def automations_cmd(
 def approve_cmd(
     request_id: str = typer.Argument(..., help="Approval request id"),
     deny: bool = typer.Option(False, "--deny", help="Deny instead of approve"),
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
 ) -> None:
     """Approve or deny a pending approval request."""
 
@@ -322,7 +322,7 @@ def approve_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            appr = engine.container.resolve(ApprovalEngine)  # type: ignore[type-abstract]
+            appr = engine.container.resolve(ApprovalEngine)
             req = await appr.decide(request_id, approve=not deny, decided_by="cli")
             console.print(f"{req.id} → {req.status.value}")
         finally:
@@ -334,8 +334,8 @@ def approve_cmd(
 @app.command("audit")
 def audit_cmd(
     limit: int = typer.Option(20, "--limit"),
-    kind: Optional[str] = typer.Option(None, "--kind"),
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    kind: str | None = typer.Option(None, "--kind"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
 ) -> None:
     """Show recent execution audit records."""
 
@@ -345,7 +345,7 @@ def audit_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            audit = engine.container.resolve(ExecutionAudit)  # type: ignore[type-abstract]
+            audit = engine.container.resolve(ExecutionAudit)
             rows = await audit.list_recent(limit=limit, kind=kind)
             table = Table(title="Execution audit")
             table.add_column("Time")
@@ -363,7 +363,7 @@ def audit_cmd(
 
 @app.command("context")
 def context_cmd(
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
     refresh: bool = typer.Option(False, "--refresh", help="Regenerate proactive suggestions"),
 ) -> None:
     """Show fused cognitive context and suggestions."""
@@ -374,7 +374,7 @@ def context_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            cce = engine.container.resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+            cce = engine.container.resolve(CognitiveContextEngine)
             if refresh:
                 await cce.generate_suggestions()
             ctx = await cce.fuse()
@@ -413,11 +413,11 @@ def context_cmd(
 @app.command("project")
 def project_cmd(
     action: str = typer.Argument("list", help="list|create|get"),
-    name: Optional[str] = typer.Option(None, "--name"),
+    name: str | None = typer.Option(None, "--name"),
     description: str = typer.Option("", "--description"),
-    project_id: Optional[str] = typer.Option(None, "--id"),
+    project_id: str | None = typer.Option(None, "--id"),
     activate: bool = typer.Option(False, "--activate"),
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
 ) -> None:
     """Manage projects (Cognitive Context)."""
 
@@ -428,8 +428,8 @@ def project_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            pm = engine.container.resolve(ProjectManager)  # type: ignore[type-abstract]
-            cce = engine.container.try_resolve(CognitiveContextEngine)  # type: ignore[type-abstract]
+            pm = engine.container.resolve(ProjectManager)
+            cce = engine.container.try_resolve(CognitiveContextEngine)
             if action == "create":
                 if not name:
                     console.print("[red]--name required[/red]")
@@ -439,8 +439,8 @@ def project_cmd(
                     await cce.set_active_project(p.id)
                 console.print(f"[green]Created[/green] {p.id}  {p.name}")
             elif action == "get" and project_id:
-                p = await pm.get(project_id)
-                console.print(p.model_dump() if p else "not found")
+                project = await pm.get(project_id)
+                console.print(project.model_dump() if project else "not found")
             else:
                 rows = await pm.list(limit=30)
                 table = Table(title="Projects")
@@ -460,11 +460,11 @@ def project_cmd(
 @app.command("goal")
 def goal_cmd(
     action: str = typer.Argument("list", help="list|create|complete"),
-    title: Optional[str] = typer.Option(None, "--title"),
+    title: str | None = typer.Option(None, "--title"),
     horizon: str = typer.Option("medium", "--horizon", help="long|medium|daily"),
-    goal_id: Optional[str] = typer.Option(None, "--id"),
-    project_id: Optional[str] = typer.Option(None, "--project"),
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    goal_id: str | None = typer.Option(None, "--id"),
+    project_id: str | None = typer.Option(None, "--project"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
 ) -> None:
     """Manage goals (Cognitive Context)."""
 
@@ -474,7 +474,7 @@ def goal_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            ge = engine.container.resolve(GoalEngine)  # type: ignore[type-abstract]
+            ge = engine.container.resolve(GoalEngine)
             if action == "create":
                 if not title:
                     console.print("[red]--title required[/red]")
@@ -502,7 +502,7 @@ def goal_cmd(
 
 @app.command("reflect")
 def reflect_cmd(
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
 ) -> None:
     """Run the Reflection Engine once and print findings."""
 
@@ -512,7 +512,7 @@ def reflect_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            re_ = engine.container.resolve(ReflectionEngine)  # type: ignore[type-abstract]
+            re_ = engine.container.resolve(ReflectionEngine)
             reflection = await re_.reflect()
             console.print(reflection.format())
         finally:
@@ -524,7 +524,7 @@ def reflect_cmd(
 @app.command("discover")
 def discover_cmd(
     limit: int = typer.Option(15, "--limit"),
-    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
+    data_dir: Path | None = typer.Option(None, "--data-dir"),
 ) -> None:
     """Run Knowledge Discovery and print insights (advisory only)."""
 
@@ -534,7 +534,7 @@ def discover_cmd(
 
         engine = await SageEngine.create(overrides=_overrides(data_dir))
         try:
-            disc = engine.container.resolve(DiscoveryEngine)  # type: ignore[type-abstract]
+            disc = engine.container.resolve(DiscoveryEngine)
             insights = await disc.discover(limit=limit)
             if not insights:
                 console.print("[dim]No insights.[/dim]")
