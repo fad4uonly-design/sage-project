@@ -97,6 +97,13 @@ class DefaultOrchestrator:
             )
             return ExecutionPlan(intent=intent, steps=steps)
 
+        if intent.kind == IntentKind.TOOL:
+            # Explicit tool imperative → invoke through the standard ToolManager,
+            # then compose the user-facing response from the tool artifact.
+            steps.append(PipelineStep.INVOKE_TOOL)
+            steps.append(PipelineStep.COMPOSE_RESPONSE)
+            return ExecutionPlan(intent=intent, steps=steps)
+
         # Default chat path — layered retrieval then compose
         steps.extend(
             [
@@ -163,6 +170,7 @@ class DefaultOrchestrator:
                         PipelineStep.REASON,
                         PipelineStep.DISPATCH_AGENT,
                         PipelineStep.LEARN,
+                        PipelineStep.INVOKE_TOOL,
                     }
                     and isinstance(out, str)
                     and not out.startswith(("recalled=", "knowledge=", "learning="))
@@ -242,9 +250,58 @@ class DefaultOrchestrator:
             return await self._step_compose(intent, message, ctx)
 
         if step == PipelineStep.INVOKE_TOOL:
-            return None
+            return await self._step_invoke_tool(intent, ctx)
 
         return None
+
+    async def _step_invoke_tool(self, intent: Intent, ctx: dict[str, Any]) -> str:
+        """Run an explicit tool request through the standard ToolManager.
+
+        The manager is resolved from the container (dependency injection — the
+        orchestrator never constructs tools or model clients itself). Any tool
+        failure is converted into a controlled user-facing message: a failed
+        tool must degrade the response, never crash the loop.
+        """
+        from sage.tools.interfaces import ToolManager
+
+        manager = self._container.try_resolve(ToolManager)
+        if manager is None:
+            return "The tool framework is unavailable in this runtime."
+
+        tool_name = str(intent.entities.get("tool") or "").strip()
+        if not tool_name:
+            return "No tool was specified for this request."
+
+        args = intent.entities.get("args")
+        if not isinstance(args, dict):
+            args = {}
+
+        result = await manager.invoke(tool_name, **args)
+        ctx["tool_result"] = result
+
+        if result.success:
+            return self._format_tool_output(tool_name, result)
+
+        # Controlled degraded response — surface the reason, keep the loop alive.
+        error = (result.error or "unknown error").strip()
+        return f"I couldn't complete that with the {tool_name} tool: {error}"
+
+    @staticmethod
+    def _format_tool_output(tool_name: str, result: Any) -> str:
+        """Render a successful ToolResult as a user-facing artifact."""
+        output = getattr(result, "output", None)
+        if isinstance(output, dict):
+            summary = output.get("summary")
+            if summary:
+                lines = [str(summary)]
+                sources = output.get("sources")
+                if sources:
+                    lines.append("Sources: " + ", ".join(str(s) for s in sources))
+                return "\n".join(lines)
+            return "\n".join(f"{key}: {value}" for key, value in output.items())
+        if output is None:
+            return f"{tool_name} completed."
+        return str(output)
 
     async def _step_recall(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str | None:
         from sage.memory.interfaces import MemorySystem
@@ -640,6 +697,10 @@ class DefaultOrchestrator:
     async def _step_compose(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str:
         # If earlier steps already produced a user-facing artifact for non-chat intents, use it
         artifacts = ctx.get("_artifacts") or []
+        if intent.kind == IntentKind.TOOL and not artifacts:
+            # The tool step raised or produced nothing: controlled fallback
+            # instead of falling through to a generic chat answer.
+            return "I processed your tool request but it did not produce a result."
         if intent.kind != IntentKind.CHAT and artifacts:
             return str(artifacts[-1])
         if intent.kind in {

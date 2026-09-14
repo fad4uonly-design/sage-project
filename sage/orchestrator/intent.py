@@ -69,6 +69,17 @@ _PATTERNS: list[tuple[IntentKind, re.Pattern[str], float]] = [
 ]
 
 
+# Explicit tool imperatives: "<phrase> <topic>" routes to IntentKind.TOOL and
+# the orchestrator invokes the named tool through the standard ToolManager.
+# Only explicit user phrasing lands here — tools never run automatically.
+_EXPLICIT_TOOL_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    (
+        "web_learn",
+        re.compile(r"^\s*learn\s+(?:up\s+)?about\s+(?P<topic>.+?)\s*[?.!]*\s*$", re.I | re.S),
+    ),
+]
+
+
 class IntentAnalyzer:
     def analyze(self, message: str, *, context: dict[str, Any] | None = None) -> Intent:
         text = message.strip()
@@ -87,6 +98,14 @@ class IntentAnalyzer:
             if not m:
                 continue
             return self._intent_from_match(kind, conf, m, text)
+
+        # 1.5) Explicit tool imperatives (e.g. "learn about X"). Placed above
+        # domain specialists so an explicit learning request is never hijacked
+        # by keyword routing. These messages previously fell through to CHAT,
+        # so no pre-existing intent behavior changes.
+        tool_intent = self._explicit_tool_intent(text)
+        if tool_intent is not None:
+            return tool_intent
 
         # 2) Domain specialists beat generic plan/reason when keywords are clear
         domain_intent = self._domain_agent_intent(text)
@@ -127,6 +146,25 @@ class IntentAnalyzer:
             raw_message=text,
             hints=self._hints(IntentKind.CHAT, text),
         )
+
+    def _explicit_tool_intent(self, text: str) -> Intent | None:
+        """Match explicit tool imperatives ("learn about X" → web_learn)."""
+        for tool_name, pattern in _EXPLICIT_TOOL_PATTERNS:
+            m = pattern.match(text)
+            if not m:
+                continue
+            topic = (m.group("topic") or "").strip()
+            if not topic:
+                continue
+            return Intent(
+                kind=IntentKind.TOOL,
+                confidence=0.9,
+                subject=topic,
+                raw_message=text,
+                entities={"tool": tool_name, "args": {"topic": topic}},
+                hints=[f"tool:{tool_name}", "explicit:true"],
+            )
+        return None
 
     def _intent_from_match(
         self,
