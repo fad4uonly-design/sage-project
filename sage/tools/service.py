@@ -6,9 +6,12 @@ from sage.config.settings import Settings
 from sage.core.container import Container
 from sage.core.health import HealthStatus
 from sage.core.module import BaseModule
+from sage.logging import get_logger
 from sage.tools.builtin import all_builtin_tools
 from sage.tools.interfaces import ToolManager
 from sage.tools.manager import DefaultToolManager
+
+log = get_logger(__name__)
 
 
 class ToolsModule(BaseModule):
@@ -43,6 +46,56 @@ class ToolsModule(BaseModule):
                 # still register write_file; approval engine gates it
                 pass
             self._manager.register(tool)
+
+        # On-demand web research: wire the EXISTING WebLearner (router-backed
+        # summarizer + real memory) into the tool manager. Built lazily from the
+        # running container so it reuses the live model router + memory system;
+        # it only learns when explicitly invoked (never automatic/background).
+        try:
+            from sage.core.router_summarizer import RouterSummarizer
+            from sage.core.web_learner import (
+                DEFAULT_SEARCHER,
+                WebLearnedMemory,
+                WebLearner,
+            )
+            from sage.memory.index import VectorIndex
+            from sage.memory.service import SQLiteMemorySystem
+            from sage.models.interfaces import ModelRouter
+            from sage.models.router import DefaultModelRouter
+            from sage.tools.builtin.web_learn_tool import WebLearnTool
+
+            router = self.container.try_resolve(ModelRouter)
+            if router is None:
+                router = self.container.try_resolve(DefaultModelRouter)
+            index = self.container.try_resolve(VectorIndex)
+            system = self.container.try_resolve(SQLiteMemorySystem)
+
+            if (
+                router is not None
+                and index is not None
+                and system is not None
+                and DEFAULT_SEARCHER is not None
+            ):
+                embedding = router.get_embedding_model()
+                memory = WebLearnedMemory(system, index, embedding=embedding)
+                summarizer = RouterSummarizer(router)
+                learner = WebLearner(memory, DEFAULT_SEARCHER, summarizer)
+                self._manager.register(WebLearnTool(learner=learner))
+                log.info("tools.web_learn_wired", router=type(router).__name__)
+            else:
+                missing = [
+                    name
+                    for name, cond in (
+                        ("ModelRouter", router is None),
+                        ("VectorIndex", index is None),
+                        ("SQLiteMemorySystem", system is None),
+                        ("SearchFn", DEFAULT_SEARCHER is None),
+                    )
+                    if cond
+                ]
+                log.warning("tools.web_learn_not_wired", missing=missing)
+        except Exception:  # never let web-learn tooling break tool-module boot
+            log.exception("tools.web_learn_wiring_failed")
 
         self.container.register_instance(ToolManager, self._manager)
         self.container.register_instance(DefaultToolManager, self._manager)

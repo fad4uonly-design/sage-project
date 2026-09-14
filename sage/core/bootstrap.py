@@ -95,6 +95,28 @@ class Bootstrapper:
         self.container.register_instance(ModuleRegistry, self.registry)
         self.container.register_instance(Scheduler, self.scheduler)
 
+        # Expose the EXISTING sage.memory.index.VectorIndex through normal DI so
+        # components like MemoryInterface can resolve it instead of rebuilding it.
+        # Lazy factory: Database + ModelRouter are registered by their modules
+        # later, so the index is only materialized when actually resolved.
+        from sage.memory.index import VectorIndex
+
+        def _build_vector_index(c: Container) -> VectorIndex:
+            from sage.db.connection import Database
+            from sage.memory.index import SqliteVectorIndex
+            from sage.models.interfaces import ModelRouter
+
+            index = SqliteVectorIndex(c.resolve(Database))
+            router = c.try_resolve(ModelRouter)
+            if router is not None:
+                try:
+                    index.attach(router.get_embedding_model())
+                except Exception as exc:  # never break boot over embedding attach
+                    log.debug("bootstrap.vector_index_attach_failed", error=str(exc))
+            return index
+
+        self.container.register_factory(VectorIndex, _build_vector_index)
+
     async def boot(self) -> BootReport:
         started = time.perf_counter()
         initialized: list[str] = []
