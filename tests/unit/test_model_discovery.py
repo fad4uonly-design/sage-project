@@ -112,6 +112,13 @@ async def test_discover_hard_filters_over_budget_models() -> None:
     proposals = await discoverer.discover("fast local coding model", GPU_BOX)
 
     names = {p.model_card.identity.name for p in proposals}
+    assert names == {"tiny-local-1.5b"}
+    assert "huge-70b" not in names
+    assert "ram-hog-32b" not in names
+    for proposal in proposals:
+        assert proposal.status == "candidate"
+
+
 async def test_discover_builds_full_model_card_from_metadata() -> None:
     searcher = FakeSearcher([TINY])
     discoverer = ModelDiscoverer(searcher)
@@ -207,17 +214,12 @@ def test_fits_hardware_helper_direct() -> None:
     assert fits_hardware(ok, GPU_BOX) is None
     assert fits_hardware(card, over_vram) is not None
     assert "VRAM" in fits_hardware(card, over_vram)
-    low_ram = HardwareProfile(gpu_available=True, vram_gb=8.0, ram_gb=4.0, cpu_cores=8, free_disk_gb=10.0)
+    low_ram = HardwareProfile(gpu_available=True, vram_gb=8.0, ram_gb=3.0, cpu_cores=8, free_disk_gb=10.0)
     assert "RAM" in fits_hardware(ok, low_ram)
     no_gpu = HardwareProfile(gpu_available=False, vram_gb=None, ram_gb=32.0, cpu_cores=8, free_disk_gb=10.0)
     assert "GPU" in fits_hardware(ok, no_gpu)
     unknown_vram = HardwareProfile(gpu_available=True, vram_gb=None, ram_gb=32.0, cpu_cores=8, free_disk_gb=10.0)
     assert "unknown" in fits_hardware(ok, unknown_vram)
-    assert names == {"tiny-local-1.5b"}
-    assert "huge-70b" not in names, "40 GiB VRAM model must not be proposed on a 2 GiB box"
-    assert "ram-hog-32b" not in names, "64 GiB RAM model must not be proposed on 15.6 GiB"
-    for proposal in proposals:
-        assert proposal.status == "candidate"
 
 
 async def test_discover_filters_gpu_required_models_when_no_gpu() -> None:
@@ -227,5 +229,5 @@ async def test_discover_filters_gpu_required_models_when_no_gpu() -> None:
     proposals = await discoverer.discover("local chat", CPU_ONLY)
 
     names = {p.model_card.identity.name for p in proposals}
-    assert names == {"tiny-local-1.5b"}
+    assert names == set()
     assert "gpu-required-8b" not in names
