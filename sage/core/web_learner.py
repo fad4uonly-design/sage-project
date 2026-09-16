@@ -142,7 +142,7 @@ class WebLearner:
         )
         if chosen_searcher is None:
             raise RuntimeError(
-                "WebLearner needs a searcher — install 'duckduckgo-search' "
+                "WebLearner needs a searcher — install 'ddgs' "
                 "or pass a custom SearchFn explicitly."
             )
         self._searcher = chosen_searcher

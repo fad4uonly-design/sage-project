@@ -1,6 +1,6 @@
 """Tests for the DuckDuckGo search provider + default-searcher wiring.
 
-No real network access anywhere: ``duckduckgo_search.DDGS`` is
+No real network access anywhere: ``ddgs.DDGS`` is
 monkeypatched with an in-memory double returning recorded-style fixtures,
 and the region-backoff behavior is exercised by making the fake fail on
 specific regions.
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import duckduckgo_search
+import ddgs
 import pytest
 from sage.core.model_discovery import ModelDiscoverer, ModelMetadata
 from sage.core.providers.duckduckgo_search import (
@@ -36,7 +36,7 @@ RAW = [
 
 
 class FakeDDGS:
-    """In-memory double for ``duckduckgo_search.DDGS``.
+    """In-memory double for ``ddgs.DDGS``.
 
     ``fail_regions`` makes ``text()`` raise for specific regions so tests can
     exercise the provider's region backoff without touching the network.
@@ -70,7 +70,7 @@ def fake(monkeypatch: pytest.MonkeyPatch) -> FakeDDGS:
     def _factory() -> FakeDDGS:
         return instance
 
-    monkeypatch.setattr(duckduckgo_search, "DDGS", _factory)
+    monkeypatch.setattr(ddgs, "DDGS", _factory)
     return instance
 
 

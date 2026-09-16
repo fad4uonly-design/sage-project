@@ -250,7 +250,7 @@ class ModelDiscoverer:
         chosen: SearchFn | None = searcher if searcher is not None else DEFAULT_SEARCHER
         if chosen is None:
             raise RuntimeError(
-                "ModelDiscoverer needs a searcher — install 'duckduckgo-search' "
+                "ModelDiscoverer needs a searcher — install 'ddgs' "
                 "or pass a custom SearchFn explicitly."
             )
         self._searcher = chosen

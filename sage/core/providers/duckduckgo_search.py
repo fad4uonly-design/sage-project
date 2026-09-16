@@ -2,9 +2,9 @@
 
 Wires real async ``SearchFn`` implementations (no API key) into both
 WebLearner (``sage/core/web_learner.py``) and ModelDiscoverer
-(``sage/core/model_discovery.py``). Uses the maintained
-``duckduckgo-search`` package (pinned in ``pyproject.toml``) rather than
-hand-rolled scraping, for reliability.
+(``sage/core/model_discovery.py``). Uses the maintained ``ddgs`` package
+(pinned in ``pyproject.toml``; the successor of ``duckduckgo-search``)
+rather than hand-rolled scraping, for reliability.
 
 Result shape from ``DDGS.text()`` (observed at runtime)::
 
@@ -54,18 +54,18 @@ class SearchResult:
 
 
 def _import_ddgs() -> Any:
-    """Return a ``duckduckgo_search.DDGS`` client instance.
+    """Return a ``ddgs.DDGS`` client instance.
 
     The import is deferred to call time so SAGE imports cleanly when the
     optional provider package is absent; the default-searcher wiring slots
     degrade to a clear runtime error instead of a module-import failure.
     """
-    import duckduckgo_search
+    import ddgs
 
-    ddgs = duckduckgo_search.DDGS()
-    if not hasattr(ddgs, "text") or not callable(ddgs.text):
-        raise RuntimeError("duckduckgo_search.DDGS.text missing")
-    return ddgs
+    ddgs_client = ddgs.DDGS()
+    if not hasattr(ddgs_client, "text") or not callable(ddgs_client.text):
+        raise RuntimeError("ddgs.DDGS.text missing")
+    return ddgs_client
 
 
 def _run_ddg_text(query: str, max_results: int) -> list[dict[str, str]]:
