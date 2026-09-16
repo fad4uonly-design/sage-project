@@ -7,6 +7,7 @@ Reasoning/Planning/Agents/Tools) → Response
 
 from __future__ import annotations
 
+import contextlib
 import re
 import time
 from typing import Any
@@ -54,6 +55,13 @@ class DefaultOrchestrator:
         if intent.kind == IntentKind.RECALL:
             steps.append(PipelineStep.RETRIEVE)
             steps.append(PipelineStep.RECALL_MEMORY)
+            steps.append(PipelineStep.COMPOSE_RESPONSE)
+            return ExecutionPlan(intent=intent, steps=steps)
+
+        if intent.kind == IntentKind.KNOWLEDGE:
+            # Explicit knowledge-base query → search the existing knowledge
+            # manager and compose from its hits (no second RAG pipeline).
+            steps.append(PipelineStep.SEARCH_KNOWLEDGE)
             steps.append(PipelineStep.COMPOSE_RESPONSE)
             return ExecutionPlan(intent=intent, steps=steps)
 
@@ -166,6 +174,7 @@ class DefaultOrchestrator:
                     in {
                         PipelineStep.STORE_MEMORY,
                         PipelineStep.RECALL_MEMORY,
+                        PipelineStep.SEARCH_KNOWLEDGE,
                         PipelineStep.PLAN,
                         PipelineStep.REASON,
                         PipelineStep.DISPATCH_AGENT,
@@ -196,7 +205,7 @@ class DefaultOrchestrator:
             else:
                 response_parts.append("I processed your request but produced no response.")
 
-        return OrchestratorResult(
+        result = OrchestratorResult(
             plan_id=plan.id,
             intent=intent,
             response="\n".join(response_parts).strip(),
@@ -208,6 +217,72 @@ class DefaultOrchestrator:
                 "failed_steps": [s.step.value for s in step_results if not s.success],
             },
         )
+        await self._audit_capability(result, message, ctx)
+        return result
+
+    async def _audit_capability(
+        self,
+        result: OrchestratorResult,
+        message: str,
+        ctx: dict[str, Any],
+    ) -> None:
+        """Record the capability decision through the existing execution audit.
+
+        One record per request answers: what was requested (truncated preview;
+        the full text already lives in conversation turns), which capability
+        was selected, which pipeline steps executed, whether tool verification
+        ran, and whether the operation succeeded. Best-effort: a missing or
+        failing audit system never breaks the response loop.
+        """
+        from sage.audit.logger import ExecutionAudit
+
+        audit = self._container.try_resolve(ExecutionAudit)
+        if audit is None:
+            return
+
+        tool_result = ctx.get("tool_result")
+        verification = (
+            getattr(tool_result, "metadata", {}).get("verification")
+            if tool_result is not None
+            else None
+        )
+        failed_steps = [s.step.value for s in result.steps if not s.success]
+        tool_error = None
+        if tool_result is not None and not getattr(tool_result, "success", True):
+            tool_error = getattr(tool_result, "error", None)
+
+        detail: dict[str, Any] = {
+            "capability": result.intent.kind.value,
+            "intent_confidence": result.intent.confidence,
+            "request_chars": len(message),
+            "request_preview": message[:120],
+            "steps": [
+                {"step": s.step.value, "ok": s.success, "ms": round(s.duration_ms, 1)}
+                for s in result.steps
+            ],
+            "failed_steps": failed_steps,
+        }
+        if result.intent.kind == IntentKind.TOOL:
+            detail["tool"] = result.intent.entities.get("tool")
+        if isinstance(verification, dict):
+            detail["verification"] = {
+                "verified": bool(verification.get("verified")),
+                "confidence": verification.get("confidence"),
+                "issue_count": verification.get("issue_count"),
+            }
+        if tool_error:
+            detail["tool_error"] = tool_error
+
+        with contextlib.suppress(Exception):
+            await audit.record(
+                kind="capability",
+                subject_id=result.plan_id,
+                principal=str(result.metadata.get("user_id") or "default"),
+                status="error" if (failed_steps or tool_error) else "ok",
+                summary=f"{result.intent.kind.value}: {message[:80]}",
+                duration_ms=round(sum(s.duration_ms for s in result.steps), 1),
+                detail=detail,
+            )
 
     async def _run_step(
         self,
@@ -297,11 +372,24 @@ class DefaultOrchestrator:
                 sources = output.get("sources")
                 if sources:
                     lines.append("Sources: " + ", ".join(str(s) for s in sources))
-                return "\n".join(lines)
-            return "\n".join(f"{key}: {value}" for key, value in output.items())
-        if output is None:
-            return f"{tool_name} completed."
-        return str(output)
+                text = "\n".join(lines)
+            else:
+                text = "\n".join(f"{key}: {value}" for key, value in output.items())
+        elif output is None:
+            text = f"{tool_name} completed."
+        else:
+            text = str(output)
+        # Surface the existing Tool-R0 verification verdict (stamped by the
+        # ToolManager) instead of leaving it hidden in result metadata.
+        verification = getattr(result, "metadata", {}).get("verification")
+        if isinstance(verification, dict):
+            verdict = "verified" if verification.get("verified") else "flagged"
+            text = (
+                f"{text}\nVerification: {verdict} "
+                f"(confidence {verification.get('confidence')}, "
+                f"issues: {verification.get('issue_count')})"
+            )
+        return text
 
     async def _step_recall(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str | None:
         from sage.memory.interfaces import MemorySystem
@@ -328,7 +416,9 @@ class DefaultOrchestrator:
 
     def _clean_recall_query(self, query: str) -> str:
         q = re.sub(
-            r"^(what do you (know|remember)|recall|show memories)\s*",
+            r"^(what do you (know|remember)"
+            r"|what did i (?:ask|tell) you(?: to)? remember"
+            r"|recall|show memories)\s*",
             "",
             query,
             flags=re.I,
@@ -336,16 +426,35 @@ class DefaultOrchestrator:
         q = re.sub(r"^about\s+", "", q, flags=re.I).strip()
         stop = {"a", "an", "the", "my", "me", "about", "regarding", "on", "for", "of"}
         tokens = [t for t in re.split(r"\W+", q) if t and t.lower() not in stop]
-        return " ".join(tokens) if tokens else q
+        # Empty result (e.g. "What did I ask you to remember?") → "" which the
+        # real MemorySystem resolves to recent memories via list_recent.
+        return " ".join(tokens) if tokens else ""
 
     async def _step_knowledge(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str:
         from sage.knowledge.interfaces import KnowledgeManager
 
         km = self._container.try_resolve(KnowledgeManager)
         if not km:
+            if intent.kind == IntentKind.KNOWLEDGE:
+                return "The knowledge system is unavailable right now."
             return "knowledge=0"
-        hits = await km.search(intent.subject or message, limit=3)
+        query = (intent.subject or message).rstrip(" ?.!")
+        hits = await km.search(query, limit=3)
         ctx["knowledge"] = [f"{h.title}: {h.snippet}" for h in hits if h.snippet]
+        if intent.kind == IntentKind.KNOWLEDGE:
+            # Explicit knowledge query → deterministic listing of what SAGE
+            # has stored (same style as recall); the model must not invent it.
+            if not hits:
+                return "I don't have matching knowledge yet."
+            lines = ["Here is what I have in my knowledge base:"]
+            for i, hit in enumerate(hits, 1):
+                title = (hit.title or "").strip()
+                snippet = (hit.snippet or "").strip()
+                if title and snippet:
+                    lines.append(f"{i}. {title} — {snippet}")
+                else:
+                    lines.append(f"{i}. {title or snippet}")
+            return "\n".join(lines)
         return f"knowledge={len(hits)}"
 
     async def _step_store(self, intent: Intent, ctx: dict[str, Any]) -> str:

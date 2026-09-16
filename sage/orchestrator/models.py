@@ -15,6 +15,7 @@ class IntentKind(StrEnum):
     CHAT = "chat"
     REMEMBER = "remember"
     RECALL = "recall"
+    KNOWLEDGE = "knowledge"
     PLAN = "plan"
     REASON = "reason"
     RESEARCH = "research"

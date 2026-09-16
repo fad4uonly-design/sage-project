@@ -24,7 +24,9 @@ _PATTERNS: list[tuple[IntentKind, re.Pattern[str], float]] = [
     (
         IntentKind.RECALL,
         re.compile(
-            r"^\s*(what do you (know|remember)|recall|show memories)\b(.*)$",
+            r"^\s*(what do you (know|remember)"
+            r"|what did i (?:ask|tell) you(?: to)? remember"
+            r"|recall|show memories)\b(.*)$",
             re.I | re.S,
         ),
         0.95,
@@ -79,6 +81,17 @@ _EXPLICIT_TOOL_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ),
 ]
 
+# Explicit knowledge-base queries. Grouped with the explicit imperatives:
+# these ask about SAGE's own stored knowledge and must not be hijacked by
+# domain keyword routing nor folded into generic chat.
+_KNOWLEDGE_PATTERN: re.Pattern[str] = re.compile(
+    r"^\s*(?:"
+    r"search\s+(?:the\s+|my\s+|our\s+)?knowledge(?:\s+base)?(?:\s+(?:i|we)\s+have\s+stored)?|"
+    r"what\s+information\s+do\s+we\s+have"
+    r")\s+(?:about|for|on|regarding)\s+(?P<subject>.+?)\s*[?.!]*\s*$",
+    re.I | re.S,
+)
+
 
 class IntentAnalyzer:
     def analyze(self, message: str, *, context: dict[str, Any] | None = None) -> Intent:
@@ -106,6 +119,13 @@ class IntentAnalyzer:
         tool_intent = self._explicit_tool_intent(text)
         if tool_intent is not None:
             return tool_intent
+
+        # 1.6) Explicit knowledge-base queries ("search the knowledge ...",
+        # "what information do we have about X"). Above domain routing so a
+        # lookup in SAGE's own knowledge is never hijacked by domain keywords.
+        knowledge_intent = self._knowledge_intent(text)
+        if knowledge_intent is not None:
+            return knowledge_intent
 
         # 2) Domain specialists beat generic plan/reason when keywords are clear
         domain_intent = self._domain_agent_intent(text)
@@ -165,6 +185,22 @@ class IntentAnalyzer:
                 hints=[f"tool:{tool_name}", "explicit:true"],
             )
         return None
+
+    def _knowledge_intent(self, text: str) -> Intent | None:
+        """Match explicit knowledge-base queries ("search the knowledge ...")."""
+        m = _KNOWLEDGE_PATTERN.match(text)
+        if not m:
+            return None
+        subject = (m.group("subject") or "").strip()
+        if not subject:
+            return None
+        return Intent(
+            kind=IntentKind.KNOWLEDGE,
+            confidence=0.9,
+            subject=subject,
+            raw_message=text,
+            hints=["intent:knowledge", "explicit:true"],
+        )
 
     def _intent_from_match(
         self,
