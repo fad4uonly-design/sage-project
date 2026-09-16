@@ -128,3 +128,61 @@ async def test_vector_recall_surfaces_nonkeyword_match(tmp_path: Path) -> None:
         assert "morning walks" in contents
     finally:
         await db.close()
+
+
+async def test_recall_scored_pairs_relevance_with_items(tmp_path: Path) -> None:
+    """recall_scored keeps the semantic/lexical relevance per hit instead of
+    dropping it — the score downstream layers must rank by."""
+    system, db = await _make_system(tmp_path)
+    try:
+        await system.store(
+            MemoryItem(
+                type=MemoryType.FACT,
+                content="The greenhouse tomato sales doubled this summer.",
+                source="user",
+            )
+        )
+        await system.store(
+            MemoryItem(
+                type=MemoryType.FACT,
+                content="Booked a flight to Tokyo for next Monday.",
+            )
+        )
+
+        pairs = await system.recall_scored("tomato greenhouse sales", limit=2)
+
+        rel = {item.content: score for item, score in pairs}
+        tomato = next((k for k in rel if "tomato" in k.lower()), None)
+        assert tomato is not None, "the semantically relevant memory must be retrieved"
+        tomato_rel = rel[tomato]
+        assert 0.0 <= tomato_rel <= 1.0
+        # The relevant memory outranks anything else that was returned.
+        for content, score in rel.items():
+            if content != tomato:
+                assert score < tomato_rel
+
+        # Access bookkeeping parity with recall()
+        for item, _ in pairs:
+            fresh = await system.get(item.id)
+            assert fresh is not None
+            assert (fresh.access_count or 0) >= 1
+    finally:
+        await db.close()
+
+
+async def test_recall_scored_empty_query_lists_recent_with_zero_relevance(
+    tmp_path: Path,
+) -> None:
+    system, db = await _make_system(tmp_path)
+    try:
+        await system.store(
+            MemoryItem(type=MemoryType.FACT, content="Plain keyword memory about cats.")
+        )
+
+        pairs = await system.recall_scored("", limit=5)
+
+        assert len(pairs) == 1
+        assert pairs[0][0].content == "Plain keyword memory about cats."
+        assert pairs[0][1] == 0.0
+    finally:
+        await db.close()

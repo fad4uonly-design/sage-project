@@ -86,6 +86,30 @@ class LayeredRetriever:
         if not mem:
             return []
         try:
+            # Preferred path: the memory system carries the semantic/lexical
+            # relevance of each hit (max of token overlap and vector cosine)
+            # so the layer ranks by actual relevance. Importance stays
+            # secondary/informational and can no longer promote an unrelated
+            # memory above a clearly more relevant one.
+            scored = getattr(mem, "recall_scored", None)
+            if callable(scored):
+                pairs = await scored(query, limit=limit)
+                return [
+                    EvidenceItem(
+                        layer=RetrievalLayer.MEMORY,
+                        content=m.content,
+                        score=float(rel),
+                        confidence=float(m.confidence),
+                        source_ref=m.id,
+                        metadata={
+                            "type": m.type.value,
+                            "importance": m.importance,
+                            "relevance": float(rel),
+                        },
+                    )
+                    for m, rel in pairs
+                ]
+            # Legacy fallback for memory systems without scored recall.
             found = await mem.recall(query, limit=limit)
         except Exception:
             log.exception("retrieval.memory_failed")
@@ -198,6 +222,12 @@ class LayeredRetriever:
         router = self._container.try_resolve(ModelRouter)
         mem = self._container.try_resolve(MemorySystem)
         if not router or not mem:
+            return []
+        if callable(getattr(mem, "recall_scored", None)):
+            # The MEMORY layer already carries the semantic/vector relevance
+            # (same index, same code path via ``recall_scored``). Re-embedding
+            # here would duplicate semantic search and create a competing,
+            # independent memory ranking over only the most recent items.
             return []
         try:
             recent = await mem.recall("", limit=30)

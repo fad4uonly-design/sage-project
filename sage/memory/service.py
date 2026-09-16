@@ -175,13 +175,46 @@ class SQLiteMemorySystem:
         else:
             items = await self._store.list_recent(limit=lim)
 
+        await self._touch(items)
+        return items
+
+    async def recall_scored(
+        self,
+        query: str,
+        *,
+        limit: int | None = None,
+        types: Sequence[MemoryType] | None = None,
+    ) -> list[tuple[MemoryItem, float]]:
+        """Blended recall that KEEPS the per-item relevance score.
+
+        Returns ``(item, relevance)`` pairs. ``relevance`` is the semantic /
+        lexical similarity of the hit (max of token overlap and vector cosine —
+        the primary ranking signal), so downstream layers can rank by relevance
+        instead of re-deriving importance-based scores. Ordering follows the
+        same blended rank as :meth:`recall`; importance and recency remain
+        secondary signals inside that ordering only.
+        """
+        lim = limit if limit is not None else self._settings.memory.default_recall_limit
+        type_vals = [t.value for t in types] if types else None
+
+        if query.strip():
+            ranked = await self._blended_recall_scored(query, lim, type_vals)
+            items = [item for item, _ in ranked]
+        else:
+            ranked = []
+            items = await self._store.list_recent(limit=lim)
+
+        await self._touch(items)
+        relevance = {item.id: rel for item, rel in ranked}
+        return [(item, relevance.get(item.id, 0.0)) for item in items]
+
+    async def _touch(self, items: list[MemoryItem]) -> None:
         now = utcnow_iso()
         for item in items:
             await self._store.update_fields(
                 item.id,
                 {"last_accessed_at": now, "access_count": item.access_count + 1},
             )
-        return items
 
     # -- vector index plumbing (TurboVec slot) ---------------------------
 
@@ -244,6 +277,22 @@ class SQLiteMemorySystem:
         type_vals: list[str] | None,
     ) -> list[MemoryItem]:
         """Keyword recall union vector recall, scored sim/importance/recency."""
+        ranked = await self._blended_recall_scored(query, limit, type_vals)
+        return [item for item, _ in ranked]
+
+    async def _blended_recall_scored(
+        self,
+        query: str,
+        limit: int,
+        type_vals: list[str] | None,
+    ) -> list[tuple[MemoryItem, float]]:
+        """Blended recall keeping each item's relevance score.
+
+        The carried score is the semantic/lexical relevance (max of token
+        overlap and vector cosine) — NOT the blended rank, so importance and
+        recency stay secondary ordering signals and never masquerade as
+        relevance downstream.
+        """
         await self.sync_index()
 
         tokens = {t.lower() for t in query.split() if len(t) > 2}
@@ -297,7 +346,7 @@ class SQLiteMemorySystem:
             return 0.45 * sim + 0.35 * item.importance + 0.20 * recency(item)
 
         ranked = sorted(candidates.values(), key=final_score, reverse=True)
-        return [item for _, item in ranked[:limit]]
+        return [(item, sim) for sim, item in ranked[:limit]]
 
     async def get(self, memory_id: str) -> MemoryItem | None:
         return await self._store.get(memory_id)
