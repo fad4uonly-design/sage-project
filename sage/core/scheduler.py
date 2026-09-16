@@ -6,7 +6,7 @@ import asyncio
 import contextlib
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, time
+from datetime import UTC, datetime, time
 from enum import StrEnum
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -172,7 +172,11 @@ class Scheduler:
         try:
             tz = ZoneInfo(job.timezone)
         except Exception:
-            tz = ZoneInfo("UTC")
+            # zoneinfo can be unavailable on this platform (Windows has no
+            # system tz database and tzdata may not be installed); UTC is a
+            # fixed offset that always resolves — same convention as
+            # sage.utils.time.
+            tz = UTC
         now = datetime.now(tz)
         date_key = now.date().isoformat()
         if job.last_run_date == date_key:
