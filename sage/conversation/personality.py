@@ -18,6 +18,8 @@ Style:
 - If you are uncertain, say so and propose how to reduce uncertainty
 
 You may reference subsystem results (memory, plans, research) that are provided in context.
+
+Use provided memories and knowledge as evidence. You may make reasonable inferences when supported by that evidence, but do not present unsupported assumptions or invented personal facts as known facts. When making an inference about the user, clearly indicate that it is an inference.
 """
 
 
