@@ -78,6 +78,45 @@ async def test_learn_about_beats_domain_keyword_routing() -> None:
     assert intent.entities["tool"] == "web_learn"
 
 
+# -- Calculator explicit imperative --------------------------------------------
+
+
+async def test_calculate_maps_to_calculator_intent() -> None:
+    orch = make_orchestrator(None)
+    intent = await orch.analyze_intent("calculate 25 * 4")
+    assert intent.kind == IntentKind.TOOL
+    assert intent.entities["tool"] == "calculator"
+    assert intent.entities["args"] == {"expression": "25 * 4"}
+    assert intent.subject == "25 * 4"
+
+
+async def test_calculate_pattern_case_and_punctuation_handling() -> None:
+    """Case-insensitive prefix, trailing punctuation stripped — same contract
+    as the web_learn pattern."""
+    orch = make_orchestrator(None)
+    intent = await orch.analyze_intent("CALCULATE 100 / 5 + 1?")
+    assert intent.kind == IntentKind.TOOL
+    assert intent.entities["tool"] == "calculator"
+    assert intent.entities["args"] == {"expression": "100 / 5 + 1"}
+    assert intent.subject == "100 / 5 + 1"
+
+
+async def test_calculator_plan_runs_invoke_then_compose() -> None:
+    manager = FakeToolManager(
+        ToolResult(success=True, output={"expression": "25 * 4", "result": 100}, metadata={})
+    )
+    orch = make_orchestrator(manager)
+    result = await orch.handle("calculate 25 * 4")
+    assert [s.step for s in result.steps] == [
+        PipelineStep.ANALYZE_INTENT,
+        PipelineStep.INVOKE_TOOL,
+        PipelineStep.COMPOSE_RESPONSE,
+    ]
+    assert manager.calls == [("calculator", {"expression": "25 * 4"})]
+    assert all(s.success for s in result.steps)
+    assert "100" in result.response
+
+
 @pytest.mark.parametrize(
     ("message", "expected"),
     [
@@ -89,6 +128,9 @@ async def test_learn_about_beats_domain_keyword_routing() -> None:
         ("research solar panels", IntentKind.RESEARCH),
         ("status", IntentKind.STATUS),
         ("hello there", IntentKind.CHAT),
+        ("calculate 25 * 4", IntentKind.TOOL),
+        # Priority intents beat explicit tool imperatives.
+        ("Remember: calculate 2 + 2 first", IntentKind.REMEMBER),
     ],
 )
 async def test_existing_intents_unchanged(message: str, expected: IntentKind) -> None:

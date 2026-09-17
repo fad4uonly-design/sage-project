@@ -71,13 +71,21 @@ _PATTERNS: list[tuple[IntentKind, re.Pattern[str], float]] = [
 ]
 
 
-# Explicit tool imperatives: "<phrase> <topic>" routes to IntentKind.TOOL and
-# the orchestrator invokes the named tool through the standard ToolManager.
+# Explicit tool imperatives: "<phrase> <argument>" routes to IntentKind.TOOL
+# and the orchestrator invokes the named tool through the standard ToolManager.
 # Only explicit user phrasing lands here — tools never run automatically.
-_EXPLICIT_TOOL_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+# Each entry is (tool_name, pattern, argument_name): the pattern's named group
+# is the tool's required parameter (web_learn → topic, calculator → expression).
+_EXPLICIT_TOOL_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     (
         "web_learn",
         re.compile(r"^\s*learn\s+(?:up\s+)?about\s+(?P<topic>.+?)\s*[?.!]*\s*$", re.I | re.S),
+        "topic",
+    ),
+    (
+        "calculator",
+        re.compile(r"^\s*calculate\s+(?P<expression>.+?)\s*[?.!]*\s*$", re.I | re.S),
+        "expression",
     ),
 ]
 
@@ -168,20 +176,21 @@ class IntentAnalyzer:
         )
 
     def _explicit_tool_intent(self, text: str) -> Intent | None:
-        """Match explicit tool imperatives ("learn about X" → web_learn)."""
-        for tool_name, pattern in _EXPLICIT_TOOL_PATTERNS:
+        """Match explicit tool imperatives ("learn about X" → web_learn,
+        "calculate 25 * 4" → calculator)."""
+        for tool_name, pattern, arg_name in _EXPLICIT_TOOL_PATTERNS:
             m = pattern.match(text)
             if not m:
                 continue
-            topic = (m.group("topic") or "").strip()
-            if not topic:
+            value = (m.group(arg_name) or "").strip()
+            if not value:
                 continue
             return Intent(
                 kind=IntentKind.TOOL,
                 confidence=0.9,
-                subject=topic,
+                subject=value,
                 raw_message=text,
-                entities={"tool": tool_name, "args": {"topic": topic}},
+                entities={"tool": tool_name, "args": {arg_name: value}},
                 hints=[f"tool:{tool_name}", "explicit:true"],
             )
         return None
