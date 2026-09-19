@@ -105,6 +105,9 @@ async def test_recall_without_index_still_works(tmp_path: Path) -> None:
 
 async def test_vector_recall_surfaces_nonkeyword_match(tmp_path: Path) -> None:
     system, db = await _make_system(tmp_path)
+    # Pins vector plumbing, not the production floor: the 128-d hashing
+    # embedder cannot reach nomic-scale cosines for a non-keyword match.
+    system.MIN_RECALL_RELEVANCE = 0.0
     try:
         await system.store(
             MemoryItem(
@@ -184,5 +187,52 @@ async def test_recall_scored_empty_query_lists_recent_with_zero_relevance(
         assert len(pairs) == 1
         assert pairs[0][0].content == "Plain keyword memory about cats."
         assert pairs[0][1] == 0.0
+    finally:
+        await db.close()
+
+
+async def test_recall_drops_unrelated_memories_below_floor(tmp_path: Path) -> None:
+    """A non-empty query must not return weakly related memories, even when
+    maximally important. Here one shared token out of three scores 0.333 on
+    the hashing embedder, so only the floor keeps it out."""
+    system, db = await _make_system(tmp_path)
+    try:
+        await system.store(
+            MemoryItem(
+                type=MemoryType.FACT,
+                content="The greenhouse tomato sales doubled this summer.",
+            )
+        )
+        await system.store(
+            MemoryItem(
+                type=MemoryType.FACT,
+                content="Quarterly sales figures for the office were reviewed.",
+                importance=1.0,
+            )
+        )
+
+        hits = await system.recall("tomato greenhouse sales", limit=5)
+
+        contents = [item.content for item in hits]
+        assert any("tomato" in c.lower() for c in contents)
+        assert not any("quarterly" in c.lower() for c in contents)
+    finally:
+        await db.close()
+
+
+async def test_recall_empty_query_still_lists_recent_memories(tmp_path: Path) -> None:
+    """The relevance floor applies only to non-empty queries."""
+    system, db = await _make_system(tmp_path)
+    try:
+        await system.store(
+            MemoryItem(type=MemoryType.FACT, content="Plain memory about cats.")
+        )
+        await system.store(
+            MemoryItem(type=MemoryType.FACT, content="Plain memory about dogs.")
+        )
+
+        hits = await system.recall("", limit=5)
+
+        assert len(hits) == 2
     finally:
         await db.close()

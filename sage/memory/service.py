@@ -270,6 +270,12 @@ class SQLiteMemorySystem:
             log.exception("memory.index_sync_failed")
             return 0
 
+    #: Minimum relevance (max of token overlap and vector cosine) for a memory to
+    #: be returned for a non-empty query. Measured on nomic-embed-text: unrelated
+    #: memories scored 0.30-0.50, true matches 0.63-0.79. Revisit if the
+    #: embedding model changes. An empty query still lists recent memories.
+    MIN_RECALL_RELEVANCE = 0.55
+
     async def _blended_recall(
         self,
         query: str,
@@ -326,6 +332,13 @@ class SQLiteMemorySystem:
                 if fetched is None or (type_vals and fetched.type.value not in type_vals):
                     continue
                 candidates[memory_id] = (sim, fetched)
+
+        if query.strip():
+            candidates = {
+                memory_id: entry
+                for memory_id, entry in candidates.items()
+                if entry[0] >= self.MIN_RECALL_RELEVANCE
+            }
 
         if not candidates:
             return []

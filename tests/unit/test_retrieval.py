@@ -100,6 +100,10 @@ async def test_memory_layer_preserves_semantic_relevance_over_importance(
             router_resolver=lambda: _HashRouter(),
         )
 
+        # Pins ranking, not the production floor: the hashing embedder cannot
+        # reach nomic-scale cosines for the sky fact.
+        mem.MIN_RECALL_RELEVANCE = 0.0
+
         # Unrelated, but maximally important and freshly written. Shares NO
         # query tokens (not even "the") so the deterministic hashing embedding
         # gives it no relevance advantage; in production the real embedding
