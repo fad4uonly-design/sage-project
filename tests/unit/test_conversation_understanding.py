@@ -301,3 +301,33 @@ async def test_secrets_are_refused_not_stored(engine: SageEngine) -> None:
 
     assert "won't store" in result.response.lower()
     assert await mem.count() == before
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "what time is it",
+        "can you tell me what time it is",
+        "what is the current time",
+        "current time please",
+        "what's the time",
+        "what is today's date",
+        "what day is it",
+    ],
+)
+def test_time_and_date_questions_are_tool_requests(message: str) -> None:
+    assert understand(message).mode == ConversationMode.TOOL_REQUEST
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "what is the time of the meeting?",
+        "what is the date of the contract",
+        "what's the current time extension?",
+        "what time is it in Tokyo",
+        "what is the current date on drawing A-101",
+    ],
+)
+def test_document_questions_about_time_are_not_tool_requests(message: str) -> None:
+    assert understand(message).mode != ConversationMode.TOOL_REQUEST

@@ -127,6 +127,50 @@ class DefaultOrchestrator:
         )
         return ExecutionPlan(intent=intent, steps=steps)
 
+    async def _select_tool_intent(
+        self, intent: Intent, message: str, ctx: dict[str, Any]
+    ) -> Intent:
+        """Ask the configured model which registered tool applies, if any.
+
+        Returns the intent unchanged unless a *registered* tool was chosen and
+        its required arguments were supplied; tool execution itself still goes
+        through :class:`~sage.tools.interfaces.ToolManager`.
+        """
+        from sage.models.interfaces import ModelRouter
+        from sage.tools.interfaces import ToolManager
+        from sage.tools.selection import ModelToolSelector
+
+        router = self._container.try_resolve(ModelRouter)
+        tools = self._container.try_resolve(ToolManager)
+        if router is None or tools is None:
+            return intent
+
+        decision = await ModelToolSelector(router, tools).decide(message)
+        if decision is None:
+            return intent
+
+        name, arguments = decision
+        if not ModelToolSelector.has_required_arguments(tools, name, arguments):
+            log.debug("tools.selection_missing_arguments", tool=name)
+            return intent
+
+        log.info("tools.auto_selected", tool=name)
+        ctx["tool_selection"] = {"tool": name, "arguments": arguments}
+        first_value = next(iter(arguments.values()), message)
+        return intent.model_copy(
+            update={
+                "kind": IntentKind.TOOL,
+                "subject": str(first_value),
+                "entities": {
+                    **intent.entities,
+                    "tool": name,
+                    "args": arguments,
+                    "auto_selected": True,
+                },
+                "confidence": min(intent.confidence, 0.8),
+            }
+        )
+
     async def handle(
         self,
         message: str,
@@ -153,7 +197,7 @@ class DefaultOrchestrator:
 
         # Conversational understanding — deterministic and cheap (no extra LLM
         # call): dialogue mode + response policy around the capability route.
-        from sage.conversation.understanding import social_response, understand
+        from sage.conversation.understanding import ConversationMode, social_response, understand
 
         und = understand(message)
         ctx["conversation"] = und
@@ -163,6 +207,20 @@ class DefaultOrchestrator:
         if intent.kind in {IntentKind.CHAT, IntentKind.UNKNOWN} and und.is_social:
             social_text = social_response(message, und)
             ctx["social_response"] = social_text
+
+        # Model-assisted tool selection. The configured local brain is not
+        # tool-capable, so the decision is a schema-constrained JSON request
+        # (see sage.tools.selection) rather than a native ``tools`` payload.
+        # Consulted only for ``tool_request`` turns where no explicit imperative
+        # matched; a selection simply reuses the standard TOOL plan, so
+        # permissions, approval, verification and audit are the existing ones.
+        if (
+            social_text is None
+            and intent.kind == IntentKind.CHAT
+            and und.mode == ConversationMode.TOOL_REQUEST
+        ):
+            intent = await self._select_tool_intent(intent, message, ctx)
+
         plan = self._build_plan(intent)
         if social_text is not None:
             plan = ExecutionPlan(

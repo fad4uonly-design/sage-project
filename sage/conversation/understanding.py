@@ -163,6 +163,16 @@ _CONTINUATION = re.compile(
 )
 _FOLLOW_UP = re.compile(r"^\s*(?:what about|and what|and also|also,?|and then)\b", re.I)
 _TOOL_REQUEST = re.compile(r"\b(?:calculate|compute|convert|learn about|search the web)\b", re.I)
+#: Unambiguous "what is the time/date right now" phrasings only. Every branch is
+#: anchored, so document questions ("what is the date of the contract") never match.
+_TIME_REQUEST = re.compile(
+    r"\bwhat time (?:is it|it is)(?: now| right now)?\s*\??\s*$"
+    r"|\bwhat(?:.s| is) (?:the )?(?:current |exact )?time(?: now| right now)?\s*\??\s*$"
+    r"|^\s*(?:the )?current (?:time|date)(?: please| now)?\s*[?.!]*\s*$"
+    r"|\bwhat(?:.s| is) (?:today.?s|the current) date\s*\??\s*$"
+    r"|\bwhat day is it(?: today)?\s*\??\s*$",
+    re.I,
+)
 _REMEMBER_STATED = re.compile(r"^\s*(?:remember|note|don'?t forget|keep in mind)\b", re.I)
 _PLANNING = re.compile(r"\b(?:plan|schedule|organize|roadmap)\b", re.I)
 _RESEARCH = re.compile(r"\b(?:research|investigate|look up|find out)\b", re.I)
@@ -310,7 +320,7 @@ def understand(message: str) -> ConversationUnderstanding:
         return result(ConversationMode.CONTINUATION)
     if _FOLLOW_UP.match(text):
         return result(ConversationMode.FOLLOW_UP)
-    if _TOOL_REQUEST.search(text):
+    if _TOOL_REQUEST.search(text) or _TIME_REQUEST.search(text):
         return result(ConversationMode.TOOL_REQUEST)
     if _REMEMBER_STATED.match(text):
         return result(ConversationMode.TASK)
