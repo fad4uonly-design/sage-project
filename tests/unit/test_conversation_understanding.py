@@ -47,6 +47,7 @@ from sage.orchestrator.models import IntentKind, PipelineStep
         ("what do you remember about X?", ConversationMode.QUESTION),
         ("do you think I would like X?", ConversationMode.QUESTION),
         ("help me plan X", ConversationMode.PLANNING),
+        ("Actually, can you help me plan this?", ConversationMode.PLANNING),
         ("let's continue the SAGE work", ConversationMode.CONTINUATION),
         ("I changed my mind about X", ConversationMode.CORRECTION),
         ("thanks bro", ConversationMode.CASUAL_CHAT),

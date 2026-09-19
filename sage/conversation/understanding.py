@@ -141,7 +141,7 @@ _GOODBYE_PREFIX = re.compile(
 )
 _THANKS = re.compile(r"^\s*(?:thanks|thank you|thx|ty)\b", re.I)
 _CORRECTION = re.compile(
-    r"^\s*(?:no\b|that'?s not|not what i meant|actually\b|wrong|"
+    r"^\s*(?:no\b|that'?s not|not what i meant|wrong|"
     r"i (?:changed my mind|meant|disagree with that)|that'?s (?:wrong|incorrect))\b",
     re.I,
 )
