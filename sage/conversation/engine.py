@@ -77,6 +77,7 @@ class DefaultConversationEngine(BaseRepository):
                 limit=min(20, self._settings.conversation.max_history_turns)
             ),
             "preferences": dict(ctx.preferences),
+            "conversation_state": ctx.state_snapshot(),
         }
 
         from sage.orchestrator.interfaces import Orchestrator
@@ -112,6 +113,14 @@ class DefaultConversationEngine(BaseRepository):
             # Keep recalled content on dialogue context for inspection
             ctx.recalled_memories = list(orch_context.get("memories") or [])
             ctx.knowledge_snippets = list(orch_context.get("knowledge") or [])
+            # Roll the short-lived conversational state forward from what the
+            # orchestrator understood about this turn.
+            conv = (result.metadata.get("conversation") or {}) if result else {}
+            ctx.note_turn(
+                mode=conv.get("mode"),
+                topic=conv.get("topic"),
+                response_type=conv.get("response_type"),
+            )
 
         turn = ConversationTurn(
             session_id=session_id,

@@ -23,6 +23,21 @@ class MemoryType(StrEnum):
     FACT = "fact"
 
 
+class MemoryStatus(StrEnum):
+    """Temporal memory lifecycle (stored in ``MemoryItem.metadata["status"]``).
+
+    The DB schema is unchanged; these states ride on metadata today so a
+    memory can later represent CURRENT / SUPERSEDED / EXPIRED / HISTORICAL
+    without a redesign. A newer explicit user statement supersedes an older
+    one — history is preserved, never silently erased.
+    """
+
+    CURRENT = "current"
+    SUPERSEDED = "superseded"
+    EXPIRED = "expired"
+    HISTORICAL = "historical"
+
+
 class MemoryItem(BaseModel):
     id: str = Field(default_factory=lambda: new_id("memory"))
     type: MemoryType = MemoryType.FACT

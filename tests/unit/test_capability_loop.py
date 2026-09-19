@@ -146,7 +146,7 @@ async def test_model_only_request_routes_to_model() -> None:
     router = FakeRouter()
     orch = build({ModelRouter: router})
 
-    result = await orch.handle("hello there")
+    result = await orch.handle("What is RAG?")
 
     assert result.intent.kind == IntentKind.CHAT
     assert [s.step for s in result.steps] == [

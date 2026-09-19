@@ -27,6 +27,12 @@ from sage.utils.ids import new_id
 
 log = get_logger(__name__)
 
+#: Relevance at which a new explicit user statement REPLACES an existing
+#: user-stated memory instead of appending a near-duplicate (versioned update;
+#: history preserved). Deliberately NOT the Lean adapter's 0.60 short-circuit
+#: threshold — different purpose, different calibration.
+_MEMORY_REPLACE_RELEVANCE = 0.5
+
 
 class DefaultOrchestrator:
     def __init__(self, container: Any) -> None:
@@ -145,7 +151,24 @@ class DefaultOrchestrator:
         if intent.kind.value == "chat" and self._is_suggestions_query(message):
             return await self._handle_suggestions(message, ctx, session_id, user_id)
 
+        # Conversational understanding — deterministic and cheap (no extra LLM
+        # call): dialogue mode + response policy around the capability route.
+        from sage.conversation.understanding import social_response, understand
+
+        und = understand(message)
+        ctx["conversation"] = und
+        # Deterministic natural social replies for greeting/goodbye-only turns:
+        # no retrieval, no tools, no model call — SAGE responds as a partner.
+        social_text = None
+        if intent.kind in {IntentKind.CHAT, IntentKind.UNKNOWN} and und.is_social:
+            social_text = social_response(message, und)
+            ctx["social_response"] = social_text
         plan = self._build_plan(intent)
+        if social_text is not None:
+            plan = ExecutionPlan(
+                intent=intent,
+                steps=[PipelineStep.ANALYZE_INTENT, PipelineStep.COMPOSE_RESPONSE],
+            )
         step_results: list[StepResult] = []
         response_parts: list[str] = []
 
@@ -215,6 +238,17 @@ class DefaultOrchestrator:
                 "user_id": user_id,
                 "step_count": len(step_results),
                 "failed_steps": [s.step.value for s in step_results if not s.success],
+                "conversation": {
+                    "mode": und.mode.value,
+                    "tone": und.policy.tone,
+                    "length": und.policy.length,
+                    "response_type": "social" if social_text is not None else "model",
+                    "topic": (
+                        intent.subject[:120]
+                        if intent.kind not in {IntentKind.CHAT, IntentKind.UNKNOWN}
+                        else None
+                    ),
+                },
             },
         )
         await self._audit_capability(result, message, ctx)
@@ -262,6 +296,9 @@ class DefaultOrchestrator:
             ],
             "failed_steps": failed_steps,
         }
+        und = ctx.get("conversation")
+        if und is not None:
+            detail["conversation_mode"] = und.mode.value
         if result.intent.kind == IntentKind.TOOL:
             detail["tool"] = result.intent.entities.get("tool")
         if isinstance(verification, dict):
@@ -459,7 +496,7 @@ class DefaultOrchestrator:
 
     async def _step_store(self, intent: Intent, ctx: dict[str, Any]) -> str:
         from sage.memory.interfaces import MemorySystem
-        from sage.memory.models import MemoryItem, MemoryType
+        from sage.memory.models import MemoryItem, MemoryStatus, MemoryType
 
         mem = self._container.try_resolve(MemorySystem)
         if not mem:
@@ -467,30 +504,68 @@ class DefaultOrchestrator:
         fact = intent.subject.strip()
         if not fact:
             return "Nothing to remember."
-        # Use cognitive store path if available
-        store_fn = getattr(mem, "store_cognitive", None)
-        if callable(store_fn):
-            mid = await store_fn(
-                MemoryItem(
-                    type=MemoryType.LONG_TERM,
-                    content=fact,
-                    importance=0.75,
-                    confidence=0.9,
-                    source="user",
-                    tags=["user_stated"],
-                )
+        # Secrets/credentials never enter long-term memory (transparent refusal).
+        if re.search(
+            r"\b(?:password|passphrase|api[_-]?key|apikey|secret|token|credential)s?\b\s*"
+            r"(?:[:=]|\bis\b|\bwas\b)",
+            fact,
+            re.I,
+        ):
+            return (
+                "I won't store that in long-term memory — it looks like a secret or "
+                "credential. Keep those out of durable memory; rephrase if you meant "
+                "something non-sensitive."
             )
-        else:
-            mid = await mem.store(
-                MemoryItem(
-                    type=MemoryType.LONG_TERM,
-                    content=fact,
-                    importance=0.75,
-                    confidence=0.9,
-                    source="user",
-                    tags=["user_stated"],
-                )
+        # Memory lifecycle — REPLACE before ADD: a rephrased or changed user
+        # statement updates the existing user-stated memory (versioned; history
+        # preserved) instead of blindly appending a near-duplicate.
+        mid: str | None = None
+        replaced = False
+        exact_duplicate = False
+        scored = getattr(mem, "recall_scored", None)
+        update_fn = getattr(mem, "update", None)
+        if callable(scored) and callable(update_fn):
+            try:
+                pairs = await scored(fact, limit=5)
+            except Exception:
+                log.exception("orchestrator.memory_replace_probe_failed")
+                pairs = []
+            for existing, rel in pairs:
+                replaceable = existing.source == "user" or "user_stated" in existing.tags
+                same = existing.content.strip().lower() == fact.lower()
+                if same and replaceable:
+                    exact_duplicate = True  # store() reinforces instead
+                    break
+                if replaceable and rel >= _MEMORY_REPLACE_RELEVANCE:
+                    await update_fn(
+                        existing.id,
+                        content=fact,
+                        metadata={
+                            **existing.metadata,
+                            "status": MemoryStatus.CURRENT.value,
+                            "supersedes": existing.content[:160],
+                        },
+                    )
+                    mid, replaced = existing.id, True
+                    break
+        if exact_duplicate:
+            return (
+                "Understood — that matches what I already remember, so I reinforced "
+                "it instead of storing a duplicate."
             )
+        if mid is None:
+            # Use cognitive store path if available
+            store_fn = getattr(mem, "store_cognitive", None)
+            item = MemoryItem(
+                type=MemoryType.LONG_TERM,
+                content=fact,
+                importance=0.75,
+                confidence=0.9,
+                source="user",
+                tags=["user_stated"],
+                metadata={"status": MemoryStatus.CURRENT.value},
+            )
+            mid = await store_fn(item) if callable(store_fn) else await mem.store(item)
         ctx["stored_memory_id"] = mid
         # Extract entities/relations into knowledge graph
         from sage.knowledge.graph.interfaces import KnowledgeGraph
@@ -503,6 +578,11 @@ class DefaultOrchestrator:
                 )
             except Exception:
                 log.exception("orchestrator.graph_from_memory_failed")
+        if replaced:
+            return (
+                "Updated my memory: «" + fact + "» — the earlier similar memory was "
+                "replaced; its previous versions are kept in history."
+            )
         return f"Understood. I will remember that (id: {mid}).\n«{fact}»"
 
     async def _step_retrieve(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str:
@@ -804,6 +884,12 @@ class DefaultOrchestrator:
         )
 
     async def _step_compose(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str:
+        # Deterministic social replies first — a greeting is a social
+        # interaction, not a help request: acknowledge naturally and briefly,
+        # without retrieving memory, invoking tools, or calling the model.
+        social_text = ctx.get("social_response")
+        if social_text is not None:
+            return social_text
         # If earlier steps already produced a user-facing artifact for non-chat intents, use it
         artifacts = ctx.get("_artifacts") or []
         if intent.kind == IntentKind.TOOL and not artifacts:
@@ -832,13 +918,27 @@ class DefaultOrchestrator:
                 return skill_text
 
         from sage.config.settings import Settings
-        from sage.conversation.personality import build_system_prompt
+        from sage.conversation.personality import (
+            build_system_prompt,
+            memory_evidence_block,
+            style_directive,
+        )
         from sage.models.interfaces import CompletionRequest, Message, ModelRouter
 
         router = self._container.try_resolve(ModelRouter)
         if router is None:
             return f"I heard you, but no language model is configured. You said: «{message}»"
 
+        und = ctx.get("conversation")
+        style_text = (
+            style_directive(
+                und.policy.tone,
+                length=und.policy.length,
+                acknowledge_first=und.policy.acknowledge_first,
+            )
+            if und is not None
+            else None
+        )
         extra_bits: list[str] = []
         if ctx.get("context_summary"):
             extra_bits.append(f"Cognitive context: {ctx['context_summary']}")
@@ -849,7 +949,9 @@ class DefaultOrchestrator:
                 "Active projects:\n- " + "\n- ".join(str(p) for p in ctx["active_projects"][:4])
             )
         if ctx.get("memories"):
-            extra_bits.append("Relevant memories:\n- " + "\n- ".join(ctx["memories"][:5]))
+            evidence = memory_evidence_block(list(ctx["memories"])[:5])
+            if evidence:
+                extra_bits.append(evidence)
         if ctx.get("graph_facts"):
             extra_bits.append(
                 "Knowledge graph facts:\n- " + "\n- ".join(ctx["graph_facts"][:6])
@@ -861,7 +963,9 @@ class DefaultOrchestrator:
         if ctx.get("preferences"):
             extra_bits.append(f"User preferences: {ctx['preferences']}")
 
-        system = build_system_prompt(extra="\n\n".join(extra_bits) if extra_bits else None)
+        system = build_system_prompt(
+            extra="\n\n".join(extra_bits) if extra_bits else None, style=style_text
+        )
         messages = [Message(role="system", content=system)]
         for role, content in ctx.get("history") or []:
             messages.append(Message(role=role, content=content))

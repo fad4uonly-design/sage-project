@@ -23,7 +23,58 @@ Use provided memories and knowledge as evidence. You may make reasonable inferen
 """
 
 
-def build_system_prompt(*, extra: str | None = None) -> str:
+def style_directive(
+    tone: str, *, length: str = "normal", acknowledge_first: bool = False
+) -> str:
+    """Layered speaking style for the current turn (layer C of personality).
+
+    Small, structured, and grounded in the conversation — not a giant prompt.
+    """
+    base = {
+        "casual": "Speak casually and warmly — contractions are fine, a light emoji is okay when it fits.",
+        "technical": "Be technical and precise: exact names, paths, commands. No filler.",
+        "focused": "Be focused: address the task directly with minimal preamble.",
+        "serious": "Keep a calm, serious tone. No jokes or emoji.",
+        "warm": "Be warm and supportive: acknowledge feelings first; do not rush to fix.",
+    }.get(tone, "Be clear and direct.")
+    parts = [base]
+    if length == "short":
+        parts.append("Keep the reply short.")
+    elif length == "detailed":
+        parts.append("A detailed answer is appropriate here.")
+    if acknowledge_first:
+        parts.append(
+            "If the user is greeting you, respond socially first. If they are correcting you, "
+            "acknowledge the correction briefly before continuing."
+        )
+    return " ".join(parts)
+
+
+def memory_evidence_block(memories: list[str] | None) -> str | None:
+    """Grounded phrasing for injected memories (epistemic safety).
+
+    Memories are things the USER said, so the model must attribute them to the
+    user instead of stating them as universal facts; its own inferences must be
+    marked as inferences.
+    """
+    if not memories:
+        return None
+    lines = [
+        "Things the user has told SAGE before — present them as what the user said, "
+        "not as universal facts; mark any inference of yours as an inference:"
+    ]
+    for item in memories:
+        lines.append(f'- You\'ve said: "{item}"')
+    return "\n".join(lines)
+
+
+def build_system_prompt(
+    *, extra: str | None = None, style: str | None = None
+) -> str:
+    """Compose the system prompt: core identity (+ optional style + extra)."""
+    prompt = SYSTEM_PROMPT
+    if style:
+        prompt += "\n\n" + style
     if extra:
-        return SYSTEM_PROMPT + "\n\n" + extra
-    return SYSTEM_PROMPT
+        prompt += "\n\n" + extra
+    return prompt
