@@ -19,6 +19,14 @@ class CompletionRequest(BaseModel):
     max_tokens: int | None = None
     stop: list[str] | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    response_schema: dict[str, Any] | None = None
+    """Optional JSON Schema the reply must satisfy.
+
+    ``None`` means ordinary free-form generation. When set, an adapter that
+    supports constrained decoding translates it into the provider's native
+    mechanism (Ollama/OpenAI ``response_format``); callers then parse a reply
+    that is already constrained to their contract instead of scraping text.
+    """
 
 
 class CompletionResponse(BaseModel):

@@ -310,3 +310,65 @@ def test_local_adapter_handles_thinking_without_final_answer() -> None:
     content = "<think>Still thinking..."
 
     assert _extract_final_content(content) == ""
+
+# -- Structured output (constrained decoding) ---------------------------------
+#
+# The configured local brain is not tool-capable, so structured requests travel
+# as an explicit JSON schema rather than a native ``tools`` payload. A request
+# without a schema must stay free-form.
+
+_DECISION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "tool": {"type": ["string", "null"], "enum": ["calculator", None]},
+        "arguments": {"type": "object"},
+    },
+    "required": ["tool", "arguments"],
+    "additionalProperties": False,
+}
+
+
+async def test_local_adapter_forwards_explicit_schema_as_response_format(
+    monkeypatch: Any,
+) -> None:
+    monkeypatch.setattr(httpx, "AsyncClient", FakeAsyncClient)
+
+    model = LocalLanguageModel(
+        base_url="http://127.0.0.1:11434/v1",
+        model_name="test-local-model",
+    )
+
+    await model.complete(
+        CompletionRequest(
+            messages=[Message(role="user", content="compute 12 + 30")],
+            response_schema=_DECISION_SCHEMA,
+        )
+    )
+
+    payload = FakeAsyncClient.last_payload or {}
+    assert FakeAsyncClient.last_url == "http://127.0.0.1:11434/v1/chat/completions"
+    assert payload["response_format"] == {
+        "type": "json_schema",
+        "json_schema": {"name": "sage_response", "schema": _DECISION_SCHEMA},
+    }
+    # No native tool calling: the model is not tool-capable.
+    assert "tools" not in payload
+
+
+async def test_local_adapter_omits_response_format_without_schema(
+    monkeypatch: Any,
+) -> None:
+    monkeypatch.setattr(httpx, "AsyncClient", FakeAsyncClient)
+
+    model = LocalLanguageModel(
+        base_url="http://127.0.0.1:11434/v1",
+        model_name="test-local-model",
+    )
+
+    await model.complete(
+        CompletionRequest(messages=[Message(role="user", content="hello there")])
+    )
+
+    payload = FakeAsyncClient.last_payload or {}
+    assert "response_format" not in payload
+    assert "tools" not in payload

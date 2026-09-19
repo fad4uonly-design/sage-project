@@ -48,10 +48,13 @@ class LocalLanguageModel:
     def model_name(self) -> str:
         return self._model_name
 
-    async def complete(
-        self,
-        request: CompletionRequest,
-    ) -> CompletionResponse:
+    def build_payload(self, request: CompletionRequest) -> dict[str, Any]:
+        """Translate a SAGE request into the endpoint's request payload.
+
+        Free-form calls carry no structured-output constraint; a request that
+        asks for a ``response_schema`` gets the provider's constrained-decoding
+        parameter instead.
+        """
         payload: dict[str, Any] = {
             "model": self._model_name,
             "messages": [
@@ -71,6 +74,27 @@ class LocalLanguageModel:
 
         if request.stop is not None:
             payload["stop"] = request.stop
+
+        if request.response_schema is not None:
+            # Constrained decoding: Ollama's OpenAI-compatible endpoint accepts
+            # the OpenAI ``response_format`` shape and enforces the schema as a
+            # grammar underneath (the native /api/chat ``format`` parameter).
+            # Callers that request no schema keep free-form generation.
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "sage_response",
+                    "schema": request.response_schema,
+                },
+            }
+
+        return payload
+
+    async def complete(
+        self,
+        request: CompletionRequest,
+    ) -> CompletionResponse:
+        payload = self.build_payload(request)
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(
