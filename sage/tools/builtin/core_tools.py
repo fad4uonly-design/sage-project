@@ -9,7 +9,6 @@ from typing import Any
 
 from sage.tools.base import BaseTool
 from sage.tools.interfaces import ToolResult
-from sage.utils.time import utcnow_iso
 
 _SAFE_OPS: dict[type[ast.AST], Callable[..., Any]] = {
     ast.Add: operator.add,
@@ -39,12 +38,18 @@ class EchoTool(BaseTool):
 
 class TimeTool(BaseTool):
     name = "current_time"
-    description = "Return the current UTC time in ISO-8601 format."
+    description = "Return the current local time with its UTC offset in ISO-8601 format."
     category = "utility"
     parameters_schema = {"type": "object", "properties": {}}
 
     async def execute(self, **params: Any) -> ToolResult:
-        return ToolResult(success=True, output=utcnow_iso())
+        from datetime import datetime
+
+        # Local time with its UTC offset (still valid ISO-8601). Stored
+        # timestamps elsewhere stay UTC; this tool answers the user's
+        # "what time is it", so it reports the machine's local time.
+        now = datetime.now().astimezone()
+        return ToolResult(success=True, output=now.isoformat(timespec="seconds"))
 
 
 class CalculatorTool(BaseTool):
