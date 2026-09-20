@@ -89,6 +89,27 @@ _EXPLICIT_TOOL_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     ),
 ]
 
+# Percent questions ("what is 15 percent of 240", "15% of 240") name their
+# operands but no expression, so the calculator argument is derived here.
+# Operands must be plain numbers: "15% of my budget" is not arithmetic we can
+# resolve and stays ordinary chat. Multiplying before dividing avoids
+# needless float noise.
+_NUMBER = r"\d+(?:\.\d+)?"
+_PERCENT_OF_PATTERN: re.Pattern[str] = re.compile(
+    r"^\s*(?:(?:calculate|compute|what(?:['\u2019]s|\s+is)|how\s+much\s+is)\s+)?"
+    rf"(?P<pct>{_NUMBER})\s*(?:%|percent|per\s+cent)\s+of\s+(?P<base>{_NUMBER})"
+    r"\s*[?.!]*\s*$",
+    re.I,
+)
+
+
+def _percent_of_expression(text: str) -> str | None:
+    m = _PERCENT_OF_PATTERN.match(text)
+    if not m:
+        return None
+    return f"({m.group('pct')} * {m.group('base')}) / 100"
+
+
 # Explicit knowledge-base queries. Grouped with the explicit imperatives:
 # these ask about SAGE's own stored knowledge and must not be hijacked by
 # domain keyword routing nor folded into generic chat.
@@ -178,6 +199,17 @@ class IntentAnalyzer:
     def _explicit_tool_intent(self, text: str) -> Intent | None:
         """Match explicit tool imperatives ("learn about X" → web_learn,
         "calculate 25 * 4" → calculator)."""
+        percent = _percent_of_expression(text)
+        if percent is not None:
+            return Intent(
+                kind=IntentKind.TOOL,
+                confidence=0.9,
+                subject=percent,
+                raw_message=text,
+                entities={"tool": "calculator", "args": {"expression": percent}},
+                hints=["tool:calculator", "explicit:true"],
+            )
+
         for tool_name, pattern, arg_name in _EXPLICIT_TOOL_PATTERNS:
             m = pattern.match(text)
             if not m:
