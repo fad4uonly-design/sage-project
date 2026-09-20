@@ -686,6 +686,22 @@ class DefaultOrchestrator:
                     )
                     or [],
                     "retrieval_confidence": ctx.get("retrieval_confidence"),
+                    # Provenance for ranked evidence (layer / confidence /
+                    # source_ref only — never the raw score, which is a
+                    # retrieval relevance signal, not evidence confidence).
+                    "evidence_provenance": [
+                        {
+                            "layer": getattr(
+                                getattr(ev, "layer", None), "value", None
+                            )
+                            or str(getattr(ev, "layer", "unknown")),
+                            "confidence": getattr(ev, "confidence", 0.5),
+                            "source_ref": getattr(ev, "source_ref", None),
+                        }
+                        for ev in (
+                            getattr(ctx.get("retrieval"), "ranked", None) or []
+                        )[:8]
+                    ],
                 },
             ),
             use_retrieval=False,  # already retrieved
@@ -978,6 +994,7 @@ class DefaultOrchestrator:
         from sage.config.settings import Settings
         from sage.conversation.personality import (
             build_system_prompt,
+            evidence_block,
             memory_evidence_block,
             style_directive,
             web_learned_texts,
@@ -1007,21 +1024,56 @@ class DefaultOrchestrator:
             extra_bits.append(
                 "Active projects:\n- " + "\n- ".join(str(p) for p in ctx["active_projects"][:4])
             )
+        # Provenance-aware evidence from the ranked RetrievalResult (same
+        # EvidenceItems _step_retrieve stored in ctx["retrieval"]). Preferred
+        # over the flattened string lists because it keeps layer, confidence
+        # and source_ref; legacy lists render only what it did not already
+        # cover so nothing appears twice.
+        from sage.retrieval.models import RetrievalResult
+
+        provenance_rendered: set[str] = set()
+        retrieval = ctx.get("retrieval")
+        if isinstance(retrieval, RetrievalResult) and retrieval.ranked:
+            block = evidence_block(retrieval.ranked)
+            if block:
+                extra_bits.append(block)
+                for ev in retrieval.ranked[:8]:
+                    text = str(getattr(ev, "content", "") or "").strip()
+                    if text:
+                        provenance_rendered.add(text)
         if ctx.get("memories"):
-            evidence = memory_evidence_block(
-                list(ctx["memories"])[:5],
-                learned=web_learned_texts(ctx),
-            )
-            if evidence:
-                extra_bits.append(evidence)
+            memories = [
+                m
+                for m in list(ctx["memories"])[:5]
+                if str(m).strip() not in provenance_rendered
+            ]
+            if memories:
+                evidence = memory_evidence_block(
+                    memories,
+                    learned=web_learned_texts(ctx),
+                )
+                if evidence:
+                    extra_bits.append(evidence)
         if ctx.get("graph_facts"):
-            extra_bits.append(
-                "Knowledge graph facts:\n- " + "\n- ".join(ctx["graph_facts"][:6])
-            )
+            facts = [
+                f
+                for f in ctx["graph_facts"][:6]
+                if str(f).strip() not in provenance_rendered
+            ]
+            if facts:
+                extra_bits.append("Knowledge graph facts:\n- " + "\n- ".join(facts))
         if ctx.get("documents"):
-            extra_bits.append("Documents:\n- " + "\n- ".join(ctx["documents"][:3]))
+            docs = [
+                d for d in ctx["documents"][:3] if str(d).strip() not in provenance_rendered
+            ]
+            if docs:
+                extra_bits.append("Documents:\n- " + "\n- ".join(docs))
         elif ctx.get("knowledge"):
-            extra_bits.append("Relevant knowledge:\n- " + "\n- ".join(ctx["knowledge"][:3]))
+            knowledge = [
+                k for k in ctx["knowledge"][:3] if str(k).strip() not in provenance_rendered
+            ]
+            if knowledge:
+                extra_bits.append("Relevant knowledge:\n- " + "\n- ".join(knowledge))
         if ctx.get("preferences"):
             extra_bits.append(f"User preferences: {ctx['preferences']}")
 

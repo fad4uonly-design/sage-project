@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
 from typing import Any
 
-from sage.models.interfaces import CompletionResponse
+import pytest
+
 from sage.core.engine import SageEngine
+from sage.models.interfaces import CompletionResponse
 from sage.orchestrator.interfaces import Orchestrator
 from sage.orchestrator.models import IntentKind
 
@@ -113,3 +114,130 @@ async def test_chat_memory_context_is_explicitly_grounded(engine: SageEngine) ->
     assert "Use provided memories and knowledge as evidence." in system_prompt
     assert "do not present unsupported assumptions or invented personal facts as known facts" in system_prompt
     assert "clearly indicate that it is an inference" in system_prompt
+
+@pytest.mark.asyncio
+async def test_compose_prefers_ranked_evidence_with_provenance(engine: SageEngine) -> None:
+    """Provenance preservation: ranked EvidenceItems render with layer,
+    confidence and source, and the same content is not duplicated by the
+    legacy flattened string lists."""
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.models import Intent
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer, RetrievalResult
+
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    item = EvidenceItem(
+        layer=RetrievalLayer.MEMORY,
+        content="SAGE should remain simple and user-controlled.",
+        score=0.95,
+        confidence=0.90,
+        source_ref="memory-id-1",
+        metadata={"source": "memory-id-1"},
+    )
+    retrieval = RetrievalResult(
+        query="What do you know about me?",
+        ranked=[item],
+        memories=["SAGE should remain simple and user-controlled."],
+        overall_confidence=0.90,
+    )
+
+    intent = Intent(
+        kind=IntentKind.CHAT,
+        confidence=1.0,
+        raw_message="What do you know about me?",
+    )
+    ctx = {
+        "history": [],
+        "memories": ["SAGE should remain simple and user-controlled."],
+        "retrieval": retrieval,
+        "retrieval_confidence": 0.90,
+    }
+
+    response = await orch._step_compose(
+        intent,
+        "What do you know about me?",
+        ctx,
+    )
+
+    assert response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+
+    # Evidence content AND provenance survive into the composition boundary.
+    assert "SAGE should remain simple and user-controlled." in system_prompt
+    assert "[memory | confidence 0.90]" in system_prompt
+    assert "source: memory-id-1" in system_prompt
+    # Raw retrieval relevance must never leak as evidence confidence.
+    assert "0.95" not in system_prompt
+    # No duplicate: the same memory appears once, not in both blocks.
+    assert system_prompt.count("SAGE should remain simple and user-controlled.") == 1
+
+
+@pytest.mark.asyncio
+async def test_compose_without_retrieval_keeps_legacy_strings(engine: SageEngine) -> None:
+    """Existing string-based context behavior is unchanged when no
+    RetrievalResult is present."""
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.models import Intent
+
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    intent = Intent(
+        kind=IntentKind.CHAT,
+        confidence=1.0,
+        raw_message="What do you know about me?",
+    )
+    ctx = {
+        "history": [],
+        "memories": ["SAGE should remain simple and user-controlled."],
+    }
+
+    response = await orch._step_compose(
+        intent,
+        "What do you know about me?",
+        ctx,
+    )
+
+    assert response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+    assert "SAGE should remain simple and user-controlled." in system_prompt
+    assert "You've said:" in system_prompt
+
+
+def test_evidence_block_renderer_unit() -> None:
+    """evidence_block() renders content + provenance, skips empties, caps."""
+    from sage.conversation.personality import evidence_block
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer
+
+    assert evidence_block([]) is None
+    assert evidence_block(None) is None  # type: ignore[arg-type]
+
+    block = evidence_block(
+        [
+            EvidenceItem(
+                layer=RetrievalLayer.MEMORY,
+                content="Fact one.",
+                confidence=0.9,
+                source_ref="mem-1",
+            ),
+            EvidenceItem(
+                layer=RetrievalLayer.DOCUMENT,
+                content="Doc one.",
+                confidence=0.78,
+                source_ref="doc-9",
+            ),
+            EvidenceItem(layer=RetrievalLayer.PATTERN, content="   ", confidence=0.5),
+        ]
+    )
+    assert block is not None
+    assert "Fact one." in block and "mem-1" in block
+    assert "Doc one." in block and "doc-9" in block
+    assert "[memory | confidence 0.90]" in block
+    assert "[document | confidence 0.78]" in block

@@ -89,6 +89,64 @@ def memory_evidence_block(
     return "\n".join(lines)
 
 
+def evidence_block(ranked: object) -> str | None:
+    """Provenance-aware evidence for the model prompt, from ranked EvidenceItems.
+
+    Renders ``RetrievalResult.ranked`` concisely — content plus layer,
+    confidence, and source reference (never the raw ``score``/relevance, which
+    is a retrieval signal, not evidence confidence). Returns ``None`` when no
+    usable evidence is present so callers fall back to legacy string blocks.
+
+    Content lines intentionally mirror ``memory_evidence_block`` attribution:
+    memory-layer lines are phrased as what the user said; other layers are
+    presented as stored background with their layer named.
+    """
+    if not isinstance(ranked, list) or not ranked:
+        return None
+    lines = [
+        "Retrieved evidence — content, its layer, confidence, and source "
+        "(cite the [n] numbers when you use them; memories are things the "
+        "user said, other layers are stored background, not user statements):"
+    ]
+    shown = 0
+    for position, item in enumerate(ranked, start=1):
+        content = str(getattr(item, "content", "") or "").strip()
+        if not content:
+            continue
+        layer = getattr(getattr(item, "layer", None), "value", None) or str(
+            getattr(item, "layer", "unknown")
+        )
+        try:
+            confidence = float(getattr(item, "confidence", 0.5))
+        except (TypeError, ValueError):
+            confidence = 0.5
+        source_ref = getattr(item, "source_ref", None)
+        source = str(source_ref).strip() if source_ref else None
+        metadata = getattr(item, "metadata", None)
+        if not source and isinstance(metadata, dict):
+            for key in ("source", "path", "document_id"):
+                value = metadata.get(key)
+                if value:
+                    source = str(value).strip()
+                    break
+        provenance = f" | source: {source}" if source else ""
+        if layer == "memory":
+            line = (
+                f"[{position}] [memory | confidence {confidence:.2f}] "
+                f'You\'ve said: "{content}"{provenance}'
+            )
+        else:
+            line = (
+                f"[{position}] [{layer} | confidence {confidence:.2f}] "
+                f"{content}{provenance}"
+            )
+        lines.append(line)
+        shown += 1
+        if shown >= 8:
+            break
+    return "\n".join(lines) if shown else None
+
+
 def web_learned_texts(ctx: dict[str, object]) -> frozenset[str]:
     """Contents of retrieved memories that SAGE saved from web research.
 
