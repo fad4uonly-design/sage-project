@@ -144,6 +144,18 @@ class DefaultReasoningEngine:
                     **ctx.metadata,
                     "retrieval_confidence": result.overall_confidence,
                     "retrieval_explanation": result.explanation,
+                    # Provenance for ranked evidence (layer / confidence /
+                    # source_ref only — never the raw score, which is a
+                    # retrieval relevance signal, not evidence confidence).
+                    "evidence_provenance": [
+                        {
+                            "layer": getattr(getattr(ev, "layer", None), "value", None)
+                            or str(getattr(ev, "layer", "unknown")),
+                            "confidence": getattr(ev, "confidence", 0.5),
+                            "source_ref": getattr(ev, "source_ref", None),
+                        }
+                        for ev in (getattr(result, "ranked", None) or [])
+                    ][:8],
                 },
             }
         )
@@ -260,6 +272,25 @@ class DefaultReasoningEngine:
                 parts.append("Memories:\n- " + "\n- ".join(ctx.memories[:8]))
             if ctx.documents:
                 parts.append("Documents:\n- " + "\n- ".join(ctx.documents[:4]))
+            # Provenance for the evidence above (layer / confidence /
+            # source_ref only; the raw retrieval score stays internal).
+            provenance = [
+                p
+                for p in (ctx.metadata.get("evidence_provenance") or [])
+                if isinstance(p, dict)
+            ]
+            if provenance:
+                lines: list[str] = []
+                for p in provenance[:8]:
+                    try:
+                        conf = float(p.get("confidence", 0.5))
+                    except (TypeError, ValueError):
+                        conf = 0.5
+                    entry = f"- [{p.get('layer') or 'unknown'} | confidence {conf:.2f}]"
+                    if p.get("source_ref"):
+                        entry += f" (source: {p['source_ref']})"
+                    lines.append(entry)
+                parts.append("Evidence provenance:\n" + "\n".join(lines))
             user = f"Problem: {problem}\n" + "\n".join(parts) + "\n\nConclusion in 2-4 sentences."
             resp = await lm.complete(
                 CompletionRequest(
