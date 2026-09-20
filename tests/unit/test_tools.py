@@ -112,3 +112,13 @@ class TestVerificationGate:
         assert result.success
         assert result.output == "ping"
         assert result.metadata["verification_error"] == "verifier exploded"
+
+@pytest.mark.asyncio
+async def test_production_tool_manager_stamps_verification(
+    engine: SageEngine,
+) -> None:
+    """The production ToolsModule wires the existing verifier into the manager."""
+    tm = engine.container.resolve(ToolManager)
+    result = await tm.invoke("echo", text="production")
+    assert result.success
+    assert result.metadata["verification"]["verified"] is True

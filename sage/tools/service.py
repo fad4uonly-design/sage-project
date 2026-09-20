@@ -10,6 +10,7 @@ from sage.logging import get_logger
 from sage.tools.builtin import all_builtin_tools
 from sage.tools.interfaces import ToolManager
 from sage.tools.manager import DefaultToolManager
+from sage.tools.verification import build_verifier
 
 log = get_logger(__name__)
 
@@ -39,6 +40,10 @@ class ToolsModule(BaseModule):
             approval_engine=approval,
             audit=audit,
             auto_approve_in_test=(settings.env == "test"),
+            # Tool-R0 verification gate — the existing ToolOutputVerifier.
+            # Without it the manager never stamps result.metadata["verification"],
+            # leaving the verification layer dormant on the standard path.
+            verifier=build_verifier(),
         )
         for tool in all_builtin_tools():
             # Respect config gates for dangerous capabilities
