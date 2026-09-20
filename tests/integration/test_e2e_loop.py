@@ -235,6 +235,25 @@ async def test_chat_question_routes_stored_memory_into_model_prompt(
         "retrieval must surface the stored fact as model context"
     )
 
+    # Structured retrieval provenance must also survive end-to-end: the
+    # orchestrator exposes it in result metadata, the conversation layer
+    # persists it on the turn, and it round-trips through the database.
+    latest = (
+        await fetch_all(
+            engine,
+            "SELECT metadata FROM conversation_turns ORDER BY rowid DESC LIMIT 1",
+        )
+    )[-1]
+    meta = json.loads(latest["metadata"])
+    provenance = meta.get("evidence_provenance")
+    assert provenance, "turn metadata must carry non-empty evidence_provenance"
+    memory_items = [p for p in provenance if p.get("layer") == "memory"]
+    assert memory_items, "provenance must include a memory-layer item"
+    assert memory_items[0].get("source_ref"), "memory provenance must cite its source"
+    assert "score" not in memory_items[0], (
+        "raw retrieval score must not leak into metadata"
+    )
+
 
 # -- Scenario C: operational web learning -------------------------------------
 
