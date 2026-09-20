@@ -277,6 +277,16 @@ def test_web_learned_texts_reads_memory_items_and_retrieval() -> None:
     assert web_learned_texts({}) == frozenset()
 
 
+def test_system_prompt_does_not_demand_memory_attribution_unconditionally() -> None:
+    """Regression: an unconditional 'say so when you use memory' made small
+    models invent a memory section when nothing was retrieved."""
+    from sage.conversation.personality import SYSTEM_PROMPT
+
+    assert "When you use memory or knowledge, say so briefly" not in SYSTEM_PROMPT
+    assert "only when it is provided" in SYSTEM_PROMPT
+    assert "do not claim to have used any" in SYSTEM_PROMPT
+
+
 # -- 6. Memory lifecycle: REPLACE before ADD + secret guard ---------------------
 
 
