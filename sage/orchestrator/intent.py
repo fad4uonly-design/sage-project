@@ -110,6 +110,51 @@ def _percent_of_expression(text: str) -> str | None:
     return f"({m.group('pct')} * {m.group('base')}) / 100"
 
 
+# Plain arithmetic questions ("what is 25 * 4", "what is 15 plus 30") are
+# resolved deterministically: a 4B model's arithmetic is not trustworthy, and
+# question-form arithmetic is not a tool_request turn, so the model-driven
+# selector is never consulted for it. Numbers and binary operators only.
+# "-" and "/" must be spaced, so "12/25" and "2026-09-20" stay chat, and
+# numbers with a leading zero never match. No "%" and no "**": those keep
+# their existing (verbatim) behaviour.
+_ARITH_NUM = r"(?:0|[1-9]\d*)(?:\.\d+)?"
+_ARITH_OP = (
+    r"(?:\s*[+*\u00d7\u00f7]\s*"
+    r"|\s+[-/]\s+"
+    r"|\s+(?:plus|minus|times|multiplied\s+by|divided\s+by)\s+)"
+)
+_ARITHMETIC_PATTERN: re.Pattern[str] = re.compile(
+    r"^\s*(?:calculate|compute|what(?:['\u2019]s|\s+is)|how\s+much\s+is)\s+"
+    rf"(?P<expr>{_ARITH_NUM}(?:{_ARITH_OP}{_ARITH_NUM})+)"
+    r"\s*[?.!]*\s*$",
+    re.I,
+)
+_ARITH_TOKEN: re.Pattern[str] = re.compile(
+    rf"{_ARITH_NUM}|[-+*/\u00d7\u00f7]|plus|minus|times|multiplied\s+by|divided\s+by",
+    re.I,
+)
+_ARITH_SYMBOLS = {
+    "plus": "+",
+    "minus": "-",
+    "times": "*",
+    "multiplied by": "*",
+    "divided by": "/",
+    "\u00d7": "*",
+    "\u00f7": "/",
+}
+
+
+def _arithmetic_expression(text: str) -> str | None:
+    m = _ARITHMETIC_PATTERN.match(text)
+    if not m:
+        return None
+    parts = []
+    for token in _ARITH_TOKEN.findall(m.group("expr")):
+        key = re.sub(r"\s+", " ", token.lower())
+        parts.append(_ARITH_SYMBOLS.get(key, token))
+    return " ".join(parts)
+
+
 # Explicit knowledge-base queries. Grouped with the explicit imperatives:
 # these ask about SAGE's own stored knowledge and must not be hijacked by
 # domain keyword routing nor folded into generic chat.
@@ -207,6 +252,17 @@ class IntentAnalyzer:
                 subject=percent,
                 raw_message=text,
                 entities={"tool": "calculator", "args": {"expression": percent}},
+                hints=["tool:calculator", "explicit:true"],
+            )
+
+        arithmetic = _arithmetic_expression(text)
+        if arithmetic is not None:
+            return Intent(
+                kind=IntentKind.TOOL,
+                confidence=0.9,
+                subject=arithmetic,
+                raw_message=text,
+                entities={"tool": "calculator", "args": {"expression": arithmetic}},
                 hints=["tool:calculator", "explicit:true"],
             )
 
