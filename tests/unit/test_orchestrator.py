@@ -241,3 +241,101 @@ def test_evidence_block_renderer_unit() -> None:
     assert "Doc one." in block and "doc-9" in block
     assert "[memory | confidence 0.90]" in block
     assert "[document | confidence 0.78]" in block
+
+
+def _retrieval_with_ranked(ranked: list) -> Any:
+    """Build a RetrievalResult carrying the given ranked evidence items."""
+    from sage.retrieval.models import RetrievalResult
+
+    return RetrievalResult(query="q", ranked=ranked)
+
+
+class _StubRetriever:
+    """Retriever double returning a fixed RetrievalResult."""
+
+    def __init__(self, result: Any) -> None:
+        self._result = result
+
+    async def retrieve(self, query: str, *, limit: int = 10) -> Any:
+        return self._result
+
+
+@pytest.mark.asyncio
+async def test_result_metadata_exposes_evidence_provenance(engine: SageEngine) -> None:
+    """Ranked evidence appears in OrchestratorResult.metadata with exactly
+    layer/confidence/source_ref — raw score is never exposed."""
+    from sage.models.interfaces import ModelRouter
+    from sage.retrieval.interfaces import Retriever
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer
+
+    retrieval = _retrieval_with_ranked(
+        [
+            EvidenceItem(
+                layer=RetrievalLayer.MEMORY,
+                content="Proven fact.",
+                score=0.99,
+                confidence=0.9,
+                source_ref="memory-id-1",
+                metadata={"source": "user"},
+            ),
+            EvidenceItem(
+                layer=RetrievalLayer.DOCUMENT,
+                content="Documented fact.",
+                score=0.70,
+                confidence=0.78,
+                source_ref="doc-9",
+            ),
+        ]
+    )
+    engine.container.register_instance(Retriever, _StubRetriever(retrieval))
+    engine.container.register_instance(ModelRouter, _CaptureModelRouter())
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+    result = await orch.handle("What do you know about me?")
+
+    provenance = result.metadata["evidence_provenance"]
+    assert provenance == [
+        {"layer": "memory", "confidence": 0.9, "source_ref": "memory-id-1"},
+        {"layer": "document", "confidence": 0.78, "source_ref": "doc-9"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_result_metadata_provenance_caps_at_eight(engine: SageEngine) -> None:
+    """Only the first 8 ranked items are exposed in metadata."""
+    from sage.models.interfaces import ModelRouter
+    from sage.retrieval.interfaces import Retriever
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer
+
+    ranked = [
+        EvidenceItem(
+            layer=RetrievalLayer.MEMORY,
+            content=f"Fact {i}.",
+            score=1.0 - i * 0.01,
+            confidence=0.9,
+            source_ref=f"mem-{i}",
+        )
+        for i in range(10)
+    ]
+    engine.container.register_instance(
+        Retriever, _StubRetriever(_retrieval_with_ranked(ranked))
+    )
+    engine.container.register_instance(ModelRouter, _CaptureModelRouter())
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+    result = await orch.handle("What do you know about me?")
+
+    provenance = result.metadata["evidence_provenance"]
+    assert len(provenance) == 8
+    assert [p["source_ref"] for p in provenance] == [f"mem-{i}" for i in range(8)]
+
+
+@pytest.mark.asyncio
+async def test_result_metadata_provenance_empty_without_retrieval(
+    engine: SageEngine,
+) -> None:
+    """A turn with no retrieval result stays safe: empty provenance list."""
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+    result = await orch.handle("hi bro")
+
+    assert result.metadata["evidence_provenance"] == []

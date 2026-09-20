@@ -296,6 +296,19 @@ class DefaultOrchestrator:
                 "user_id": user_id,
                 "step_count": len(step_results),
                 "failed_steps": [s.step.value for s in step_results if not s.success],
+                # Structured retrieval provenance (same semantics as the
+                # reasoning layer's ``evidence_provenance``: first 8 ranked
+                # items, layer/confidence/source_ref only — never the raw
+                # retrieval score). Empty when no retrieval ran.
+                "evidence_provenance": [
+                    {
+                        "layer": getattr(getattr(ev, "layer", None), "value", None)
+                        or str(getattr(ev, "layer", "unknown")),
+                        "confidence": getattr(ev, "confidence", 0.5),
+                        "source_ref": getattr(ev, "source_ref", None),
+                    }
+                    for ev in (getattr(ctx.get("retrieval"), "ranked", None) or [])[:8]
+                ],
                 "conversation": {
                     "mode": und.mode.value,
                     "tone": und.policy.tone,
