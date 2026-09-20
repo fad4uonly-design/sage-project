@@ -209,6 +209,74 @@ def test_memory_evidence_block_empty_is_none() -> None:
     assert memory_evidence_block(None) is None
 
 
+def test_memory_evidence_separates_web_learned_from_user_said() -> None:
+    """Web-learned notes are never attributed to the user."""
+    block = memory_evidence_block(
+        ["I grow tomatoes.", "Concrete slump measures workability."],
+        learned=frozenset({"Concrete slump measures workability."}),
+    )
+    assert block is not None
+    lines = block.splitlines()
+    said = [ln for ln in lines if ln.startswith("- You've said:")]
+    web = [ln for ln in lines if ln.startswith("- Saved from the web:")]
+    assert len(said) == 1
+    assert "I grow tomatoes." in said[0]
+    assert len(web) == 1
+    assert "Concrete slump measures workability." in web[0]
+    assert "not something the user said" in block
+
+
+def test_memory_evidence_all_learned_omits_user_header() -> None:
+    block = memory_evidence_block(
+        ["Water cycle notes."], learned={"Water cycle notes."}
+    )
+    assert block is not None
+    assert "You've said" not in block
+    assert "not as universal facts" not in block
+    assert "Saved from the web" in block
+
+
+def test_memory_evidence_without_learned_matches_default() -> None:
+    items = ["A.", "B."]
+    default = memory_evidence_block(items)
+    assert default is not None
+    assert memory_evidence_block(items, learned=None) == default
+    assert memory_evidence_block(items, learned=frozenset()) == default
+    assert memory_evidence_block(items, learned={"unrelated"}) == default
+
+
+def test_web_learned_texts_reads_memory_items_and_retrieval() -> None:
+    from types import SimpleNamespace
+
+    from sage.conversation.personality import web_learned_texts
+    from sage.core.web_learner import WEB_LEARNED_SOURCE
+    from sage.memory.models import MemoryItem
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer
+
+    def ev(content: str, **meta: object) -> EvidenceItem:
+        return EvidenceItem(
+            layer=RetrievalLayer.MEMORY, content=content, metadata=dict(meta)
+        )
+
+    ctx: dict[str, object] = {
+        "memory_items": [
+            MemoryItem(content="learned via recall", source=WEB_LEARNED_SOURCE),
+            MemoryItem(content="user said this", source="user"),
+        ],
+        "retrieval": SimpleNamespace(
+            ranked=[
+                ev("learned via retrieve", source=WEB_LEARNED_SOURCE),
+                ev("plain", source=None),
+                ev("no source key"),
+            ]
+        ),
+    }
+    assert web_learned_texts(ctx) == frozenset(
+        {"learned via recall", "learned via retrieve"}
+    )
+    assert web_learned_texts({}) == frozenset()
+
+
 # -- 6. Memory lifecycle: REPLACE before ADD + secret guard ---------------------
 
 

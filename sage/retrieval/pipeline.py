@@ -105,6 +105,7 @@ class LayeredRetriever:
                             "type": m.type.value,
                             "importance": m.importance,
                             "relevance": float(rel),
+                            "source": m.source,
                         },
                     )
                     for m, rel in pairs
@@ -121,7 +122,11 @@ class LayeredRetriever:
                 score=float(m.importance),
                 confidence=float(m.confidence),
                 source_ref=m.id,
-                metadata={"type": m.type.value, "importance": m.importance},
+                metadata={
+                    "type": m.type.value,
+                    "importance": m.importance,
+                    "source": m.source,
+                },
             )
             for m in found
         ]

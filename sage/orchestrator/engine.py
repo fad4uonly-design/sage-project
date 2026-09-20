@@ -980,6 +980,7 @@ class DefaultOrchestrator:
             build_system_prompt,
             memory_evidence_block,
             style_directive,
+            web_learned_texts,
         )
         from sage.models.interfaces import CompletionRequest, Message, ModelRouter
 
@@ -1007,7 +1008,10 @@ class DefaultOrchestrator:
                 "Active projects:\n- " + "\n- ".join(str(p) for p in ctx["active_projects"][:4])
             )
         if ctx.get("memories"):
-            evidence = memory_evidence_block(list(ctx["memories"])[:5])
+            evidence = memory_evidence_block(
+                list(ctx["memories"])[:5],
+                learned=web_learned_texts(ctx),
+            )
             if evidence:
                 extra_bits.append(evidence)
         if ctx.get("graph_facts"):

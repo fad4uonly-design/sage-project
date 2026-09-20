@@ -138,6 +138,7 @@ async def test_memory_layer_preserves_semantic_relevance_over_importance(
         assert memory_items, "expected memory evidence"
         top = memory_items[0]
         assert "sky" in top.content.lower()
+        assert top.metadata["source"] == "test"
 
         # The carried semantic relevance IS the score now.
         assert top.score == pytest.approx(top.metadata["relevance"])
