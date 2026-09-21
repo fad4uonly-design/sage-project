@@ -60,7 +60,11 @@ class _RecordingLanguageModel:
             content=self.reply,
             model=self.model_name,
             provider=self.provider,
-            usage={},
+            usage={
+                "prompt_tokens": 211,
+                "completion_tokens": 23,
+                "total_tokens": 234,
+            },
             raw={},
             finish_reason="stop",
         )
@@ -214,6 +218,22 @@ async def test_interpretable_tool_single_reason_call(wired) -> None:
     assert "output: trend-up:q1" in prompt
     assert "verification: verified" in prompt
     assert result.response == "Interpreted: upward trend."
+
+    from sage.audit.logger import ExecutionAudit
+
+    audit = _engine.container.resolve(ExecutionAudit)
+    records = await audit.list_recent(kind="capability", limit=10)
+    record = next(r for r in records if r.subject_id == result.plan_id)
+    assert record.detail["model_usage"] == [
+        {
+            "stage": "reasoning",
+            "provider": "recording",
+            "model": "recording-v1",
+            "prompt_tokens": 211,
+            "completion_tokens": 23,
+            "total_tokens": 234,
+        }
+    ]
 # -- D: failed tool (real calculator failure) -----------------------------------
 @pytest.mark.asyncio
 async def test_failed_tool_no_reason_no_fabrication(wired) -> None:

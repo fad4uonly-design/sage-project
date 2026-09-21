@@ -306,6 +306,17 @@ class DefaultReasoningEngine:
                     ]
                 )
             )
+            usage = getattr(resp, "usage", None) or {}
+            ctx.metadata.setdefault("model_usage", []).append(
+                {
+                    "stage": "reasoning",
+                    "provider": str(getattr(resp, "provider", "") or ""),
+                    "model": str(getattr(resp, "model", "") or ""),
+                    "prompt_tokens": int(usage.get("prompt_tokens", 0) or 0),
+                    "completion_tokens": int(usage.get("completion_tokens", 0) or 0),
+                    "total_tokens": int(usage.get("total_tokens", 0) or 0),
+                }
+            )
             return (resp.content or "").strip() or None
         except Exception:
             log.exception("reasoning.model_assist_failed")

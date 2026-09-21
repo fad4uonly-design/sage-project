@@ -368,6 +368,24 @@ class DefaultOrchestrator:
         await self._audit_capability(result, message, ctx)
         return result
 
+    @staticmethod
+    def _record_model_usage(
+        ctx: dict[str, Any],
+        *,
+        stage: str,
+        response: Any,
+    ) -> None:
+        usage = getattr(response, "usage", None) or {}
+        entry = {
+            "stage": stage,
+            "provider": str(getattr(response, "provider", "") or ""),
+            "model": str(getattr(response, "model", "") or ""),
+            "prompt_tokens": int(usage.get("prompt_tokens", 0) or 0),
+            "completion_tokens": int(usage.get("completion_tokens", 0) or 0),
+            "total_tokens": int(usage.get("total_tokens", 0) or 0),
+        }
+        ctx.setdefault("_model_usage", []).append(entry)
+
     async def _audit_capability(
         self,
         result: OrchestratorResult,
@@ -423,6 +441,9 @@ class DefaultOrchestrator:
             }
         if tool_error:
             detail["tool_error"] = tool_error
+        model_usage = ctx.get("_model_usage")
+        if model_usage:
+            detail["model_usage"] = list(model_usage)
 
         with contextlib.suppress(Exception):
             await audit.record(
@@ -883,6 +904,10 @@ class DefaultOrchestrator:
         # The model contributed only when its polished conclusion replaced the
         # strategy heuristic (the existing "model_refine" trace marker).
         # Strategy text alone must never stand in for a reasoning conclusion.
+        reasoning_usage = reasoning_ctx.metadata.get("model_usage")
+        if reasoning_usage:
+            ctx.setdefault("_model_usage", []).extend(reasoning_usage)
+
         model_refined = any(step.kind == "model_refine" for step in outcome.trace)
         conclusion = str(outcome.conclusion or "").strip() if model_refined else ""
         if not conclusion:
@@ -1267,4 +1292,5 @@ class DefaultOrchestrator:
                 max_tokens=settings.models.max_tokens if settings else 2048,
             )
         )
+        self._record_model_usage(ctx, stage="compose", response=resp)
         return resp.content

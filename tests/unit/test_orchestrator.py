@@ -63,7 +63,11 @@ class _CaptureLanguageModel:
             content="captured",
             model=self.model_name,
             provider=self.provider,
-            usage={},
+            usage={
+                "prompt_tokens": 101,
+                "completion_tokens": 17,
+                "total_tokens": 118,
+            },
             raw={},
             finish_reason="stop",
         )
@@ -108,6 +112,16 @@ async def test_chat_memory_context_is_explicitly_grounded(engine: SageEngine) ->
 
     assert response == "captured"
     assert router.language_model.request is not None
+    assert ctx["_model_usage"] == [
+        {
+            "stage": "compose",
+            "provider": "test",
+            "model": "test-model",
+            "prompt_tokens": 101,
+            "completion_tokens": 17,
+            "total_tokens": 118,
+        }
+    ]
 
     system_prompt = router.language_model.request.messages[0].content
     assert "SAGE should remain simple and user-controlled." in system_prompt
