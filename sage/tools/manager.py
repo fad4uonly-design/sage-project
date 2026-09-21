@@ -45,6 +45,7 @@ class DefaultToolManager:
             parameters_schema=dict(tool.parameters_schema or {}),
             permissions=list(getattr(tool, "permissions", []) or []),
             timeout_seconds=float(getattr(tool, "timeout_seconds", 30.0) or 30.0),
+            interpretable=bool(getattr(tool, "interpretable", False)),
         )
 
     def list_tools(self) -> list[ToolInfo]:

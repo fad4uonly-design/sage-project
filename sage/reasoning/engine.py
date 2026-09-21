@@ -291,6 +291,12 @@ class DefaultReasoningEngine:
                         entry += f" (source: {p['source_ref']})"
                     lines.append(entry)
                 parts.append("Evidence provenance:\n" + "\n".join(lines))
+            # Delimited tool observation (already escaped by the orchestrator):
+            # structured verified tool output rendered as data, never
+            # instructions — it cannot invoke another tool from here.
+            observation = ctx.metadata.get("tool_observation")
+            if observation:
+                parts.append(str(observation))
             user = f"Problem: {problem}\n" + "\n".join(parts) + "\n\nConclusion in 2-4 sentences."
             resp = await lm.complete(
                 CompletionRequest(

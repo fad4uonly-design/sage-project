@@ -7,6 +7,7 @@ Reasoning/Planning/Agents/Tools) → Response
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import re
 import time
@@ -32,6 +33,11 @@ log = get_logger(__name__)
 #: history preserved). Deliberately NOT the Lean adapter's 0.60 short-circuit
 #: threshold — different purpose, different calibration.
 _MEMORY_REPLACE_RELEVANCE = 0.5
+
+#: Bounded timeout for the single reasoning pass over a verified tool result
+#: (tool→REASON path). Aligned with the existing default tool timeout
+#: (``ToolInfo.timeout_seconds = 30.0``) — no new configuration surface.
+_REASON_TIMEOUT_SECONDS = 30.0
 
 
 class DefaultOrchestrator:
@@ -115,6 +121,12 @@ class DefaultOrchestrator:
             # Explicit tool imperative → invoke through the standard ToolManager,
             # then compose the user-facing response from the tool artifact.
             steps.append(PipelineStep.INVOKE_TOOL)
+            # Opt-in bounded reasoning: only a tool that explicitly declares
+            # ``interpretable = True`` may plan a REASON step. The step still
+            # runs only when the verified result qualifies (see handle());
+            # deterministic tools (calculator, current_time, ...) never see it.
+            if self._tool_is_interpretable(intent):
+                steps.append(PipelineStep.REASON)
             steps.append(PipelineStep.COMPOSE_RESPONSE)
             return ExecutionPlan(intent=intent, steps=steps)
 
@@ -126,6 +138,27 @@ class DefaultOrchestrator:
             ]
         )
         return ExecutionPlan(intent=intent, steps=steps)
+
+    def _tool_is_interpretable(self, intent: Intent) -> bool:
+        """True only when the named tool explicitly declares ``interpretable``.
+
+        The existing ToolManager registry is the single source of truth (no
+        duplicate registry); a missing manager or unknown tool is never
+        interpretable.
+        """
+        from sage.tools.interfaces import ToolManager
+
+        manager = self._container.try_resolve(ToolManager)
+        if manager is None:
+            return False
+        tool_name = str(intent.entities.get("tool") or "").strip()
+        try:
+            for info in manager.list_tools():
+                if info.name == tool_name:
+                    return bool(getattr(info, "interpretable", False))
+        except Exception:
+            log.exception("orchestrator.tool_listing_failed", tool=tool_name)
+        return False
 
     async def _select_tool_intent(
         self, intent: Intent, message: str, ctx: dict[str, Any]
@@ -239,6 +272,16 @@ class DefaultOrchestrator:
         )
 
         for step in plan.steps:
+            # Bounded tool→reason gate: when the verified tool result does not
+            # qualify (failed execution or failed verification), the planned
+            # REASON step is skipped entirely — it never runs and never
+            # appears in the step results.
+            if (
+                step == PipelineStep.REASON
+                and intent.kind == IntentKind.TOOL
+                and ctx.get("_tool_reason_gate") is False
+            ):
+                continue
             t0 = time.perf_counter()
             try:
                 out = await self._run_step(step, intent, message, ctx)
@@ -463,11 +506,30 @@ class DefaultOrchestrator:
         ctx["tool_result"] = result
 
         if result.success:
-            return self._format_tool_output(tool_name, result)
+            formatted = self._format_tool_output(tool_name, result)
+            ctx["tool_deterministic_output"] = formatted
+            ctx["tool_response"] = formatted
+        else:
+            # Controlled degraded response — surface the reason, keep the loop alive.
+            error = (result.error or "unknown error").strip()
+            ctx["tool_response"] = (
+                f"I couldn't complete that with the {tool_name} tool: {error}"
+            )
 
-        # Controlled degraded response — surface the reason, keep the loop alive.
-        error = (result.error or "unknown error").strip()
-        return f"I couldn't complete that with the {tool_name} tool: {error}"
+        # Verification gate — the real Tool-R0 verdict stamped by the
+        # ToolManager (result.metadata["verification"]["verified"]). REASON
+        # runs only for a successful AND verified result of an interpretable
+        # tool (interpretable is checked at plan level; this runtime gate is
+        # the verification half). A flagged/failed result never reaches REASON.
+        verification = result.metadata.get("verification")
+        verified = (
+            bool(verification.get("verified")) if isinstance(verification, dict) else False
+        )
+        ctx["_tool_reason_gate"] = bool(result.success and verified)
+
+        if result.success:
+            return formatted
+        return ctx["tool_response"]
 
     @staticmethod
     def _format_tool_output(tool_name: str, result: Any) -> str:
@@ -680,6 +742,10 @@ class DefaultOrchestrator:
         )
 
     async def _step_reason(self, intent: Intent, ctx: dict[str, Any]) -> str:
+        if intent.kind == IntentKind.TOOL:
+            # Bounded verified-tool → reasoning path (interpretable tools only,
+            # verification-gated by the invoke step).
+            return await self._reason_over_tool_result(intent, ctx)
         from sage.reasoning.interfaces import ReasoningEngine
         from sage.reasoning.models import ReasoningContext
 
@@ -740,6 +806,90 @@ class DefaultOrchestrator:
             for risk in result.risks:
                 lines.append(f"  - {risk}")
         return "\n".join(lines)
+
+    async def _reason_over_tool_result(self, intent: Intent, ctx: dict[str, Any]) -> str:
+        """Bounded single-pass reasoning over a verified, interpretable tool result.
+
+        Exactly one model call through the existing reasoning engine (its
+        builtin strategies are deterministic; only the model-assist polish
+        calls the model). The structured verified result travels in
+        ``ReasoningContext.metadata``; the model sees it inside a delimited,
+        escaped ``<tool_observation>`` block — data, never instructions, and
+        it can never invoke another tool from here.
+
+        Output-source precedence (explicit, see _step_compose):
+        usable model conclusion wins; otherwise the raw verified tool output
+        is returned unchanged — an engine timeout, exception, or unusable
+        (empty/whitespace) conclusion never fabricates an explanation.
+        """
+        from sage.reasoning.interfaces import ReasoningEngine
+        from sage.reasoning.models import ReasoningContext
+        from sage.tools.observation import build_tool_observation
+
+        fallback = str(
+            ctx.get("tool_deterministic_output") or ctx.get("tool_response") or ""
+        )
+        engine = self._container.try_resolve(ReasoningEngine)
+        result = ctx.get("tool_result")
+        if engine is None or result is None:
+            ctx["tool_response"] = fallback
+            return fallback
+
+        tool_name = str(intent.entities.get("tool") or "")
+        raw_args = intent.entities.get("args")
+        args = dict(raw_args) if isinstance(raw_args, dict) else {}
+        result_metadata = getattr(result, "metadata", {}) or {}
+        verification = result_metadata.get("verification") or {}
+        structured = {
+            "tool": tool_name,
+            "arguments": args,
+            "success": bool(getattr(result, "success", False)),
+            "output": getattr(result, "output", None),
+            "error": getattr(result, "error", None),
+            "verification": {
+                "verified": verification.get("verified"),
+                "confidence": verification.get("confidence"),
+                "issue_count": verification.get("issue_count"),
+            },
+            "issues": list(result_metadata.get("verification_issues") or []),
+        }
+        reasoning_ctx = ReasoningContext(
+            memories=list(ctx.get("memories") or []),
+            metadata={
+                "tool_result": structured,
+                "tool_observation": build_tool_observation(
+                    tool_name=tool_name, arguments=args, result=result
+                ),
+            },
+        )
+        try:
+            outcome = await asyncio.wait_for(
+                engine.reason(
+                    intent.subject or intent.raw_message,
+                    context=reasoning_ctx,
+                    use_retrieval=False,
+                ),
+                timeout=_REASON_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            log.warning("orchestrator.tool_reason_timeout", tool=tool_name)
+            ctx["tool_response"] = fallback
+            return fallback
+        except Exception:
+            log.exception("orchestrator.tool_reason_failed", tool=tool_name)
+            ctx["tool_response"] = fallback
+            return fallback
+
+        # The model contributed only when its polished conclusion replaced the
+        # strategy heuristic (the existing "model_refine" trace marker).
+        # Strategy text alone must never stand in for a reasoning conclusion.
+        model_refined = any(step.kind == "model_refine" for step in outcome.trace)
+        conclusion = str(outcome.conclusion or "").strip() if model_refined else ""
+        if not conclusion:
+            ctx["tool_response"] = fallback
+            return fallback
+        ctx["tool_response"] = conclusion
+        return conclusion
 
     async def _step_plan(self, intent: Intent, ctx: dict[str, Any]) -> str:
         from sage.agents.interfaces import AgentOrchestrator, AgentTask
@@ -979,10 +1129,20 @@ class DefaultOrchestrator:
             return social_text
         # If earlier steps already produced a user-facing artifact for non-chat intents, use it
         artifacts = ctx.get("_artifacts") or []
-        if intent.kind == IntentKind.TOOL and not artifacts:
-            # The tool step raised or produced nothing: controlled fallback
-            # instead of falling through to a generic chat answer.
-            return "I processed your tool request but it did not produce a result."
+        if intent.kind == IntentKind.TOOL:
+            # Explicit output-source precedence for the tool path — never
+            # artifacts[-1] guesswork:
+            #   deterministic success           -> verified tool output
+            #   failed / flagged verification   -> deterministic failure response
+            #   interpretable + usable REASON   -> REASON output
+            #   interpretable + REASON unusable -> raw verified tool output
+            tool_response = ctx.get("tool_response")
+            if tool_response is not None:
+                return str(tool_response)
+            if not artifacts:
+                # The tool step raised or produced nothing: controlled
+                # fallback instead of a generic chat answer.
+                return "I processed your tool request but it did not produce a result."
         if intent.kind != IntentKind.CHAT and artifacts:
             return str(artifacts[-1])
         if intent.kind in {
