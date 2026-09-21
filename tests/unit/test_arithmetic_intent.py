@@ -1,4 +1,4 @@
-"""Question-form arithmetic with numeric operands routes to the calculator."""
+"""Arithmetic expressions with numeric operands route to the calculator."""
 
 import pytest
 from sage.orchestrator.intent import IntentAnalyzer
@@ -21,6 +21,9 @@ from sage.tools.builtin.core_tools import CalculatorTool
         ("compute 3 plus 4 times 2", "3 + 4 * 2"),
         ("calculate 15 plus 30", "15 + 30"),
         ("what is 6 \u00f7 3", "6 / 3"),
+        ("12 * 13", "12 * 13"),
+        ("15 plus 30", "15 + 30"),
+        ("1 / 0", "1 / 0"),
     ],
 )
 def test_arithmetic_question_maps_to_calculator(message: str, expression: str) -> None:
@@ -56,6 +59,8 @@ def test_other_calculate_expressions_keep_the_verbatim_path(
         "what is 007 + 1",
         "what is 25",
         "what is 25 * 4 in binary",
+        "25",
+        "3 + 4 apples",
     ],
 )
 def test_ambiguous_or_incomplete_arithmetic_is_not_a_tool(message: str) -> None:

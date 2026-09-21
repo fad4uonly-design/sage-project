@@ -124,7 +124,7 @@ _ARITH_OP = (
     r"|\s+(?:plus|minus|times|multiplied\s+by|divided\s+by)\s+)"
 )
 _ARITHMETIC_PATTERN: re.Pattern[str] = re.compile(
-    r"^\s*(?:calculate|compute|what(?:['\u2019]s|\s+is)|how\s+much\s+is)\s+"
+    r"^\s*(?:(?:calculate|compute|what(?:['\u2019]s|\s+is)|how\s+much\s+is)\s+)?"
     rf"(?P<expr>{_ARITH_NUM}(?:{_ARITH_OP}{_ARITH_NUM})+)"
     r"\s*[?.!]*\s*$",
     re.I,
