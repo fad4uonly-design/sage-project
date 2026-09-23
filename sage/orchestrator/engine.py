@@ -46,7 +46,13 @@ _REASON_TIMEOUT_SECONDS = 30.0
 #: fixed-range ``for`` iteration, never a ``while``, so an unbounded
 #: autonomous agent loop is structurally impossible.
 _MAX_TOOL_DECISION_ITERATIONS = 3
-_REASON_TIMEOUT_SECONDS = 30.0
+
+#: Terminal sentinel the reasoning contract asks for when the verified
+#: evidence is already sufficient ("end with FINAL and no directive"). Matched
+#: ONLY as the standalone final token of a conclusion, so ordinary prose that
+#: merely contains the word (e.g. "the final answer depends on ...") is never
+#: touched.
+_TOOL_FINAL_SENTINEL_RE = re.compile(r"(?:\A|\s)FINAL\s*\Z")
 
 
 class DefaultOrchestrator:
@@ -727,6 +733,27 @@ class DefaultOrchestrator:
         ]
         return "\n".join(kept).strip()
 
+    @staticmethod
+    def _strip_final_sentinel(text: Any) -> str:
+        """Drop the terminal ``FINAL`` sentinel from a user-facing conclusion.
+
+        The reasoning contract (``_tool_followup_contract``) tells the model to
+        end with ``FINAL`` when no further tool is needed. That marker is
+        protocol, not answer, so it is removed here — at the SAME user-visible
+        output boundary as the ``NEXT_TOOL:`` directive — and ONLY when it is
+        the standalone final token of the conclusion. Prose that merely
+        contains the word (``The final answer depends on the evidence.``) is
+        preserved verbatim.
+        """
+        if not isinstance(text, str):
+            return ""
+        cleaned = text.rstrip()
+        while True:
+            stripped = _TOOL_FINAL_SENTINEL_RE.sub("", cleaned).rstrip()
+            if stripped == cleaned:
+                return cleaned
+            cleaned = stripped
+
     def _tool_followup_contract(self) -> str:
         """Instruction block telling the model how to request one more tool.
 
@@ -1117,9 +1144,12 @@ class DefaultOrchestrator:
             return fallback
         # Keep the raw conclusion (directive included) for the bounded
         # next-decision loop; the user-facing response never shows the
-        # directive line itself.
+        # directive line itself, nor the terminal FINAL sentinel.
         ctx["_tool_next_directive_raw"] = conclusion
-        ctx["tool_response"] = self._strip_next_tool_directive(conclusion) or fallback
+        ctx["tool_response"] = (
+            self._strip_final_sentinel(self._strip_next_tool_directive(conclusion))
+            or fallback
+        )
         return str(ctx["tool_response"])
 
     async def _step_plan(self, intent: Intent, ctx: dict[str, Any]) -> str:

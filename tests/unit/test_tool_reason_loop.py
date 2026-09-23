@@ -11,10 +11,14 @@ model-assist call) execute — only invocation counting and intent stubbing sit
 at established seams.
 """
 from __future__ import annotations
+
+import re
 from typing import Any
+
 import pytest
 from sage.core.engine import SageEngine
 from sage.models.interfaces import CompletionResponse, ModelRouter
+from sage.orchestrator.engine import DefaultOrchestrator
 from sage.orchestrator.interfaces import Orchestrator
 from sage.orchestrator.models import Intent, IntentKind, PipelineStep
 from sage.reasoning.engine import DefaultReasoningEngine
@@ -22,6 +26,7 @@ from sage.reasoning.interfaces import ReasoningEngine
 from sage.tools.base import BaseTool
 from sage.tools.interfaces import ToolManager, ToolResult
 from sage.tools.verification import ToolOutputVerifier
+
 # Step sequences asserted explicitly (mandatory step-sequence checks).
 TOOL_STEPS = [
     PipelineStep.ANALYZE_INTENT,
@@ -174,23 +179,34 @@ async def test_deterministic_calculator_exact_result_no_model(wired) -> None:
     assert router.language_model.requests == []
     assert len(manager.invocations) == 1
 @pytest.mark.asyncio
-async def test_deterministic_current_time_no_model(wired) -> None:
+async def test_interpretable_current_time_verified_result_reaches_model(wired) -> None:
+    """``current_time`` is the one built-in that opts in (``interpretable=True``),
+    so its VERIFIED result goes through exactly ONE bounded reasoning pass: the
+    model receives the real ISO-8601 timestamp as escaped verified evidence.
+    One tool invocation, one model call, unchanged tool output contract."""
     _engine, router, manager, orch = wired
     orch._analyzer = _StubAnalyzer(
         _tool_intent("what time is it", "current_time", {})
     )
     result = await orch.handle("what time is it")
-    assert _steps(result) == TOOL_STEPS
-    assert router.language_model.requests == []
+    assert _steps(result) == TOOL_REASON_STEPS
+    assert len(router.language_model.requests) == 1
     assert len(manager.invocations) == 1
-    # Existing exact current-time behavior preserved (ISO-8601 timestamp).
-    assert "T" in result.response and "-" in result.response
-def test_tool_info_interpretable_defaults_false(engine: SageEngine) -> None:
+    prompt = router.language_model.requests[0].messages[-1].content
+    assert "<tool_observation>" in prompt
+    assert "tool: current_time" in prompt
+    assert "verification: verified" in prompt
+    # The exact local ISO-8601 timestamp still flows through, as evidence.
+    assert re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", prompt)
+    # Model finished without a directive → its conclusion is the response.
+    assert result.response == "Recorded conclusion."
+def test_tool_info_interpretable_is_opt_in(engine: SageEngine) -> None:
     manager = engine.container.resolve(ToolManager)
     infos = {i.name: i for i in manager.list_tools()}
     assert infos["calculator"].interpretable is False
-    assert infos["current_time"].interpretable is False
     assert infos["echo"].interpretable is False
+    # Only ``current_time`` opts in (makes the bounded loop reachable).
+    assert infos["current_time"].interpretable is True
 # -- C: successful interpretable tool -------------------------------------------
 @pytest.mark.asyncio
 async def test_interpretable_tool_single_reason_call(wired) -> None:
@@ -554,6 +570,109 @@ async def test_loop_stops_at_configured_maximum(wired) -> None:
     assert result.response
 
 
+class StaleTimeTool(BaseTool):
+    """``current_time`` override whose clock read yields a STALE/unusable result:
+    it reports failure with no error message, so the REAL ToolOutputVerifier
+    raises a ``missing_error`` issue → verified=False."""
+
+    name = "current_time"
+    description = "Stale clock read (verifier-unverified test tool)."
+    category = "utility"
+    interpretable = True
+    parameters_schema = {"type": "object", "properties": {}}
+
+    def __init__(self) -> None:
+        self.executions = 0
+
+    async def execute(self, **params: Any) -> ToolResult:
+        self.executions += 1
+        return ToolResult(
+            success=False,
+            error=None,
+            metadata={"source": "system_clock", "stale": True},
+        )
+
+
+# -- I: failure probes (stale / timeout / bound) ---------------------------------
+@pytest.mark.asyncio
+async def test_stale_time_result_is_not_verified_evidence(wired) -> None:
+    """PROBE A — a stale ``current_time`` result: the real Tool-R0 verdict is
+    not-verified, ``_tool_reason_gate`` blocks REASON, the model is NEVER shown
+    the failed result as verified evidence, the existing deterministic fallback
+    runs, and nothing crashes."""
+    _engine, router, manager, orch = wired
+    stale = StaleTimeTool()
+    manager.register(stale)
+    orch._analyzer = _StubAnalyzer(_tool_intent("what time is it", "current_time", {}))
+
+    # Tool-R0 verdict on the stale result (real verifier, no fakes).
+    verdict = await ToolOutputVerifier().verify(
+        "current_time", ToolResult(success=False, error=None)
+    )
+    assert verdict.verified is False
+    assert any(issue.severity == "error" for issue in verdict.issues)
+
+    result = await orch.handle("what time is it")
+
+    assert stale.executions == 1
+    assert _steps(result) == TOOL_STEPS  # REASON skipped entirely
+    assert router.language_model.requests == []  # never presented as evidence
+    assert len(manager.invocations) == 1
+    # Existing deterministic fallback behavior, no fabricated success.
+    assert "couldn't complete that with the current_time tool" in result.response
+    assert manager.results[-1].metadata["verification"]["verified"] is False
+
+    from sage.audit.logger import ExecutionAudit
+
+    audit = _engine.container.resolve(ExecutionAudit)
+    record = next(
+        r
+        for r in await audit.list_recent(kind="capability", limit=10)
+        if r.subject_id == result.plan_id
+    )
+    # Audit intact: verdict recorded, no model usage for a gate-blocked REASON,
+    # and no bounded-iteration marker was fabricated.
+    assert record.detail["verification"]["verified"] is False
+    assert "model_usage" not in record.detail
+    assert "tool_decision_iterations" not in record.detail
+
+
+@pytest.mark.asyncio
+async def test_reason_timeout_on_time_tool_falls_back(wired, monkeypatch) -> None:
+    """PROBE B — the REASON model call exceeds its configured timeout (patched
+    to 50ms at the existing seam): no hang, no crash, the existing error path
+    degrades to the RAW verified tool output, and audit stays intact."""
+    _engine, router, manager, orch = wired
+    router.language_model = _RecordingLanguageModel(delay=0.5)
+    _engine.container.register_instance(
+        ReasoningEngine, DefaultReasoningEngine(models=router)
+    )
+    monkeypatch.setattr("sage.orchestrator.engine._REASON_TIMEOUT_SECONDS", 0.05)
+    orch._analyzer = _StubAnalyzer(_tool_intent("what time is it", "current_time", {}))
+
+    result = await orch.handle("what time is it")
+
+    assert _steps(result) == TOOL_REASON_STEPS
+    assert len(manager.invocations) == 1
+    assert len(router.language_model.requests) == 1  # one attempt, no retry loop
+    # Fell back to the raw VERIFIED tool output, not a fabricated conclusion.
+    assert re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", result.response)
+    assert "Recorded conclusion" not in result.response
+    assert manager.results[-1].metadata["verification"]["verified"] is True
+
+    from sage.audit.logger import ExecutionAudit
+
+    audit = _engine.container.resolve(ExecutionAudit)
+    record = next(
+        r
+        for r in await audit.list_recent(kind="capability", limit=10)
+        if r.subject_id == result.plan_id
+    )
+    assert record.status == "ok"
+    assert record.detail["tool"] == "current_time"
+    assert record.detail["verification"]["verified"] is True
+
+
 @pytest.mark.asyncio
 async def test_single_tool_behavior_unchanged_when_model_finishes(wired) -> None:
     """When the model finishes without a directive, everything is exactly the
@@ -579,3 +698,194 @@ async def test_single_tool_behavior_unchanged_when_model_finishes(wired) -> None
     assert len(manager.invocations) == 1
     assert len(router.language_model.requests) == 1
     assert result.response == "Interpreted: upward trend."
+
+
+@pytest.mark.asyncio
+async def test_bound_cannot_be_extended_and_audit_records_iterations(wired) -> None:
+    """PROBE C — the model keeps requesting an allowed tool forever: the bound
+    stays exactly 3, no fourth invocation happens, model output cannot extend
+    the loop, execution stops cleanly with a safe response, and audit records
+    the bounded iteration count."""
+    _engine, router, manager, orch = wired
+    # Distinct args each round so the SEPARATE repeat-call guard (probed below)
+    # cannot stop the loop: only the iteration bound may.
+    replies = [
+        f'More.\nNEXT_TOOL: {{"tool": "current_time", "arguments": {{"note": "n{i}"}}}}'
+        for i in range(8)
+    ]
+    router.language_model = _DecisionLanguageModel(replies)
+    _engine.container.register_instance(
+        ReasoningEngine, DefaultReasoningEngine(models=router)
+    )
+    insight = InsightTool()
+    probe = TimeProbeTool()
+    manager.register(insight)
+    manager.register(probe)
+    orch._analyzer = _StubAnalyzer(
+        _tool_intent("interpret the series q1", "insight", {"text": "q1"})
+    )
+
+    from sage.orchestrator.engine import _MAX_TOOL_DECISION_ITERATIONS
+
+    result = await orch.handle("interpret the series q1")
+
+    assert _MAX_TOOL_DECISION_ITERATIONS == 3
+    assert insight.executions + probe.executions == 3  # never a 4th
+    assert len(manager.invocations) == 3
+    assert len(router.language_model.requests) == 3  # model cannot extend it
+    # Stops cleanly with a safe final response (never empty, never a crash).
+    assert result.response
+    assert "NEXT_TOOL" not in result.response
+
+    from sage.audit.logger import ExecutionAudit
+
+    audit = _engine.container.resolve(ExecutionAudit)
+    record = next(
+        r
+        for r in await audit.list_recent(kind="capability", limit=10)
+        if r.subject_id == result.plan_id
+    )
+    assert record.detail["tool_decision_iterations"] == _MAX_TOOL_DECISION_ITERATIONS
+    # Every model call is accounted for, with prompt_tokens per call.
+    assert len(record.detail["model_usage"]) == 3
+    assert all(u["prompt_tokens"] == 211 for u in record.detail["model_usage"])
+    assert all(u["stage"] == "reasoning" for u in record.detail["model_usage"])
+
+
+@pytest.mark.asyncio
+async def test_repeated_identical_directive_is_not_re_executed(wired) -> None:
+    """Independent of the iteration bound, the ``(tool, sorted args)`` guard
+    rejects a directive that repeats the call already made: the model cannot
+    loop one tool, the tool runs exactly once, and only one model call happens."""
+    _engine, router, manager, orch = wired
+    same = 'More.\nNEXT_TOOL: {"tool": "current_time", "arguments": {}}'
+    # Two identical directives: the first runs the follow-up, the second must be
+    # refused as a repeat of the call already made.
+    router.language_model = _DecisionLanguageModel([same, same, same])
+    _engine.container.register_instance(
+        ReasoningEngine, DefaultReasoningEngine(models=router)
+    )
+    insight = InsightTool()
+    probe = TimeProbeTool()
+    manager.register(insight)
+    manager.register(probe)
+    orch._analyzer = _StubAnalyzer(
+        _tool_intent("interpret the series q1", "insight", {"text": "q1"})
+    )
+
+    result = await orch.handle("interpret the series q1")
+
+    assert insight.executions == 1
+    assert probe.executions == 1  # first follow-up ran once; repeat refused
+    assert len(manager.invocations) == 2
+    assert len(router.language_model.requests) == 2
+    assert result.response
+    assert "NEXT_TOOL" not in result.response
+
+
+# -- E: the terminal FINAL sentinel never reaches the user ----------------------
+def test_strip_final_sentinel_unit_cases() -> None:
+    """The contract's terminal sentinel is removed ONLY as the standalone final
+    token: prose that merely contains the word, and a non-terminal FINAL, are
+    preserved verbatim."""
+    strip = DefaultOrchestrator._strip_final_sentinel
+    # Terminal sentinel, inline or on its own line → removed.
+    assert strip("1576512000 is the time. FINAL") == "1576512000 is the time."
+    assert strip("Interpreted the series.\nFINAL") == "Interpreted the series."
+    assert strip("Answer\n\nFINAL\n") == "Answer"
+    # Ordinary prose containing the word is untouched.
+    prose = "The final answer depends on the evidence."
+    assert strip(prose) == prose
+    note = "Final note: the value is verified."
+    assert strip(note) == note
+    # A non-terminal FINAL is data, not a sentinel.
+    leading = "FINAL is the sentinel\nmore text"
+    assert strip(leading) == leading
+    # No sentinel → unchanged; sentinel only → empty (caller keeps the fallback).
+    assert strip("Interpreted: upward trend.") == "Interpreted: upward trend."
+    assert strip("FINAL") == ""
+    assert strip(None) == ""
+
+
+@pytest.mark.asyncio
+async def test_terminal_final_sentinel_not_shown_to_user(wired) -> None:
+    """Live-shape regression: the model answers over the verified time evidence
+    and echoes the contract's terminal sentinel. The user-visible answer carries
+    the conclusion only — one tool run, one model call, contract unchanged."""
+    _engine, router, manager, orch = wired
+    router.language_model = _RecordingLanguageModel(
+        reply=(
+            "The current time is 2026-09-23T11:35:29+03:00, as determined by "
+            "the `current_time` tool. This output is verified and reliable. FINAL"
+        )
+    )
+    _engine.container.register_instance(
+        ReasoningEngine, DefaultReasoningEngine(models=router)
+    )
+    orch._analyzer = _StubAnalyzer(_tool_intent("what time is it", "current_time", {}))
+
+    result = await orch.handle("what time is it")
+
+    assert _steps(result) == TOOL_REASON_STEPS
+    assert len(manager.invocations) == 1
+    assert len(router.language_model.requests) == 1
+    assert "FINAL" not in result.response
+    assert result.response.endswith("This output is verified and reliable.")
+    # The reasoning contract still asks for the sentinel — semantics unchanged.
+    prompt = router.language_model.requests[0].messages[-1].content
+    assert "FINAL and no directive" in prompt
+
+
+@pytest.mark.asyncio
+async def test_prose_containing_final_word_reaches_user_intact(wired) -> None:
+    """An answer whose prose merely contains the word ``final`` is passed
+    through byte-for-byte: it is not a sentinel and must never be trimmed."""
+    _engine, router, manager, orch = wired
+    prose = "The final answer depends on the evidence."
+    router.language_model = _RecordingLanguageModel(reply=prose)
+    _engine.container.register_instance(
+        ReasoningEngine, DefaultReasoningEngine(models=router)
+    )
+    orch._analyzer = _StubAnalyzer(_tool_intent("what time is it", "current_time", {}))
+
+    result = await orch.handle("what time is it")
+
+    assert result.response == prose
+    assert len(router.language_model.requests) == 1
+
+
+@pytest.mark.asyncio
+async def test_sentinel_stripped_alongside_next_tool_directive(wired) -> None:
+    """A conclusion that echoes the sentinel AND requests a follow-up: the
+    existing NEXT_TOOL path still runs the second tool, and neither the
+    directive nor the sentinel is shown to the user."""
+    _engine, router, manager, orch = wired
+    router.language_model = _DecisionLanguageModel(
+        [
+            "Interpreted. Need the time.\nFINAL\n"
+            'NEXT_TOOL: {"tool": "current_time", "arguments": {}}',
+            "Done: interpreted the series using the verified time evidence.\nFINAL",
+        ]
+    )
+    _engine.container.register_instance(
+        ReasoningEngine, DefaultReasoningEngine(models=router)
+    )
+    insight = InsightTool()
+    probe = TimeProbeTool()
+    manager.register(insight)
+    manager.register(probe)
+    orch._analyzer = _StubAnalyzer(
+        _tool_intent("interpret the series q1", "insight", {"text": "q1"})
+    )
+
+    result = await orch.handle("interpret the series q1")
+
+    assert insight.executions == 1
+    assert probe.executions == 1  # the NEXT_TOOL follow-up still runs
+    assert len(router.language_model.requests) == 2
+    assert "NEXT_TOOL" not in result.response
+    assert "FINAL" not in result.response
+    assert (
+        result.response
+        == "Done: interpreted the series using the verified time evidence."
+    )

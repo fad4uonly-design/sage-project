@@ -40,6 +40,10 @@ class TimeTool(BaseTool):
     name = "current_time"
     description = "Return the current local time with its UTC offset in ISO-8601 format."
     category = "utility"
+    #: Opt-in capability (BaseTool.interpretable): the verified time result may
+    #: go through the existing bounded reasoning pass, so the model can answer
+    #: over it and, if needed, request one more registered tool.
+    interpretable = True
     parameters_schema = {"type": "object", "properties": {}}
 
     async def execute(self, **params: Any) -> ToolResult:
