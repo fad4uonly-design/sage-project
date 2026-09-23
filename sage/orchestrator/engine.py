@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import re
 import time
 from typing import Any
@@ -37,6 +38,14 @@ _MEMORY_REPLACE_RELEVANCE = 0.5
 #: Bounded timeout for the single reasoning pass over a verified tool result
 #: (tool→REASON path). Aligned with the existing default tool timeout
 #: (``ToolInfo.timeout_seconds = 30.0``) — no new configuration surface.
+_REASON_TIMEOUT_SECONDS = 30.0
+
+#: Hard bound for the verified-tool → next-decision loop: at most three tool
+#: invocations per request (the user's tool plus at most two model-driven
+#: follow-ups, each of which must itself be verified). The loop is a
+#: fixed-range ``for`` iteration, never a ``while``, so an unbounded
+#: autonomous agent loop is structurally impossible.
+_MAX_TOOL_DECISION_ITERATIONS = 3
 _REASON_TIMEOUT_SECONDS = 30.0
 
 
@@ -322,6 +331,23 @@ class DefaultOrchestrator:
                     )
                 )
 
+        # Verified-tool → next-decision loop (opt-in, interpretable tools only).
+        # The model sees the VERIFIED tool result as evidence and may finish
+        # or request one more registered tool, which re-enters the SAME
+        # approval → execution → Tool-R0 verification → audit path. Bounded:
+        # at most _MAX_TOOL_DECISION_ITERATIONS total tool invocations.
+        if (
+            intent.kind == IntentKind.TOOL
+            and response_parts
+            and self._tool_is_interpretable(intent)
+            and ctx.get("_tool_reason_gate") is True
+        ):
+            followup_parts = await self._run_tool_decision_loop(
+                intent, message, ctx, step_results, response_parts
+            )
+            if followup_parts:
+                response_parts = followup_parts
+
         if not response_parts:
             artifacts = ctx.get("_artifacts") or []
             if artifacts:
@@ -441,6 +467,9 @@ class DefaultOrchestrator:
             }
         if tool_error:
             detail["tool_error"] = tool_error
+        iterations = ctx.get("_tool_decision_iterations")
+        if iterations is not None:
+            detail["tool_decision_iterations"] = iterations
         model_usage = ctx.get("_model_usage")
         if model_usage:
             detail["model_usage"] = list(model_usage)
@@ -551,6 +580,172 @@ class DefaultOrchestrator:
         if result.success:
             return formatted
         return ctx["tool_response"]
+
+    async def _run_tool_decision_loop(
+        self,
+        intent: Intent,
+        message: str,
+        ctx: dict[str, Any],
+        step_results: list[StepResult],
+        base_parts: list[str],
+    ) -> list[str]:
+        """Bounded verified-tool → model → next-decision loop.
+
+        Reuses the existing bounded reasoning pass over the verified tool
+        result as the decision mechanism: the model already receives the full
+        verified evidence (escaped ``<tool_observation>`` block — output,
+        verification verdict, issues — data, never instructions). When its
+        conclusion carries a trailing ``{"next_tool": ...}`` directive, that
+        directive names one more *registered*, auto-selectable tool to run;
+        otherwise the conclusion is the final answer. A requested tool
+        re-enters the SAME existing path — ``_step_invoke_tool`` →
+        ToolManager (permissions, approval, Tool-R0 verification, audit) —
+        never a side channel. One model call per iteration, no extra passes.
+
+        Hard bound: at most ``_MAX_TOOL_DECISION_ITERATIONS`` total tool
+        invocations per request; the iteration is a fixed-range ``for``, so
+        no unbounded autonomous loop is possible. An unverified or failed-
+        verification result is never treated as verified evidence — the loop
+        stops there. Any decision/step failure degrades to finishing with the
+        current evidence.
+        """
+        from sage.tools.interfaces import ToolManager
+        from sage.tools.selection import ModelToolSelector
+
+        manager = self._container.try_resolve(ToolManager)
+        if manager is None:
+            return []
+
+        parts = [str(p) for p in base_parts]
+        attempted: list[dict[str, Any]] = [
+            {
+                "tool": str(intent.entities.get("tool") or ""),
+                "arguments": intent.entities.get("args") or {},
+            }
+        ]
+        iterations = 1  # the user's own tool call already ran
+
+        for _ in range(max(0, _MAX_TOOL_DECISION_ITERATIONS - 1)):
+            decision = self._parse_next_tool_directive(
+                ctx.get("_tool_next_directive_raw") or ctx.get("tool_response")
+            )
+            if decision is None:
+                break  # model finished with the verified evidence
+            name, arguments = decision
+            if name not in set(ModelToolSelector.auto_selectable(manager)):
+                log.warning("orchestrator.followup_tool_not_allowed", tool=name)
+                break
+            if (name, json.dumps(arguments, sort_keys=True, default=str)) in {
+                (a["tool"], json.dumps(a["arguments"], sort_keys=True, default=str))
+                for a in attempted
+            }:
+                log.debug("orchestrator.followup_repeated_call", tool=name)
+                break
+            if not ModelToolSelector.has_required_arguments(manager, name, arguments):
+                log.debug("orchestrator.followup_missing_arguments", tool=name)
+                break
+
+            iterations += 1
+            attempted.append({"tool": name, "arguments": arguments})
+            followup_intent = intent.model_copy(
+                update={
+                    "entities": {
+                        **intent.entities,
+                        "tool": name,
+                        "args": arguments,
+                        "auto_selected": True,
+                    }
+                }
+            )
+            t0 = time.perf_counter()
+            try:
+                out = await self._step_invoke_tool(followup_intent, ctx)
+            except Exception:
+                log.exception("orchestrator.followup_tool_failed", tool=name)
+                break
+            duration = (time.perf_counter() - t0) * 1000
+            step_results.append(
+                StepResult(
+                    step=PipelineStep.INVOKE_TOOL,
+                    success=bool(ctx.get("_tool_reason_gate")),
+                    output=out,
+                    duration_ms=duration,
+                )
+            )
+            # The follow-up's verified result becomes the evidence for the
+            # next decision: the SAME bounded reasoning pass runs over it
+            # (one model call), producing either a final answer or another
+            # NEXT_TOOL directive. An unverified/failed result is NEVER
+            # treated as verified evidence — no decision pass runs, the loop
+            # stops with the controlled degraded message.
+            if ctx.get("_tool_reason_gate") is not True:
+                parts = [str(out)]
+                break
+            conclusion = await self._reason_over_tool_result(followup_intent, ctx)
+            parts = [str(conclusion)]
+
+        ctx["_tool_decision_iterations"] = iterations
+        return parts
+
+    @staticmethod
+    def _parse_next_tool_directive(
+        text: Any,
+    ) -> tuple[str, dict[str, Any]] | None:
+        """Extract the model's next-tool decision from its conclusion.
+
+        The bounded reasoning pass may end its reply with a final line
+        ``NEXT_TOOL: {"tool": name, "arguments": {...}}`` requesting one more
+        registered tool; anything else means "finish with the verified
+        evidence". Returns ``(tool_name, arguments)`` or ``None``. The
+        directive line is untrusted model output and is validated through the
+        SAME shared decision parser as the initial tool selection
+        (:func:`sage.tools.selection.parse_tool_payload`) — malformed JSON,
+        non-string tool names or non-dict arguments all yield ``None``
+        (finish), never an execution. Registry validation (whitelist,
+        required arguments) happens in the caller.
+        """
+        if not isinstance(text, str):
+            return None
+        for line in reversed(text.splitlines()):
+            stripped = line.strip()
+            if not stripped.startswith("NEXT_TOOL:"):
+                continue
+            from sage.tools.selection import parse_tool_payload
+
+            return parse_tool_payload(stripped[len("NEXT_TOOL:") :].strip())
+        return None
+
+    @staticmethod
+    def _strip_next_tool_directive(text: Any) -> str:
+        """Drop the NEXT_TOOL directive line from a conclusion for display."""
+        if not isinstance(text, str):
+            return ""
+        kept = [
+            line
+            for line in text.splitlines()
+            if not line.strip().startswith("NEXT_TOOL:")
+        ]
+        return "\n".join(kept).strip()
+
+    def _tool_followup_contract(self) -> str:
+        """Instruction block telling the model how to request one more tool.
+
+        Lists only the auto-selectable (read-only) registered tools, so a
+        model-driven follow-up can never reach a side-effecting tool that
+        was not explicitly requested by the user.
+        """
+        from sage.tools.interfaces import ToolManager
+        from sage.tools.selection import ModelToolSelector
+
+        manager = self._container.try_resolve(ToolManager)
+        names = ModelToolSelector.auto_selectable(manager) if manager else []
+        return (
+            "After reading the verified tool evidence above you may finish, "
+            "or request exactly ONE more tool by ending your reply with a "
+            'final line: NEXT_TOOL: {"tool": <name>, "arguments": {...}}. '
+            f"Only these tools may be requested: {names or '[]'}. "
+            "If the evidence is sufficient, end with FINAL and no directive."
+        )
 
     @staticmethod
     def _format_tool_output(tool_name: str, result: Any) -> str:
@@ -883,10 +1078,17 @@ class DefaultOrchestrator:
                 ),
             },
         )
+        # The problem line carries the next-decision contract so the SAME
+        # bounded reasoning pass can finish or request one more tool — no
+        # extra model call is added for the decision.
+        problem = intent.subject or intent.raw_message
+        followup_contract = self._tool_followup_contract()
+        if followup_contract:
+            problem = f"{problem}\n\n{followup_contract}"
         try:
             outcome = await asyncio.wait_for(
                 engine.reason(
-                    intent.subject or intent.raw_message,
+                    problem,
                     context=reasoning_ctx,
                     use_retrieval=False,
                 ),
@@ -913,8 +1115,12 @@ class DefaultOrchestrator:
         if not conclusion:
             ctx["tool_response"] = fallback
             return fallback
-        ctx["tool_response"] = conclusion
-        return conclusion
+        # Keep the raw conclusion (directive included) for the bounded
+        # next-decision loop; the user-facing response never shows the
+        # directive line itself.
+        ctx["_tool_next_directive_raw"] = conclusion
+        ctx["tool_response"] = self._strip_next_tool_directive(conclusion) or fallback
+        return str(ctx["tool_response"])
 
     async def _step_plan(self, intent: Intent, ctx: dict[str, Any]) -> str:
         from sage.agents.interfaces import AgentOrchestrator, AgentTask

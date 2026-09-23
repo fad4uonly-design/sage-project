@@ -87,17 +87,17 @@ def _describe_tools(tools: list[Any]) -> str:
         )
     return "\n".join(lines)
 
-def _parse_decision(
-    content: str, tool_names: list[str]
-) -> tuple[str, dict[str, Any]] | None:
-    """Validate a constrained reply; return ``(tool, arguments)`` or ``None``.
+def parse_tool_payload(text: str) -> tuple[str, dict[str, Any]] | None:
+    """Parse a tool-decision payload; return ``(tool, arguments)`` or ``None``.
 
-    Anything unusable — malformed JSON, an unregistered tool, a null decision,
-    a non-object argument map — yields ``None`` so the caller falls back to
-    ordinary composition. Never raises.
+    Shared core of every model-driven tool decision (initial selection and
+    NEXT_TOOL follow-ups): malformed JSON, a non-object reply, a non-string
+    tool name or a non-object argument map all yield ``None`` — fail-closed,
+    never raises. Registry validation (whitelist, required arguments) stays
+    with the caller.
     """
     try:
-        data = json.loads(content or "")
+        data = json.loads(text or "")
     except (ValueError, TypeError):
         return None
     if not isinstance(data, dict):
@@ -107,7 +107,7 @@ def _parse_decision(
     if not isinstance(name, str):
         return None
     name = name.strip()
-    if name not in tool_names:
+    if not name:
         return None
 
     arguments = data.get("arguments")
@@ -121,6 +121,24 @@ def _parse_decision(
         for key, value in arguments.items()
         if isinstance(key, str) and value is not None
     }
+    return name, args
+
+
+def _parse_decision(
+    content: str, tool_names: list[str]
+) -> tuple[str, dict[str, Any]] | None:
+    """Validate a constrained reply; return ``(tool, arguments)`` or ``None``.
+
+    Anything unusable — malformed JSON, an unregistered tool, a null decision,
+    a non-object argument map — yields ``None`` so the caller falls back to
+    ordinary composition. Never raises.
+    """
+    parsed = parse_tool_payload(content)
+    if parsed is None:
+        return None
+    name, args = parsed
+    if name not in tool_names:
+        return None
     return name, args
 
 
@@ -163,6 +181,23 @@ class ModelToolSelector:
             return False
         required = (info.parameters_schema or {}).get("required") or []
         return all(key in arguments for key in required)
+
+    @staticmethod
+    def auto_selectable(tool_manager: Any) -> list[str]:
+        """Names of the registered tools a model decision may ever request.
+
+        The same read-only whitelist as :meth:`decide` — a model-driven
+        follow-up reuses it, so side-effecting tools stay reachable only
+        through explicit user imperatives.
+        """
+        try:
+            return [
+                i.name
+                for i in tool_manager.list_tools()
+                if i.name in _AUTO_SELECTABLE
+            ]
+        except Exception:
+            return []
 
     async def decide(self, message: str) -> tuple[str, dict[str, Any]] | None:
         """Return ``(tool_name, arguments)`` when a registered tool applies."""
