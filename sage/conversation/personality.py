@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 SYSTEM_PROMPT = """You are SAGE (Smart Autonomous General Engine) — a personal AI operating system.
 
 You are not a generic chatbot. You are a long-term intelligence partner that:
@@ -51,21 +53,40 @@ def style_directive(
 
 
 def memory_evidence_block(
-    memories: list[str] | None,
+    memories: list[str] | list[dict[str, Any]] | None,
     *,
     learned: set[str] | frozenset[str] | None = None,
 ) -> str | None:
     """Grounded phrasing for injected memories (epistemic safety).
 
-    Memories are things the USER said, so the model must attribute them to the
-    user instead of stating them as universal facts; its own inferences must be
-    marked as inferences.
+    Accepts either the legacy ``list[str]`` of memory contents or structured
+    provenance dicts (``content``/``confidence``/``source``/``source_ref``/
+    ``metadata``) from the fused cognitive context. With structured evidence,
+    attribution follows the memory's actual provenance: items stamped with
+    the web-learned source are presented as stored background, never as
+    things the user said; everything else is presented as what the user said.
+    No provenance is fabricated: a memory without source information is
+    rendered as user-stated (the legacy contract), and confidence is shown
+    as confidence — never labeled as relevance.
 
     Texts in ``learned`` were saved from web research rather than said by the
     user; they are listed separately and never attributed to the user.
     """
     if not memories:
         return None
+    if not all(isinstance(m, dict) for m in memories):
+        # Legacy string path — unchanged behavior.
+        return _memory_evidence_block_strings(
+            [str(m) for m in memories], learned=learned
+        )
+    return _memory_evidence_block_structured(memories)
+
+
+def _memory_evidence_block_strings(
+    memories: list[str],
+    *,
+    learned: set[str] | frozenset[str] | None,
+) -> str | None:
     lines = [
         "Things the user has told SAGE before — present them as what the user said, "
         "not as universal facts; mark any inference of yours as an inference:"
@@ -87,6 +108,79 @@ def memory_evidence_block(
         for item in web_items:
             lines.append(f'- Saved from the web: "{item}"')
     return "\n".join(lines)
+
+
+def _memory_evidence_block_structured(
+    memories: list[dict[str, Any]],
+) -> str | None:
+    """Render structured fused memory evidence with its actual provenance."""
+    from sage.core.web_learner import WEB_LEARNED_SOURCE
+
+    def _source_of(item: dict[str, Any]) -> str | None:
+        source = item.get("source")
+        if not source:
+            metadata = item.get("metadata")
+            if isinstance(metadata, dict):
+                source = metadata.get("source")
+        return str(source).strip() if source else None
+
+    def _ref_of(item: dict[str, Any]) -> str | None:
+        ref = item.get("source_ref")
+        if not ref:
+            metadata = item.get("metadata")
+            if isinstance(metadata, dict):
+                ref = metadata.get("source_ref")
+        return str(ref).strip() if ref else None
+
+    def _confidence_of(item: dict[str, Any]) -> float | None:
+        try:
+            value = float(item.get("confidence"))
+        except (TypeError, ValueError):
+            return None
+        return value
+
+    def _provenance_suffix(item: dict[str, Any]) -> str:
+        parts: list[str] = []
+        ref = _ref_of(item)
+        if ref:
+            parts.append(f"source_ref: {ref}")
+        elif (source := _source_of(item)) and source != WEB_LEARNED_SOURCE:
+            parts.append(f"source: {source}")
+        confidence = _confidence_of(item)
+        if confidence is not None:
+            parts.append(f"confidence {confidence:.2f}")
+        return f" ({'; '.join(parts)})" if parts else ""
+
+    user_items: list[tuple[str, str]] = []  # (content, provenance suffix)
+    web_items: list[tuple[str, str]] = []
+    for item in memories:
+        content = str(item.get("content") or "").strip()
+        if not content:
+            continue
+        suffix = _provenance_suffix(item)
+        if _source_of(item) == WEB_LEARNED_SOURCE:
+            web_items.append((content, suffix))
+        else:
+            user_items.append((content, suffix))
+
+    lines: list[str] = []
+    if user_items:
+        lines.append(
+            "Things the user has told SAGE before — present them as what the user said, "
+            "not as universal facts; mark any inference of yours as an inference:"
+        )
+        for content, suffix in user_items:
+            lines.append(f'- You\'ve said: "{content}"{suffix}')
+    if web_items:
+        if lines:
+            lines.append("")
+        lines.append(
+            "Notes SAGE saved from web research (not something the user said; "
+            "treat as unverified background and do not attribute them to the user):"
+        )
+        for content, suffix in web_items:
+            lines.append(f'- Saved from the web: "{content}"{suffix}')
+    return "\n".join(lines) if lines else None
 
 
 def evidence_block(ranked: object) -> str | None:

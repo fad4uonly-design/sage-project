@@ -1051,6 +1051,10 @@ class DefaultOrchestrator:
             # Prefer fused memories/graph when retrieve hasn't filled them yet
             if not ctx.get("memories") and fused.get("memories"):
                 ctx["memories"] = list(fused["memories"])
+            # Carry the fused provenance evidence along with the memories so
+            # compose can attribute them correctly (user-said vs web-learned).
+            if not ctx.get("memory_evidence") and fused.get("memory_evidence"):
+                ctx["memory_evidence"] = list(fused["memory_evidence"])
             if not ctx.get("graph_facts") and fused.get("graph_facts"):
                 ctx["graph_facts"] = list(fused["graph_facts"])
             for key in (
@@ -1239,7 +1243,18 @@ class DefaultOrchestrator:
                     text = str(getattr(ev, "content", "") or "").strip()
                     if text:
                         provenance_rendered.add(text)
-        if ctx.get("memories"):
+        if ctx.get("memory_evidence"):
+            # Structured fused evidence: renders each memory with its actual
+            # provenance (confidence, source, source_ref), so web-learned
+            # items are never attributed to the user.
+            evidence = memory_evidence_block(list(ctx["memory_evidence"])[:8])
+            if evidence:
+                extra_bits.append(evidence)
+                for item in list(ctx["memory_evidence"])[:8]:
+                    text = str(item.get("content", "") if isinstance(item, dict) else item).strip()
+                    if text:
+                        provenance_rendered.add(text)
+        elif ctx.get("memories"):
             memories = [
                 m
                 for m in list(ctx["memories"])[:5]

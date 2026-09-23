@@ -6,6 +6,8 @@ import pytest
 from sage.context.engine import CognitiveContextEngine
 from sage.core.engine import SageEngine
 from sage.goals.engine import GoalEngine, GoalHorizon
+from sage.memory.models import MemoryItem
+from sage.memory.service import SQLiteMemorySystem
 from sage.projects.manager import ProjectManager
 from sage.reflection.engine import ReflectionEngine
 
@@ -96,6 +98,34 @@ async def test_context_fusion_and_suggestions(engine: SageEngine) -> None:
     orch_ctx = unified.as_orchestrator_context()
     assert orch_ctx.get("unified_context") is True
     assert "context_summary" in orch_ctx
+    # Provenance regression: fused memories keep their structured evidence
+    # (content/confidence/source/source_ref/metadata) alongside the legacy
+    # string "memories" compatibility field.
+    mem_sys = engine.container.resolve(SQLiteMemorySystem)
+    await mem_sys.store(
+        MemoryItem(
+            content="I prefer dark mode for interfaces",
+            source="user",
+            confidence=0.9,
+            source_ref="chat:turn-42",
+        )
+    )
+    unified = await cce.fuse()
+    assert unified.recent_memories
+    assert len(unified.memory_evidence) == len(unified.recent_memories)
+    evidence = next(
+        e
+        for e in unified.memory_evidence
+        if e["content"] == "I prefer dark mode for interfaces"
+    )
+    assert evidence["source"] == "user"
+    assert evidence["confidence"] == 0.9
+    assert evidence["source_ref"] == "chat:turn-42"
+    assert "metadata" in evidence
+    orch_ctx = unified.as_orchestrator_context()
+    assert orch_ctx["memory_evidence"] == unified.memory_evidence[:8]
+    assert orch_ctx["memories"] == list(unified.recent_memories[:8])
+    assert "I prefer dark mode for interfaces" in orch_ctx["memories"]
 
 
 @pytest.mark.asyncio

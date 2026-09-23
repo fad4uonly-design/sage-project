@@ -103,6 +103,21 @@ class DefaultCognitiveContextEngine(BaseRepository):
         if mem:
             items = await mem.recall("", limit=8)
             ctx.recent_memories = [m.content for m in items]
+            # Provenance-preserving evidence for the fused path: keep what the
+            # stored MemoryItem actually carries (content, confidence, source,
+            # source_ref, metadata) so the prompt can distinguish user-said
+            # memories from web-learned/stored background. No relevance score
+            # is invented — ``recall("", ...)`` has no query-specific ranking.
+            ctx.memory_evidence = [
+                {
+                    "content": m.content,
+                    "confidence": m.confidence,
+                    "source": m.source,
+                    "source_ref": m.source_ref,
+                    "metadata": dict(m.metadata or {}),
+                }
+                for m in items
+            ]
 
         # Knowledge graph highlights from interests + project names
         from sage.knowledge.graph.interfaces import KnowledgeGraph

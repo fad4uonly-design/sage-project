@@ -245,6 +245,92 @@ def test_memory_evidence_without_learned_matches_default() -> None:
     assert memory_evidence_block(items, learned={"unrelated"}) == default
 
 
+def test_structured_memory_evidence_user_memory_renders_user_stated() -> None:
+    """Fused structured evidence: a user-sourced memory renders as user-stated,
+    with its confidence and source_ref preserved."""
+    block = memory_evidence_block(
+        [
+            {
+                "content": "I prefer dark mode for interfaces",
+                "confidence": 0.9,
+                "source": "user",
+                "source_ref": "chat:turn-42",
+                "metadata": {"status": "current"},
+            }
+        ]
+    )
+    assert block is not None
+    assert 'You\'ve said: "I prefer dark mode for interfaces"' in block
+    assert "confidence 0.90" in block
+    assert "source_ref: chat:turn-42" in block
+    assert "not as universal facts" in block
+    assert "Saved from the web" not in block
+
+
+def test_structured_memory_evidence_web_learned_not_attributed_to_user() -> None:
+    """A web-learned memory renders as stored web background, never as
+    something the user said — provenance comes from the memory itself."""
+    from sage.core.web_learner import WEB_LEARNED_SOURCE
+
+    block = memory_evidence_block(
+        [
+            {
+                "content": "Concrete slump measures workability.",
+                "confidence": 0.75,
+                "source": WEB_LEARNED_SOURCE,
+                "source_ref": None,
+                "metadata": {"via": "web_learner", "learned_from": "web"},
+            }
+        ]
+    )
+    assert block is not None
+    assert "Saved from the web" in block
+    assert "Concrete slump measures workability." in block
+    assert "confidence 0.75" in block
+    assert "You've said" not in block
+    assert "not something the user said" in block
+    # Internal metadata keys other than provenance are not exposed.
+    assert "web_learner" not in block
+    assert "learned_from" not in block
+
+
+def test_structured_memory_evidence_mixed_keeps_epistemic_split() -> None:
+    """Mixed evidence keeps the user-stated vs web-background separation,
+    driven by each memory's own source — not by a learned-text set."""
+    from sage.core.web_learner import WEB_LEARNED_SOURCE
+
+    block = memory_evidence_block(
+        [
+            {
+                "content": "I grow tomatoes.",
+                "confidence": 0.8,
+                "source": "user",
+                "source_ref": None,
+                "metadata": {},
+            },
+            {
+                "content": "Water cycle notes.",
+                "confidence": 0.6,
+                "source": WEB_LEARNED_SOURCE,
+                "source_ref": "https://example.com/water-cycle",
+                "metadata": {},
+            },
+        ]
+    )
+    assert block is not None
+    lines = block.splitlines()
+    said = [ln for ln in lines if ln.startswith("- You've said:")]
+    web = [ln for ln in lines if ln.startswith("- Saved from the web:")]
+    assert len(said) == 1
+    assert "I grow tomatoes." in said[0]
+    assert len(web) == 1
+    assert "Water cycle notes." in web[0]
+    assert "source_ref: https://example.com/water-cycle" in web[0]
+    # Never attributed to the user, and never called relevance.
+    assert "I grow tomatoes." not in " ".join(web)
+    assert "relevance" not in block.lower()
+
+
 def test_web_learned_texts_reads_memory_items_and_retrieval() -> None:
     from types import SimpleNamespace
 

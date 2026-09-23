@@ -49,6 +49,7 @@ class UnifiedContext(BaseModel):
     priorities: list[str] = Field(default_factory=list)
     open_tasks: list[dict[str, Any]] = Field(default_factory=list)
     recent_memories: list[str] = Field(default_factory=list)
+    memory_evidence: list[dict[str, Any]] = Field(default_factory=list)
     graph_highlights: list[str] = Field(default_factory=list)
     running_workflows: list[dict[str, Any]] = Field(default_factory=list)
     pending_approvals: list[dict[str, Any]] = Field(default_factory=list)
@@ -69,6 +70,7 @@ class UnifiedContext(BaseModel):
             "priorities": list(self.priorities[:8]),
             "open_tasks": self.open_tasks[:10],
             "memories": list(self.recent_memories[:8]),
+            "memory_evidence": list(self.memory_evidence[:8]),
             "graph_facts": list(self.graph_highlights[:8]),
             "documents": list(self.recent_documents[:5]),
             "long_term_interests": list(self.long_term_interests[:8]),
