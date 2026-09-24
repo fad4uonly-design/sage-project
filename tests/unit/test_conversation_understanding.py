@@ -495,3 +495,33 @@ def test_time_and_date_questions_are_tool_requests(message: str) -> None:
 )
 def test_document_questions_about_time_are_not_tool_requests(message: str) -> None:
     assert understand(message).mode != ConversationMode.TOOL_REQUEST
+
+
+# -- Regression: explicit natural tool requests (classifier slice) ------------
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        # Primary regression case: discourse connective + explicit imperative.
+        "also use the calculator to multiply 15 by 3",
+        # Bare explicit imperative (no connective).
+        "use the calculator to divide 100 by 4",
+        # Article-less construction behind another connective.
+        "and then use calculator to add 8 and 8",
+    ],
+)
+def test_explicit_calculator_requests_are_tool_requests(message: str) -> None:
+    """An explicit "use (the) calculator" imperative classifies as
+    TOOL_REQUEST — including behind a leading discourse connective
+    (also / and then), which must not win as a generic FOLLOW_UP first —
+    so the turn reaches the existing tool-selection machinery."""
+    u = understand(message)
+    assert u.mode == ConversationMode.TOOL_REQUEST
+    assert u.policy.allow_tools is True
+
+
+def test_bare_calculator_mention_is_not_a_tool_request() -> None:
+    """Guards against keyword over-broadening: merely mentioning the word
+    "calculator" without an explicit imperative stays ordinary conversation."""
+    assert understand("my calculator battery died").mode != ConversationMode.TOOL_REQUEST

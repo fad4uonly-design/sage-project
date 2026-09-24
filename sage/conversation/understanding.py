@@ -162,7 +162,17 @@ _CONTINUATION = re.compile(
     re.I,
 )
 _FOLLOW_UP = re.compile(r"^\s*(?:what about|and what|and also|also,?|and then)\b", re.I)
-_TOOL_REQUEST = re.compile(r"\b(?:calculate|compute|convert|learn about|search the web)\b", re.I)
+#: Explicit tool imperatives only — the existing verbs plus the explicit
+#: "use (the) calculator" construction. Deliberately NOT bare keywords
+#: ("calculator", "multiply", ...): an ordinary mention of the word must
+#: never turn conversational speech into a tool request.
+_TOOL_REQUEST = re.compile(
+    r"\b(?:"
+    r"calculate|compute|convert|learn about|search the web|"
+    r"use\s+(?:the\s+)?calculator"
+    r")\b",
+    re.I,
+)
 #: Unambiguous "what is the time/date right now" phrasings only. Every branch is
 #: anchored, so document questions ("what is the date of the contract") never match.
 _TIME_REQUEST = re.compile(
@@ -318,10 +328,14 @@ def understand(message: str) -> ConversationUnderstanding:
         return result(ConversationMode.EMOTIONAL_SUPPORT)
     if _CONTINUATION.search(text):
         return result(ConversationMode.CONTINUATION)
-    if _FOLLOW_UP.match(text):
-        return result(ConversationMode.FOLLOW_UP)
+    # An explicit tool/time request wins over the generic follow-up connective:
+    # "also use the calculator ..." is an explicit tool imperative, not just a
+    # conversational "also". FOLLOW_UP detection itself is unchanged and still
+    # fires whenever no explicit tool/time request is present.
     if _TOOL_REQUEST.search(text) or _TIME_REQUEST.search(text):
         return result(ConversationMode.TOOL_REQUEST)
+    if _FOLLOW_UP.match(text):
+        return result(ConversationMode.FOLLOW_UP)
     if _REMEMBER_STATED.match(text):
         return result(ConversationMode.TASK)
     if _PLANNING.search(text):
