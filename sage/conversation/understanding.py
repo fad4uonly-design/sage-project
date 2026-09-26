@@ -42,6 +42,11 @@ class ResponsePolicy:
 
     acknowledge_first: bool = False
     answer_directly: bool = True
+    #: True when this turn is context-seeking: personal memory / graph /
+    #: preference / continuity evidence may be consumed by the composition
+    #: step. False keeps personal evidence out of the model-facing prompt even
+    #: when retrieval surfaced it — provenance is unaffected, only consumption
+    #: is gated.
     needs_memory: bool = False
     needs_history: bool = True
     allow_tools: bool = False
@@ -51,6 +56,10 @@ class ResponsePolicy:
 
 
 #: Per-mode policies — the smallest policy that makes each mode behave well.
+#: ``needs_memory`` marks the context-seeking modes (question, explanation,
+#: planning, follow-up, research, continuation): only those may consume
+#: personal evidence. Social, casual, imperative (task/tool), acknowledgment
+#: and emotional turns keep it False.
 _POLICIES: dict[ConversationMode, ResponsePolicy] = {
     ConversationMode.SOCIAL_GREETING: ResponsePolicy(
         acknowledge_first=True,
@@ -71,17 +80,19 @@ _POLICIES: dict[ConversationMode, ResponsePolicy] = {
         length="short",
     ),
     ConversationMode.CASUAL_CHAT: ResponsePolicy(tone="casual", length="short"),
-    ConversationMode.QUESTION: ResponsePolicy(),
-    ConversationMode.EXPLANATION: ResponsePolicy(length="detailed"),
+    ConversationMode.QUESTION: ResponsePolicy(needs_memory=True),
+    ConversationMode.EXPLANATION: ResponsePolicy(needs_memory=True, length="detailed"),
+    # TASK is an imperative instruction, not a context request: personal
+    # evidence stays out unless the turn is also planning or explaining.
     ConversationMode.TASK: ResponsePolicy(allow_tools=True, tone="focused"),
     ConversationMode.PLANNING: ResponsePolicy(
-        tone="focused", length="detailed", follow_up=True
+        needs_memory=True, tone="focused", length="detailed", follow_up=True
     ),
     ConversationMode.RESEARCH: ResponsePolicy(
         allow_tools=True, needs_memory=True, length="detailed"
     ),
     ConversationMode.CONTINUATION: ResponsePolicy(needs_memory=True),
-    ConversationMode.FOLLOW_UP: ResponsePolicy(),
+    ConversationMode.FOLLOW_UP: ResponsePolicy(needs_memory=True),
     ConversationMode.CLARIFICATION: ResponsePolicy(
         answer_directly=False, follow_up=True, length="short"
     ),

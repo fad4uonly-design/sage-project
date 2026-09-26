@@ -353,3 +353,303 @@ async def test_result_metadata_provenance_empty_without_retrieval(
     result = await orch.handle("hi bro")
 
     assert result.metadata["evidence_provenance"] == []
+
+
+# -- Relevance boundary: personal evidence consumption --------------------------
+
+
+#: The exact stored memory behind the reported leak.
+_AGRICULTURE_MEMORY = (
+    "SAGE should prioritize agriculture as a primary domain of intelligence."
+)
+#: The exact generic turn that surfaced it in a real user-facing run.
+_GENERIC_INTRO = (
+    "Hi SAGE. Briefly introduce yourself and tell me what you can actually do."
+)
+#: Non-personal (document-layer) evidence that must remain available.
+_DOCUMENT_EVIDENCE = "Tomato irrigation scheduling follows soil moisture readings."
+
+
+def _retrieval_with_layers(ranked: list) -> Any:
+    """RetrievalResult with ranked evidence plus the flattened layer lists that
+    ``_step_retrieve`` stores on the orchestrator context."""
+    from sage.retrieval.models import RetrievalLayer, RetrievalResult
+
+    def _content(layer: RetrievalLayer) -> list[str]:
+        return [
+            str(getattr(item, "content", ""))
+            for item in ranked
+            if getattr(item, "layer", None) is layer
+        ]
+
+    return RetrievalResult(
+        query="q",
+        ranked=ranked,
+        memories=_content(RetrievalLayer.MEMORY),
+        graph_facts=_content(RetrievalLayer.KNOWLEDGE_GRAPH),
+        documents=_content(RetrievalLayer.DOCUMENT),
+    )
+
+
+def _agriculture_and_document_evidence() -> tuple[Any, Any]:
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer
+
+    memory = EvidenceItem(
+        layer=RetrievalLayer.MEMORY,
+        content=_AGRICULTURE_MEMORY,
+        score=0.95,
+        confidence=0.90,
+        source_ref="memory-id-1",
+        metadata={"source": "user"},
+    )
+    document = EvidenceItem(
+        layer=RetrievalLayer.DOCUMENT,
+        content=_DOCUMENT_EVIDENCE,
+        score=0.70,
+        confidence=0.78,
+        source_ref="doc-9",
+    )
+    return memory, document
+
+
+@pytest.mark.asyncio
+async def test_generic_turn_keeps_unrelated_personal_memory_out_of_prompt(
+    engine: SageEngine,
+) -> None:
+    """Contract: unrelated personal memory must not reach the model-facing
+    prompt on a generic turn — while retrieval and provenance stay intact."""
+    from sage.models.interfaces import ModelRouter
+    from sage.retrieval.interfaces import Retriever
+
+    memory, document = _agriculture_and_document_evidence()
+    engine.container.register_instance(
+        Retriever, _StubRetriever(_retrieval_with_layers([memory, document]))
+    )
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+    result = await orch.handle(_GENERIC_INTRO)
+
+    assert result.response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+
+    # The stored personal memory is retrieved but never rendered to the model.
+    assert _AGRICULTURE_MEMORY not in system_prompt
+    assert "agriculture" not in system_prompt.lower()
+    assert "You've said" not in system_prompt
+    # Non-personal evidence is still available as model context.
+    assert _DOCUMENT_EVIDENCE in system_prompt
+
+    # Retrieval and provenance are untouched: the memory is still attributed.
+    provenance = result.metadata["evidence_provenance"]
+    assert {"layer": "memory", "confidence": 0.9, "source_ref": "memory-id-1"} in provenance
+    assert {"layer": "document", "confidence": 0.78, "source_ref": "doc-9"} in provenance
+
+
+@pytest.mark.asyncio
+async def test_context_seeking_question_consumes_personal_memory(
+    engine: SageEngine,
+) -> None:
+    """Positive control: an explicit context-seeking question (QUESTION mode →
+    ``needs_memory``) still receives the same stored memory."""
+    from sage.models.interfaces import ModelRouter
+    from sage.retrieval.interfaces import Retriever
+
+    memory, document = _agriculture_and_document_evidence()
+    engine.container.register_instance(
+        Retriever, _StubRetriever(_retrieval_with_layers([memory, document]))
+    )
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+    result = await orch.handle("What is my test project called?")
+
+    assert result.response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+
+    assert _AGRICULTURE_MEMORY in system_prompt
+    assert "[memory | confidence 0.90]" in system_prompt
+    assert "source: memory-id-1" in system_prompt
+
+
+@pytest.mark.asyncio
+async def test_recall_intent_allows_personal_evidence_for_unmatched_phrasing(
+    engine: SageEngine,
+) -> None:
+    """``IntentKind.RECALL`` is an explicit allow condition: "recall my
+    preferences" is not a context-seeking *mode* (casual_chat) but is an
+    explicit memory request, so personal evidence is rendered."""
+    from sage.conversation.understanding import understand
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.models import Intent
+
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    message = "recall my preferences"
+    und = understand(message)
+    assert und.policy.needs_memory is False  # the mode alone would suppress
+    ctx = {
+        "history": [],
+        "conversation": und,
+        "memories": [_AGRICULTURE_MEMORY],
+    }
+    response = await orch._step_compose(
+        Intent(kind=IntentKind.RECALL, confidence=1.0, raw_message=message),
+        message,
+        ctx,
+    )
+
+    assert response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+    assert _AGRICULTURE_MEMORY in system_prompt
+
+
+@pytest.mark.asyncio
+async def test_generic_turn_suppresses_every_personal_secondary_channel(
+    engine: SageEngine,
+) -> None:
+    """No other compose-time channel may leak personal context on a generic
+    turn: fused memory evidence, flattened memories, graph facts / KG evidence,
+    preferences and cognitive continuity are all gated, while non-personal
+    document evidence stays available."""
+    from sage.conversation.understanding import understand
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.models import Intent
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer
+
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    kg_fact = "SAGE -prioritize-> agriculture"
+    ctx: dict[str, Any] = {
+        "history": [],
+        "conversation": understand(_GENERIC_INTRO),
+        "memory_evidence": [
+            {"content": _AGRICULTURE_MEMORY, "confidence": 0.9, "source": "user"}
+        ],
+        "memories": ["SAGE should remain simple and user-controlled."],
+        "graph_facts": [kg_fact],
+        "preferences": {"tone": "formal"},
+        "context_summary": "Interests: agriculture, tomatoes",
+        "priorities": ["Expand the farm"],
+        "active_projects": ["Farm expansion"],
+        "documents": [_DOCUMENT_EVIDENCE],
+        "knowledge": [_DOCUMENT_EVIDENCE, kg_fact],
+        "retrieval": _retrieval_with_layers(
+            [
+                EvidenceItem(
+                    layer=RetrievalLayer.MEMORY,
+                    content=_AGRICULTURE_MEMORY,
+                    confidence=0.9,
+                    source_ref="memory-id-1",
+                ),
+                EvidenceItem(
+                    layer=RetrievalLayer.KNOWLEDGE_GRAPH,
+                    content=kg_fact,
+                    confidence=0.8,
+                    source_ref="edge-1",
+                ),
+                EvidenceItem(
+                    layer=RetrievalLayer.DOCUMENT,
+                    content=_DOCUMENT_EVIDENCE,
+                    confidence=0.78,
+                    source_ref="doc-9",
+                ),
+            ]
+        ),
+    }
+    response = await orch._step_compose(
+        Intent(kind=IntentKind.CHAT, confidence=1.0, raw_message=_GENERIC_INTRO),
+        _GENERIC_INTRO,
+        ctx,
+    )
+
+    assert response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+    for leaked in (
+        _AGRICULTURE_MEMORY,
+        "SAGE should remain simple and user-controlled.",
+        kg_fact,
+        "Interests: agriculture, tomatoes",
+        "Expand the farm",
+        "Farm expansion",
+        "User preferences",
+        "Knowledge graph facts",
+        "Cognitive context",
+    ):
+        assert leaked not in system_prompt
+    assert _DOCUMENT_EVIDENCE in system_prompt
+
+    # The "Relevant knowledge" fallback can carry graph facts -> gated as well.
+    del ctx["documents"]
+    ctx["knowledge"] = [kg_fact]
+    await orch._step_compose(
+        Intent(kind=IntentKind.CHAT, confidence=1.0, raw_message=_GENERIC_INTRO),
+        _GENERIC_INTRO,
+        ctx,
+    )
+    fallback_prompt = router.language_model.request.messages[0].content
+    assert kg_fact not in fallback_prompt
+    assert "Relevant knowledge" not in fallback_prompt
+
+
+@pytest.mark.asyncio
+async def test_compose_without_conversation_keeps_every_personal_channel(
+    engine: SageEngine,
+) -> None:
+    """Legacy direct ``_step_compose`` calls (no ``ctx["conversation"]``) keep
+    today's behaviour exactly: every personal channel still renders."""
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.models import Intent
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer
+
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    kg_fact = "SAGE -prioritize-> agriculture"
+    ctx = {
+        "history": [],
+        "memory_evidence": [
+            {"content": _AGRICULTURE_MEMORY, "confidence": 0.9, "source": "user"}
+        ],
+        "graph_facts": [kg_fact],
+        "preferences": {"tone": "formal"},
+        "context_summary": "Interests: agriculture, tomatoes",
+        "priorities": ["Expand the farm"],
+        "active_projects": ["Farm expansion"],
+        "retrieval": _retrieval_with_layers(
+            [
+                EvidenceItem(
+                    layer=RetrievalLayer.MEMORY,
+                    content=_AGRICULTURE_MEMORY,
+                    confidence=0.9,
+                    source_ref="memory-id-1",
+                )
+            ]
+        ),
+    }
+    response = await orch._step_compose(
+        Intent(kind=IntentKind.CHAT, confidence=1.0, raw_message="What do you know about me?"),
+        "What do you know about me?",
+        ctx,
+    )
+
+    assert response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+    assert _AGRICULTURE_MEMORY in system_prompt
+    assert kg_fact in system_prompt
+    assert "Interests: agriculture, tomatoes" in system_prompt
+    assert "Expand the farm" in system_prompt
+    assert "Farm expansion" in system_prompt
+    assert "User preferences" in system_prompt

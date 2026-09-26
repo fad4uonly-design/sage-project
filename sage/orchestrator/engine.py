@@ -1453,77 +1453,105 @@ class DefaultOrchestrator:
             if und is not None
             else None
         )
+        # Relevance boundary (evidence consumption, never retrieval): personal
+        # evidence may influence the model-facing prompt only when this turn's
+        # understanding is context-seeking (``needs_memory``), when the intent
+        # explicitly asks for the user's own memory (``RECALL``), or when a
+        # legacy caller composes directly without a conversation result.
+        # Retrieval scoring and provenance are untouched — suppressed evidence
+        # stays retrieved and attributed, it is simply not rendered here.
+        personal_allowed = (
+            und is None or und.policy.needs_memory or intent.kind is IntentKind.RECALL
+        )
         extra_bits: list[str] = []
-        if ctx.get("context_summary"):
-            extra_bits.append(f"Cognitive context: {ctx['context_summary']}")
-        if ctx.get("priorities"):
-            extra_bits.append("Priorities:\n- " + "\n- ".join(str(p) for p in ctx["priorities"][:5]))
-        if ctx.get("active_projects"):
-            extra_bits.append(
-                "Active projects:\n- " + "\n- ".join(str(p) for p in ctx["active_projects"][:4])
-            )
+        if personal_allowed:
+            # Session continuity is personal context too: a generic turn must
+            # not be coloured by the user's projects/priorities/interests.
+            if ctx.get("context_summary"):
+                extra_bits.append(f"Cognitive context: {ctx['context_summary']}")
+            if ctx.get("priorities"):
+                extra_bits.append(
+                    "Priorities:\n- " + "\n- ".join(str(p) for p in ctx["priorities"][:5])
+                )
+            if ctx.get("active_projects"):
+                extra_bits.append(
+                    "Active projects:\n- " + "\n- ".join(str(p) for p in ctx["active_projects"][:4])
+                )
         # Provenance-aware evidence from the ranked RetrievalResult (same
         # EvidenceItems _step_retrieve stored in ctx["retrieval"]). Preferred
         # over the flattened string lists because it keeps layer, confidence
         # and source_ref; legacy lists render only what it did not already
         # cover so nothing appears twice.
-        from sage.retrieval.models import RetrievalResult
+        from sage.retrieval.models import RetrievalLayer, RetrievalResult
+
+        #: User-derived evidence layers: memories plus the graph facts
+        #: extracted from those same memories. Never rendered on a turn that
+        #: did not ask for personal context.
+        personal_layers = {RetrievalLayer.MEMORY, RetrievalLayer.KNOWLEDGE_GRAPH}
 
         provenance_rendered: set[str] = set()
         retrieval = ctx.get("retrieval")
         if isinstance(retrieval, RetrievalResult) and retrieval.ranked:
-            block = evidence_block(retrieval.ranked)
+            ranked = list(retrieval.ranked)
+            if not personal_allowed:
+                ranked = [
+                    ev for ev in ranked if getattr(ev, "layer", None) not in personal_layers
+                ]
+            block = evidence_block(ranked)
             if block:
                 extra_bits.append(block)
-                for ev in retrieval.ranked[:8]:
+                for ev in ranked[:8]:
                     text = str(getattr(ev, "content", "") or "").strip()
                     if text:
                         provenance_rendered.add(text)
-        if ctx.get("memory_evidence"):
-            # Structured fused evidence: renders each memory with its actual
-            # provenance (confidence, source, source_ref), so web-learned
-            # items are never attributed to the user.
-            evidence = memory_evidence_block(list(ctx["memory_evidence"])[:8])
-            if evidence:
-                extra_bits.append(evidence)
-                for item in list(ctx["memory_evidence"])[:8]:
-                    text = str(item.get("content", "") if isinstance(item, dict) else item).strip()
-                    if text:
-                        provenance_rendered.add(text)
-        elif ctx.get("memories"):
-            memories = [
-                m
-                for m in list(ctx["memories"])[:5]
-                if str(m).strip() not in provenance_rendered
-            ]
-            if memories:
-                evidence = memory_evidence_block(
-                    memories,
-                    learned=web_learned_texts(ctx),
-                )
+        if personal_allowed:
+            if ctx.get("memory_evidence"):
+                # Structured fused evidence: renders each memory with its actual
+                # provenance (confidence, source, source_ref), so web-learned
+                # items are never attributed to the user.
+                evidence = memory_evidence_block(list(ctx["memory_evidence"])[:8])
                 if evidence:
                     extra_bits.append(evidence)
-        if ctx.get("graph_facts"):
-            facts = [
-                f
-                for f in ctx["graph_facts"][:6]
-                if str(f).strip() not in provenance_rendered
-            ]
-            if facts:
-                extra_bits.append("Knowledge graph facts:\n- " + "\n- ".join(facts))
+                    for item in list(ctx["memory_evidence"])[:8]:
+                        text = str(
+                            item.get("content", "") if isinstance(item, dict) else item
+                        ).strip()
+                        if text:
+                            provenance_rendered.add(text)
+            elif ctx.get("memories"):
+                memories = [
+                    m
+                    for m in list(ctx["memories"])[:5]
+                    if str(m).strip() not in provenance_rendered
+                ]
+                if memories:
+                    evidence = memory_evidence_block(
+                        memories,
+                        learned=web_learned_texts(ctx),
+                    )
+                    if evidence:
+                        extra_bits.append(evidence)
+            if ctx.get("graph_facts"):
+                facts = [
+                    f
+                    for f in ctx["graph_facts"][:6]
+                    if str(f).strip() not in provenance_rendered
+                ]
+                if facts:
+                    extra_bits.append("Knowledge graph facts:\n- " + "\n- ".join(facts))
         if ctx.get("documents"):
             docs = [
                 d for d in ctx["documents"][:3] if str(d).strip() not in provenance_rendered
             ]
             if docs:
                 extra_bits.append("Documents:\n- " + "\n- ".join(docs))
-        elif ctx.get("knowledge"):
+        elif personal_allowed and ctx.get("knowledge"):
             knowledge = [
                 k for k in ctx["knowledge"][:3] if str(k).strip() not in provenance_rendered
             ]
             if knowledge:
                 extra_bits.append("Relevant knowledge:\n- " + "\n- ".join(knowledge))
-        if ctx.get("preferences"):
+        if personal_allowed and ctx.get("preferences"):
             extra_bits.append(f"User preferences: {ctx['preferences']}")
 
         system = build_system_prompt(
