@@ -361,6 +361,7 @@ class DefaultOrchestrator:
             else:
                 response_parts.append("I processed your request but produced no response.")
 
+        admitted_ids = ctx.get("_admitted_evidence_ids")
         result = OrchestratorResult(
             plan_id=plan.id,
             intent=intent,
@@ -381,6 +382,11 @@ class DefaultOrchestrator:
                         or str(getattr(ev, "layer", "unknown")),
                         "confidence": getattr(ev, "confidence", 0.5),
                         "source_ref": getattr(ev, "source_ref", None),
+                        "admitted": (
+                            id(ev) in admitted_ids
+                            if admitted_ids is not None
+                            else False
+                        ),
                     }
                     for ev in (getattr(ctx.get("retrieval"), "ranked", None) or [])[:8]
                 ],
@@ -1497,6 +1503,7 @@ class DefaultOrchestrator:
                 ranked = [
                     ev for ev in ranked if getattr(ev, "layer", None) not in personal_layers
                 ]
+            ctx["_admitted_evidence_ids"] = {id(ev) for ev in ranked}
             block = evidence_block(ranked)
             if block:
                 extra_bits.append(block)

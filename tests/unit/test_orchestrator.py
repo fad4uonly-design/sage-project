@@ -309,8 +309,18 @@ async def test_result_metadata_exposes_evidence_provenance(engine: SageEngine) -
 
     provenance = result.metadata["evidence_provenance"]
     assert provenance == [
-        {"layer": "memory", "confidence": 0.9, "source_ref": "memory-id-1"},
-        {"layer": "document", "confidence": 0.78, "source_ref": "doc-9"},
+        {
+            "layer": "memory",
+            "confidence": 0.9,
+            "source_ref": "memory-id-1",
+            "admitted": True,
+        },
+        {
+            "layer": "document",
+            "confidence": 0.78,
+            "source_ref": "doc-9",
+            "admitted": True,
+        },
     ]
 
 
@@ -444,8 +454,18 @@ async def test_generic_turn_keeps_unrelated_personal_memory_out_of_prompt(
 
     # Retrieval and provenance are untouched: the memory is still attributed.
     provenance = result.metadata["evidence_provenance"]
-    assert {"layer": "memory", "confidence": 0.9, "source_ref": "memory-id-1"} in provenance
-    assert {"layer": "document", "confidence": 0.78, "source_ref": "doc-9"} in provenance
+    assert {
+        "layer": "memory",
+        "confidence": 0.9,
+        "source_ref": "memory-id-1",
+        "admitted": False,
+    } in provenance
+    assert {
+        "layer": "document",
+        "confidence": 0.78,
+        "source_ref": "doc-9",
+        "admitted": True,
+    } in provenance
 
 
 @pytest.mark.asyncio
@@ -474,6 +494,20 @@ async def test_context_seeking_question_consumes_personal_memory(
     assert _AGRICULTURE_MEMORY in system_prompt
     assert "[memory | confidence 0.90]" in system_prompt
     assert "source: memory-id-1" in system_prompt
+
+    provenance = result.metadata["evidence_provenance"]
+    assert {
+        "layer": "memory",
+        "confidence": 0.9,
+        "source_ref": "memory-id-1",
+        "admitted": True,
+    } in provenance
+    assert {
+        "layer": "document",
+        "confidence": 0.78,
+        "source_ref": "doc-9",
+        "admitted": True,
+    } in provenance
 
 
 @pytest.mark.asyncio
