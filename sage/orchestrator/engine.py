@@ -54,6 +54,18 @@ _MAX_TOOL_DECISION_ITERATIONS = 3
 #: touched.
 _TOOL_FINAL_SENTINEL_RE = re.compile(r"(?:\A|\s)FINAL\s*\Z")
 
+#: User-derived evidence layers: stored memories plus the knowledge-graph facts
+#: extracted from those same memories. These are the layers the one admission
+#: decision withholds on a turn that never asked for personal context, at every
+#: boundary where evidence becomes model/reasoning context.
+_PERSONAL_EVIDENCE_LAYERS = frozenset({"memory", "knowledge_graph"})
+
+
+def _evidence_layer_value(evidence: Any) -> str:
+    """Layer value of an evidence item (``""`` when the layer is absent)."""
+    layer = getattr(evidence, "layer", None)
+    return str(getattr(layer, "value", None) or layer or "")
+
 
 class DefaultOrchestrator:
     def __init__(self, container: Any) -> None:
@@ -967,6 +979,48 @@ class DefaultOrchestrator:
             )
         return f"Understood. I will remember that (id: {mid}).\n«{fact}»"
 
+    # -- Evidence admission boundary -------------------------------------------
+    #
+    # ONE decision, two boundaries: ``_step_reason`` (ReasoningContext + the
+    # explainability report) and ``_step_compose`` (the model-facing prompt)
+    # both go through these two helpers, so evidence can never be admitted at
+    # one boundary and withheld at the other.
+
+    def _personal_evidence_allowed(self, intent: Intent, ctx: dict[str, Any]) -> bool:
+        """May user-derived evidence influence this turn's context?
+
+        Admitted only when this turn's conversation understanding is
+        context-seeking (``needs_memory``), when the intent explicitly asks for
+        the user's own memory (``RECALL``), or when a legacy caller runs a step
+        directly without a conversation result. Retrieval scoring and
+        provenance are untouched — withheld evidence stays retrieved and
+        attributed, it is simply never admitted as context.
+        """
+        und = ctx.get("conversation")
+        return bool(
+            und is None
+            or und.policy.needs_memory
+            or intent.kind is IntentKind.RECALL
+        )
+
+    def _admit_evidence(self, intent: Intent, ctx: dict[str, Any]) -> list[Any]:
+        """Ranked evidence admitted for this turn, in retrieval order.
+
+        Applies ``_personal_evidence_allowed`` to ``ctx["retrieval"].ranked``:
+        on a turn that did not ask for personal context the user-derived layers
+        (memories + the knowledge-graph facts extracted from them) are dropped
+        and everything else (documents, semantic hits, patterns) survives.
+        Empty when no retrieval ran.
+        """
+        ranked = list(getattr(ctx.get("retrieval"), "ranked", None) or [])
+        if not self._personal_evidence_allowed(intent, ctx):
+            ranked = [
+                ev
+                for ev in ranked
+                if _evidence_layer_value(ev) not in _PERSONAL_EVIDENCE_LAYERS
+            ]
+        return ranked
+
     async def _step_retrieve(self, intent: Intent, message: str, ctx: dict[str, Any]) -> str:
         from sage.retrieval.interfaces import Retriever
 
@@ -1001,12 +1055,33 @@ class DefaultOrchestrator:
         engine = self._container.try_resolve(ReasoningEngine)
         if not engine:
             return "Reasoning engine is unavailable."
+        # Evidence admission boundary — the SAME decision that gates the
+        # compose-time prompt gates the reasoning context. Evidence this turn
+        # did not ask for (user-derived memory / knowledge-graph layers on a
+        # non-context-seeking turn) is not admitted here, so it can neither
+        # enter the reasoning model prompt nor the explainability report; its
+        # attribution stays visible in the orchestrator's provenance metadata.
+        personal_allowed = self._personal_evidence_allowed(intent, ctx)
+        admitted = self._admit_evidence(intent, ctx)
+        memories = list(ctx.get("memories") or [])
+        graph_facts = list(ctx.get("graph_facts") or [])
+        knowledge = list(ctx.get("knowledge") or [])
+        if not personal_allowed:
+            withheld = {
+                str(getattr(ev, "content", "") or "").strip()
+                for ev in (getattr(ctx.get("retrieval"), "ranked", None) or [])
+                if _evidence_layer_value(ev) in _PERSONAL_EVIDENCE_LAYERS
+            }
+            memories = []
+            graph_facts = []
+            knowledge = [k for k in knowledge if str(k).strip() not in withheld]
+
         result = await engine.reason(
             intent.subject or intent.raw_message,
             context=ReasoningContext(
-                memories=list(ctx.get("memories") or []),
-                knowledge=list(ctx.get("knowledge") or []),
-                graph_facts=list(ctx.get("graph_facts") or []),
+                memories=memories,
+                knowledge=knowledge,
+                graph_facts=graph_facts,
                 documents=list(ctx.get("documents") or []),
                 metadata={
                     "retrieval_explanation": getattr(
@@ -1014,21 +1089,16 @@ class DefaultOrchestrator:
                     )
                     or [],
                     "retrieval_confidence": ctx.get("retrieval_confidence"),
-                    # Provenance for ranked evidence (layer / confidence /
-                    # source_ref only — never the raw score, which is a
+                    # Provenance for the ADMITTED evidence only (layer /
+                    # confidence / source_ref — never the raw score, which is a
                     # retrieval relevance signal, not evidence confidence).
                     "evidence_provenance": [
                         {
-                            "layer": getattr(
-                                getattr(ev, "layer", None), "value", None
-                            )
-                            or str(getattr(ev, "layer", "unknown")),
+                            "layer": _evidence_layer_value(ev) or "unknown",
                             "confidence": getattr(ev, "confidence", 0.5),
                             "source_ref": getattr(ev, "source_ref", None),
                         }
-                        for ev in (
-                            getattr(ctx.get("retrieval"), "ranked", None) or []
-                        )[:8]
+                        for ev in admitted[:8]
                     ],
                 },
             ),
@@ -1459,16 +1529,12 @@ class DefaultOrchestrator:
             if und is not None
             else None
         )
-        # Relevance boundary (evidence consumption, never retrieval): personal
-        # evidence may influence the model-facing prompt only when this turn's
-        # understanding is context-seeking (``needs_memory``), when the intent
-        # explicitly asks for the user's own memory (``RECALL``), or when a
-        # legacy caller composes directly without a conversation result.
-        # Retrieval scoring and provenance are untouched — suppressed evidence
-        # stays retrieved and attributed, it is simply not rendered here.
-        personal_allowed = (
-            und is None or und.policy.needs_memory or intent.kind is IntentKind.RECALL
-        )
+        # Relevance boundary (evidence consumption, never retrieval): the ONE
+        # admission decision shared with _step_reason — personal evidence may
+        # influence this turn only when the turn is context-seeking, a RECALL,
+        # or a legacy direct compose. Suppressed evidence stays retrieved and
+        # attributed; it is simply not rendered here.
+        personal_allowed = self._personal_evidence_allowed(intent, ctx)
         extra_bits: list[str] = []
         if personal_allowed:
             # Session continuity is personal context too: a generic turn must
@@ -1488,21 +1554,12 @@ class DefaultOrchestrator:
         # over the flattened string lists because it keeps layer, confidence
         # and source_ref; legacy lists render only what it did not already
         # cover so nothing appears twice.
-        from sage.retrieval.models import RetrievalLayer, RetrievalResult
-
-        #: User-derived evidence layers: memories plus the graph facts
-        #: extracted from those same memories. Never rendered on a turn that
-        #: did not ask for personal context.
-        personal_layers = {RetrievalLayer.MEMORY, RetrievalLayer.KNOWLEDGE_GRAPH}
+        from sage.retrieval.models import RetrievalResult
 
         provenance_rendered: set[str] = set()
         retrieval = ctx.get("retrieval")
         if isinstance(retrieval, RetrievalResult) and retrieval.ranked:
-            ranked = list(retrieval.ranked)
-            if not personal_allowed:
-                ranked = [
-                    ev for ev in ranked if getattr(ev, "layer", None) not in personal_layers
-                ]
+            ranked = self._admit_evidence(intent, ctx)
             ctx["_admitted_evidence_ids"] = {id(ev) for ev in ranked}
             block = evidence_block(ranked)
             if block:

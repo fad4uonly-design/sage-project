@@ -687,3 +687,247 @@ async def test_compose_without_conversation_keeps_every_personal_channel(
     assert "Expand the farm" in system_prompt
     assert "Farm expansion" in system_prompt
     assert "User preferences" in system_prompt
+
+
+# -- Evidence admission boundary: REASON + COMPOSE share ONE decision -----------
+#
+# The regression these guard: the admission predicate used to live inline in
+# _step_compose only, so _step_reason handed user-derived evidence straight into
+# ReasoningContext on a turn that never asked for it. Both boundaries now call
+# DefaultOrchestrator._personal_evidence_allowed / _admit_evidence.
+
+
+_KG_FACT = "SAGE -prioritize-> agriculture"
+
+
+class _CaptureReasoningEngine:
+    """Reasoning-engine double: records the ReasoningContext it is handed."""
+
+    def __init__(self) -> None:
+        self.contexts: list[Any] = []
+
+    async def reason(
+        self,
+        problem: str,
+        *,
+        context: Any = None,
+        strategy: Any = None,
+        use_retrieval: bool = True,
+        combine_top_k: int = 1,
+    ) -> Any:
+        from sage.reasoning.models import ReasoningResult, StrategyKind
+
+        self.contexts.append(context)
+        return ReasoningResult(
+            problem=problem,
+            strategy=StrategyKind.DEDUCTION,
+            conclusion="Admitted evidence reviewed.",
+        )
+
+
+def _mixed_evidence() -> list[Any]:
+    """Ranked evidence covering every relevant layer: user memory and
+    knowledge-graph fact (both user-derived) plus one document (non-personal)."""
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer
+
+    memory, document = _agriculture_and_document_evidence()
+    graph = EvidenceItem(
+        layer=RetrievalLayer.KNOWLEDGE_GRAPH,
+        content=_KG_FACT,
+        score=0.80,
+        confidence=0.70,
+        source_ref="kg-1",
+    )
+    return [memory, graph, document]
+
+
+def _reason_ctx(ranked: list[Any], *, conversation: Any) -> dict[str, Any]:
+    """Context as ``_step_retrieve`` leaves it, plus this turn's understanding
+    (the admission input)."""
+    return {
+        "history": [],
+        "conversation": conversation,
+        "retrieval": _retrieval_with_layers(ranked),
+        "retrieval_confidence": 0.9,
+        "memories": [_AGRICULTURE_MEMORY],
+        "graph_facts": [_KG_FACT],
+        "documents": [_DOCUMENT_EVIDENCE],
+        "knowledge": [_DOCUMENT_EVIDENCE, _KG_FACT],
+    }
+
+
+def _provenance_layers(context: Any) -> list[str]:
+    return [p["layer"] for p in context.metadata["evidence_provenance"]]
+
+
+@pytest.mark.asyncio
+async def test_reason_boundary_withholds_personal_evidence_from_reasoning_context(
+    engine: SageEngine,
+) -> None:
+    """A turn that never asked for personal context must not put user-derived
+    evidence into ReasoningContext — so it can reach neither the reasoning model
+    prompt nor the explainability report. Non-personal evidence stays."""
+    from sage.conversation.understanding import understand
+    from sage.orchestrator.models import Intent
+    from sage.reasoning.interfaces import ReasoningEngine
+
+    reasoning = _CaptureReasoningEngine()
+    engine.container.register_instance(ReasoningEngine, reasoning)
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    und = understand(_GENERIC_INTRO)
+    assert und.policy.needs_memory is False  # the turn never asked for memory
+    ctx = _reason_ctx(_mixed_evidence(), conversation=und)
+
+    await orch._step_reason(
+        Intent(kind=IntentKind.REASON, confidence=1.0, raw_message=_GENERIC_INTRO),
+        ctx,
+    )
+
+    context = reasoning.contexts[-1]
+    assert context.memories == []
+    assert context.graph_facts == []
+    assert _AGRICULTURE_MEMORY not in context.knowledge
+    assert _KG_FACT not in context.knowledge
+    # Mixed evidence: the non-personal item is untouched.
+    assert context.documents == [_DOCUMENT_EVIDENCE]
+    assert _DOCUMENT_EVIDENCE in context.knowledge
+    # And the reasoning-time attribution reflects ONLY the admitted evidence.
+    assert _provenance_layers(context) == ["document"]
+
+
+@pytest.mark.asyncio
+async def test_reason_boundary_admits_personal_evidence_for_recall_intent(
+    engine: SageEngine,
+) -> None:
+    """Positive control on the SAME retrieved evidence: ``RECALL`` is an explicit
+    allow condition, so personal evidence IS admitted at the REASON boundary."""
+    from sage.conversation.understanding import understand
+    from sage.orchestrator.models import Intent
+    from sage.reasoning.interfaces import ReasoningEngine
+
+    reasoning = _CaptureReasoningEngine()
+    engine.container.register_instance(ReasoningEngine, reasoning)
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    und = understand(_GENERIC_INTRO)
+    assert und.policy.needs_memory is False  # only the intent differs
+    ctx = _reason_ctx(_mixed_evidence(), conversation=und)
+
+    await orch._step_reason(
+        Intent(kind=IntentKind.RECALL, confidence=1.0, raw_message=_GENERIC_INTRO),
+        ctx,
+    )
+
+    context = reasoning.contexts[-1]
+    assert context.memories == [_AGRICULTURE_MEMORY]
+    assert context.graph_facts == [_KG_FACT]
+    assert _KG_FACT in context.knowledge
+    assert _provenance_layers(context) == ["memory", "knowledge_graph", "document"]
+
+
+@pytest.mark.asyncio
+async def test_reason_boundary_admits_personal_evidence_when_policy_needs_memory(
+    engine: SageEngine,
+) -> None:
+    """Positive control for the other allow condition: a context-seeking turn
+    (``needs_memory``) admits the same personal evidence at REASON time."""
+    from sage.conversation.understanding import understand
+    from sage.orchestrator.models import Intent
+    from sage.reasoning.interfaces import ReasoningEngine
+
+    reasoning = _CaptureReasoningEngine()
+    engine.container.register_instance(ReasoningEngine, reasoning)
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    message = "What is my test project called?"
+    und = understand(message)
+    assert und.policy.needs_memory is True
+    ctx = _reason_ctx(_mixed_evidence(), conversation=und)
+
+    await orch._step_reason(
+        Intent(kind=IntentKind.REASON, confidence=1.0, raw_message=message),
+        ctx,
+    )
+
+    context = reasoning.contexts[-1]
+    assert context.memories == [_AGRICULTURE_MEMORY]
+    assert context.graph_facts == [_KG_FACT]
+    assert _provenance_layers(context) == ["memory", "knowledge_graph", "document"]
+
+
+@pytest.mark.asyncio
+async def test_admission_decision_drops_personal_items_and_keeps_the_rest(
+    engine: SageEngine,
+) -> None:
+    """Mixed ranked evidence: only the rejected user-derived items are dropped,
+    non-personal evidence survives in retrieval order, and deciding twice is pure
+    (repeatable, with no mutation of the retrieved evidence)."""
+    from sage.conversation.understanding import understand
+    from sage.orchestrator.models import Intent
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+    memory, graph, document = _mixed_evidence()
+    ctx = _reason_ctx(
+        [memory, graph, document], conversation=understand(_GENERIC_INTRO)
+    )
+
+    generic = Intent(kind=IntentKind.CHAT, confidence=1.0, raw_message=_GENERIC_INTRO)
+    assert orch._personal_evidence_allowed(generic, ctx) is False
+    assert orch._admit_evidence(generic, ctx) == [document]
+
+    recall = Intent(
+        kind=IntentKind.RECALL, confidence=1.0, raw_message=_GENERIC_INTRO
+    )
+    assert orch._personal_evidence_allowed(recall, ctx) is True
+    assert orch._admit_evidence(recall, ctx) == [memory, graph, document]
+
+    # Admission is a filter, not a rewrite: retrieval results stay intact.
+    assert ctx["retrieval"].ranked == [memory, graph, document]
+
+
+@pytest.mark.asyncio
+async def test_reason_and_compose_apply_the_same_admission_decision(
+    engine: SageEngine,
+) -> None:
+    """One decision, two boundaries: REASON and COMPOSE must agree item-for-item,
+    so evidence can never be admitted at one boundary and withheld at the other."""
+    from sage.conversation.understanding import understand
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.engine import DefaultOrchestrator
+    from sage.orchestrator.models import Intent
+    from sage.reasoning.interfaces import ReasoningEngine
+
+    reasoning = _CaptureReasoningEngine()
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ReasoningEngine, reasoning)
+    engine.container.register_instance(ModelRouter, router)
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    for kind, personal_expected in (
+        (IntentKind.CHAT, False),
+        (IntentKind.RECALL, True),
+    ):
+        ctx = _reason_ctx(_mixed_evidence(), conversation=understand(_GENERIC_INTRO))
+        intent = Intent(kind=kind, confidence=1.0, raw_message=_GENERIC_INTRO)
+        admitted = orch._admit_evidence(intent, ctx)
+
+        await orch._step_reason(intent, ctx)
+        await orch._step_compose(intent, _GENERIC_INTRO, ctx)
+
+        # The REASON boundary admitted exactly the decided set...
+        assert _provenance_layers(reasoning.contexts[-1]) == [
+            str(ev.layer.value) for ev in admitted
+        ]
+        # ...and so did the COMPOSE boundary, which records it for provenance.
+        assert ctx["_admitted_evidence_ids"] == {id(ev) for ev in admitted}
+        # The model-facing prompt agrees with the reasoning context.
+        prompt = router.language_model.request.messages[0].content
+        assert (_AGRICULTURE_MEMORY in prompt) is personal_expected
+        assert _DOCUMENT_EVIDENCE in prompt
+
+    # ONE decision: neither boundary re-implements it, both delegate.
+    for step in (DefaultOrchestrator._step_reason, DefaultOrchestrator._step_compose):
+        names = step.__code__.co_names
+        assert "_admit_evidence" in names and "_personal_evidence_allowed" in names
+        assert "needs_memory" not in names
