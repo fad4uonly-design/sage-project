@@ -413,6 +413,10 @@ class DefaultOrchestrator:
                         else None
                     ),
                 },
+                # Residual-unknown marker passthrough (read-only): preserved
+                # here so the existing metadata -> ConversationTurn path keeps
+                # the structured state. Never drives tool invocation.
+                "unresolved": ctx.get("unresolved"),
             },
         )
         await self._audit_capability(result, message, ctx)
@@ -1038,6 +1042,19 @@ class DefaultOrchestrator:
         ctx["knowledge"] = list(result.documents) + list(result.graph_facts)
         ctx["retrieval"] = result
         ctx["retrieval_confidence"] = result.overall_confidence
+        # SAGE-native residual-unknown marker (minimal, structured, per-turn):
+        # the existing no-evidence condition only. No threshold, no new model,
+        # no control-flow change here -- reasoning/compose read it as data.
+        ranked = list(getattr(result, "ranked", None) or [])
+        if not ranked:
+            ctx["unresolved"] = {
+                "unresolved": True,
+                "reason": "no_evidence",
+                "missing": ["retrieval evidence"],
+                "bounded_next_warranted": False,
+            }
+        else:
+            ctx.pop("unresolved", None)
         return (
             f"retrieve=ok memories={len(result.memories)} "
             f"graph={len(result.graph_facts)} docs={len(result.documents)} "
@@ -1089,6 +1106,9 @@ class DefaultOrchestrator:
                     )
                     or [],
                     "retrieval_confidence": ctx.get("retrieval_confidence"),
+                    # Residual-unknown marker passthrough (read-only): the
+                    # existing reasoning path carries it without branching.
+                    "unresolved": ctx.get("unresolved"),
                     # Provenance for the ADMITTED evidence only (layer /
                     # confidence / source_ref — never the raw score, which is a
                     # retrieval relevance signal, not evidence confidence).
