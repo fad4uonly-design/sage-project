@@ -225,6 +225,132 @@ async def test_compose_without_retrieval_keeps_legacy_strings(engine: SageEngine
     assert "You've said:" in system_prompt
 
 
+@pytest.mark.asyncio
+async def test_compose_unresolved_directive_when_nothing_rendered(
+    engine: SageEngine,
+) -> None:
+    """Residual-unknown consumption: when the marker is set and this turn
+    rendered no evidence, the compose prompt carries an explicit
+    acknowledge-don't-invent directive. The model call still happens -- the
+    marker never becomes a refusal."""
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.models import Intent
+
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    intent = Intent(
+        kind=IntentKind.CHAT,
+        confidence=1.0,
+        raw_message="tell me about zqxj unmapped topic",
+    )
+    ctx = {
+        "history": [],
+        "unresolved": {
+            "unresolved": True,
+            "reason": "no_evidence",
+            "missing": ["retrieval evidence"],
+            "bounded_next_warranted": False,
+        },
+    }
+
+    response = await orch._step_compose(
+        intent, "tell me about zqxj unmapped topic", ctx
+    )
+
+    assert response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+    assert "No stored evidence was found for this turn" in system_prompt
+
+
+@pytest.mark.asyncio
+async def test_compose_unresolved_directive_suppressed_by_rendered_evidence(
+    engine: SageEngine,
+) -> None:
+    """Supported answers stay unrestricted: when ranked evidence rendered on
+    the turn, the no-evidence directive is never injected -- even if a stale
+    marker sits in the context."""
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.models import Intent
+    from sage.retrieval.models import EvidenceItem, RetrievalLayer, RetrievalResult
+
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    item = EvidenceItem(
+        layer=RetrievalLayer.MEMORY,
+        content="SAGE should remain simple and user-controlled.",
+        score=0.95,
+        confidence=0.90,
+        source_ref="memory-id-1",
+    )
+    retrieval = RetrievalResult(
+        query="What do you know about me?",
+        ranked=[item],
+        memories=["SAGE should remain simple and user-controlled."],
+        overall_confidence=0.90,
+    )
+
+    intent = Intent(
+        kind=IntentKind.CHAT,
+        confidence=1.0,
+        raw_message="What do you know about me?",
+    )
+    ctx = {
+        "history": [],
+        "retrieval": retrieval,
+        "retrieval_confidence": 0.90,
+        "unresolved": {
+            "unresolved": True,
+            "reason": "no_evidence",
+            "missing": ["retrieval evidence"],
+            "bounded_next_warranted": False,
+        },
+    }
+
+    response = await orch._step_compose(intent, "What do you know about me?", ctx)
+
+    assert response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+    assert "SAGE should remain simple and user-controlled." in system_prompt
+    assert "No stored evidence was found for this turn" not in system_prompt
+
+
+@pytest.mark.asyncio
+async def test_compose_without_unresolved_marker_has_no_directive(
+    engine: SageEngine,
+) -> None:
+    """Trigger specificity: without the marker, the directive is absent --
+    it fires only on the residual-unknown condition, never by default."""
+    from sage.models.interfaces import ModelRouter
+    from sage.orchestrator.models import Intent
+
+    router = _CaptureModelRouter()
+    engine.container.register_instance(ModelRouter, router)
+
+    orch = engine.container.resolve(Orchestrator)  # type: ignore[type-abstract]
+
+    intent = Intent(
+        kind=IntentKind.CHAT,
+        confidence=1.0,
+        raw_message="What do you know about me?",
+    )
+    ctx = {"history": []}
+
+    response = await orch._step_compose(intent, "What do you know about me?", ctx)
+
+    assert response == "captured"
+    assert router.language_model.request is not None
+    system_prompt = router.language_model.request.messages[0].content
+    assert "No stored evidence was found for this turn" not in system_prompt
+
+
 def test_evidence_block_renderer_unit() -> None:
     """evidence_block() renders content + provenance, skips empties, caps."""
     from sage.conversation.personality import evidence_block

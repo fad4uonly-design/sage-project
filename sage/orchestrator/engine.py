@@ -1034,6 +1034,29 @@ class DefaultOrchestrator:
             # Fallback to separate memory + knowledge
             await self._step_recall(intent, message, ctx)
             await self._step_knowledge(intent, message, ctx)
+            # Residual-unknown marker, recomputed for this branch: same
+            # guarantee as the ranked path -- a stale marker from an earlier
+            # retrieval state never survives, and a genuine no-evidence state
+            # is not masked. Evaluated against the evidence this branch
+            # actually produced (plus anything the fused context supplied).
+            if any(
+                ctx.get(key)
+                for key in (
+                    "memories",
+                    "memory_evidence",
+                    "graph_facts",
+                    "documents",
+                    "knowledge",
+                )
+            ):
+                ctx.pop("unresolved", None)
+            else:
+                ctx["unresolved"] = {
+                    "unresolved": True,
+                    "reason": "no_evidence",
+                    "missing": ["retrieval evidence"],
+                    "bounded_next_warranted": False,
+                }
             return "retrieve=fallback"
         result = await retriever.retrieve(query, limit=10)
         ctx["memories"] = list(result.memories)
@@ -1576,6 +1599,7 @@ class DefaultOrchestrator:
         # cover so nothing appears twice.
         from sage.retrieval.models import RetrievalResult
 
+        evidence_bits_start = len(extra_bits)
         provenance_rendered: set[str] = set()
         retrieval = ctx.get("retrieval")
         if isinstance(retrieval, RetrievalResult) and retrieval.ranked:
@@ -1635,6 +1659,20 @@ class DefaultOrchestrator:
             ]
             if knowledge:
                 extra_bits.append("Relevant knowledge:\n- " + "\n- ".join(knowledge))
+        # Residual-unknown consumption: deterministic trigger (marker set AND
+        # this turn rendered no evidence at all), prompt-level effect only --
+        # an acknowledge-don't-invent directive, never a refusal and never a
+        # control-flow change. Empty retrieval alone does not make the answer
+        # unknowable: confident general-knowledge answers stay available.
+        # Suppresses itself whenever any evidence block was rendered above.
+        if ctx.get("unresolved") and len(extra_bits) == evidence_bits_start:
+            extra_bits.append(
+                "No stored evidence was found for this turn. Do not invent "
+                "personal or project-specific facts. If the question is about "
+                "the user's own life, notes, or projects and nothing about it "
+                "has been stored, say so plainly and invite them to share. "
+                "Confident general-knowledge answers are still fine."
+            )
         if personal_allowed and ctx.get("preferences"):
             extra_bits.append(f"User preferences: {ctx['preferences']}")
 

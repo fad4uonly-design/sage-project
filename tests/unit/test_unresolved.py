@@ -103,3 +103,46 @@ async def test_unresolved_does_not_trigger_tool_loop(engine: SageEngine) -> None
     assert calls == []
     assert result.metadata.get("unresolved", {}).get("unresolved") is True
     assert result.intent.kind != IntentKind.TOOL
+
+
+@pytest.mark.asyncio
+async def test_fallback_without_retriever_recomputes_stale_unresolved() -> None:
+    """The no-Retriever fallback branch recomputes the marker from the
+    evidence it actually produced: a stale marker is replaced (not silently
+    preserved) and the canonical no-evidence state is set."""
+    from sage.core.container import Container
+    from sage.orchestrator.engine import DefaultOrchestrator
+
+    orch = DefaultOrchestrator(Container())
+    ctx: dict = {"unresolved": {"unresolved": True, "reason": "stale"}}
+    outcome = await orch._step_retrieve(_chat_intent("obscure topic"), "obscure topic", ctx)  # noqa: SLF001
+    assert outcome == "retrieve=fallback"
+    assert ctx["unresolved"] == {
+        "unresolved": True,
+        "reason": "no_evidence",
+        "missing": ["retrieval evidence"],
+        "bounded_next_warranted": False,
+    }
+
+
+@pytest.mark.asyncio
+async def test_fallback_with_evidence_clears_stale_unresolved() -> None:
+    """When the fallback's memory leg finds evidence, the recomputation
+    clears a stale marker -- mirroring the ranked-path clear guarantee."""
+    from types import SimpleNamespace
+
+    from sage.core.container import Container
+    from sage.memory.interfaces import MemorySystem
+    from sage.orchestrator.engine import DefaultOrchestrator
+
+    class _Memory:
+        async def recall(self, query: str, *, limit: int = 10):
+            return [SimpleNamespace(content="User waters orchids on Fridays")]
+
+    container = Container()
+    container.register_instance(MemorySystem, _Memory())
+    orch = DefaultOrchestrator(container)
+    ctx: dict = {"unresolved": {"unresolved": True, "reason": "stale"}}
+    await orch._step_retrieve(_chat_intent("orchids"), "orchids", ctx)  # noqa: SLF001
+    assert "unresolved" not in ctx
+    assert ctx["memories"] == ["User waters orchids on Fridays"]
