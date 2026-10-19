@@ -373,7 +373,14 @@ class DefaultOrchestrator:
             else:
                 response_parts.append("I processed your request but produced no response.")
 
-        admitted_ids = ctx.get("_admitted_evidence_ids")
+        # Admission state for the provenance metadata: recomputed at this
+        # exposure boundary via the SAME shared decision both boundaries
+        # delegate to (_admit_evidence is a pure filter over the retrieved
+        # ranked evidence), so artifact-early-return turns (e.g. RECALL)
+        # report admission correctly even when the compose ranked block never
+        # ran. This corrects how admission is reported, never which evidence
+        # is admitted; the compose-side _admitted_evidence_ids write stands.
+        admitted_ids = {id(ev) for ev in self._admit_evidence(intent, ctx)}
         result = OrchestratorResult(
             plan_id=plan.id,
             intent=intent,
@@ -394,11 +401,7 @@ class DefaultOrchestrator:
                         or str(getattr(ev, "layer", "unknown")),
                         "confidence": getattr(ev, "confidence", 0.5),
                         "source_ref": getattr(ev, "source_ref", None),
-                        "admitted": (
-                            id(ev) in admitted_ids
-                            if admitted_ids is not None
-                            else False
-                        ),
+                        "admitted": id(ev) in admitted_ids,
                     }
                     for ev in (getattr(ctx.get("retrieval"), "ranked", None) or [])[:8]
                 ],
